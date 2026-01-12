@@ -31,7 +31,7 @@ export default function PrivacyPage() {
               <section>
                 <h2 className="font-mono text-xl font-semibold mb-4">1. Introduction</h2>
                 <p className="text-muted-foreground">
-                  BitRegalo ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains
+                  BitRegalo (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy explains
                   how we collect, use, disclose, and safeguard your information when you use our Service. Please read
                   this Privacy Policy carefully. If you do not agree with the terms of this Privacy Policy, please do
                   not access the Service.
@@ -72,7 +72,7 @@ export default function PrivacyPage() {
                 <p className="text-muted-foreground">
                   As a blockchain-based service, certain information is inherently public and immutable, including
                   transaction hashes, wallet addresses, and on-chain verification records. This information is part of
-                  the blockchain's public ledger and cannot be deleted or modified.
+                  the blockchain&apos;s public ledger and cannot be deleted or modified.
                 </p>
               </section>
 
@@ -192,7 +192,7 @@ export default function PrivacyPage() {
               </section>
 
               <section>
-                <h2 className="font-mono text-xl font-semibold mb-4">11. Children's Privacy</h2>
+                <h2 className="font-mono text-xl font-semibold mb-4">11. Children&apos;s Privacy</h2>
                 <p className="text-muted-foreground">
                   Our Service is not intended for individuals under the age of 18. We do not knowingly collect personal
                   information from children. If you become aware that a child has provided us with personal
@@ -213,7 +213,7 @@ export default function PrivacyPage() {
                 <h2 className="font-mono text-xl font-semibold mb-4">13. Changes to This Privacy Policy</h2>
                 <p className="text-muted-foreground">
                   We may update this Privacy Policy from time to time. We will notify you of any changes by posting the
-                  new Privacy Policy on this page and updating the "Last updated" date. You are advised to review this
+                  new Privacy Policy on this page and updating the &quot;Last updated&quot; date. You are advised to review this
                   Privacy Policy periodically for any changes.
                 </p>
               </section>

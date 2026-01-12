@@ -24,6 +24,16 @@ export function HeroSection() {
   const [isTypingDone, setIsTypingDone] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
+  const handleScrollToFeatures = () => {
+    const element = document.getElementById("features")
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      })
+    }
+  }
+
   const text1 = "Prove it."
   const text2 = "Secure it. Own it."
 
@@ -251,15 +261,7 @@ export function HeroSection() {
     }
   }, [])
 
-  const chartData = [
-    { label: "Escrow", value: 35, color: "#10b981" },
-    { label: "RFP", value: 30, color: "#3b82f6" },
-    { label: "RTS", value: 20, color: "#a855f7" },
-    { label: "UserAuth", value: 15, color: "#f59e0b" },
-  ]
 
-  const total = chartData.reduce((sum, item) => sum + item.value, 0)
-  const cumulativePercent = 0
 
   return (
     <section className="relative overflow-hidden pt-20 pb-10 sm:pt-28 sm:pb-16 lg:pt-36">
@@ -313,12 +315,9 @@ export function HeroSection() {
           </p>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button size="lg" className="w-full sm:w-auto">
+            <Button size="lg" className="w-full sm:w-auto" onClick={handleScrollToFeatures}>
               Explore Protocols
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent">
-              Read Whitepaper
             </Button>
           </div>
         </div>

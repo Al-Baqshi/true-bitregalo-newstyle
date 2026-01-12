@@ -2,9 +2,10 @@
 
 import type React from "react"
 
-import { Lock, FileCheck, Users, TrendingUp, Sparkles } from "lucide-react"
+import { Lock, FileCheck, TrendingUp, Sparkles } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 
 const features = [
   {
@@ -13,6 +14,7 @@ const features = [
     description:
       "Secure multi-party transactions with automated release conditions. Eliminate intermediaries while maintaining trust through smart contracts.",
     image: "/assets/escrow-card.svg",
+    slug: "escrow",
   },
   {
     icon: FileCheck,
@@ -20,6 +22,7 @@ const features = [
     description:
       "On-chain RFP management system connecting demand with qualified suppliers. Transparent bid submission and evaluation process.",
     image: "/assets/rfp.svg",
+    slug: "rfp",
   },
   {
     icon: TrendingUp,
@@ -27,13 +30,7 @@ const features = [
     description:
       "Streamlined supply-side protocol for vendors to offer services and products. Automated matching with demand requirements.",
     image: "/assets/ert-escrow.svg",
-  },
-  {
-    icon: Users,
-    title: "User Authentication",
-    description:
-      "Decentralized identity (DID) with zero-knowledge proofs (ZKP) for secure authentication. KYC tagging without compromising privacy.",
-    image: "/assets/comb-escrow.svg",
+    slug: "rts",
   },
 ]
 
@@ -132,9 +129,10 @@ export function FeaturesSection() {
             onTouchEnd={() => setIsPaused(false)}
           >
             {duplicatedFeatures.map((feature, index) => (
-              <div
+              <Link
                 key={index}
-                className="group relative flex-shrink-0 w-[380px] rounded-2xl border border-border/60 bg-card/50 p-8 transition-all hover:border-border hover:bg-card"
+                href={`/protocols/${feature.slug}`}
+                className="group relative flex-shrink-0 w-[380px] rounded-2xl border border-border/60 bg-card/50 p-8 transition-all hover:border-border hover:bg-card cursor-pointer"
               >
                 <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-secondary">
                   <feature.icon className="h-6 w-6 text-foreground" />
@@ -152,7 +150,7 @@ export function FeaturesSection() {
                     />
                   </div>
                 )}
-              </div>
+              </Link>
             ))}
           </div>
         </div>

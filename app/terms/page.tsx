@@ -31,7 +31,7 @@ export default function TermsPage() {
               <section>
                 <h2 className="font-mono text-xl font-semibold mb-4">1. Acceptance of Terms</h2>
                 <p className="text-muted-foreground">
-                  By accessing and using BitRegalo ("the Service"), you accept and agree to be bound by the terms and
+                  By accessing and using BitRegalo (&quot;the Service&quot;), you accept and agree to be bound by the terms and
                   provision of this agreement. If you do not agree to abide by the above, please do not use this
                   service.
                 </p>
@@ -149,7 +149,7 @@ export default function TermsPage() {
                 <h2 className="font-mono text-xl font-semibold mb-4">11. Modifications to Terms</h2>
                 <p className="text-muted-foreground">
                   We reserve the right to modify these Terms at any time. We will notify users of any material changes
-                  by posting the new Terms on this page and updating the "Last updated" date. Your continued use of the
+                  by posting the new Terms on this page and updating the &quot;Last updated&quot; date. Your continued use of the
                   Service after such modifications constitutes your acceptance of the updated Terms.
                 </p>
               </section>

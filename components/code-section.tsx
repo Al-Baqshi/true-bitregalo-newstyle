@@ -23,15 +23,6 @@ const rfp = await bitregalo.createRFP({
 
 ✓ RFP recorded on immutable ledger`,
 
-  userauth: `$ bitregalo auth verify --did
-
-✓ Decentralized identity validated
-✓ KYC proof: sha256:8f3c...b4e9
-✓ Credentials encrypted with AES-256
-
-$ bitregalo auth link --wallet
-✓ Wallet linked to DID successfully`,
-
   integrity: `$ bitregalo verify --asset document.pdf
 
 ✓ Hash computed: sha256:a7f3...d9e2
@@ -44,7 +35,6 @@ Proof-of-existence verified (100% integrity)`,
 const features = [
   { key: "escrow", label: "Escrow smart contracts" },
   { key: "rfp", label: "Request for Proposal (RFP)" },
-  { key: "userauth", label: "User authentication & DID" },
   { key: "integrity", label: "Proof-of-existence verification" },
 ] as const
 

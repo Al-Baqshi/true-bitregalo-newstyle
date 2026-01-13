@@ -76,13 +76,17 @@ export function DocsSection() {
         </div>
 
         <div className="mt-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-          <Button size="lg" className="gap-2">
-            <Download className="h-4 w-4" />
-            Download Full Whitepaper
+          <Button size="lg" className="gap-2" asChild>
+            <Link href="/whitepaper">
+              <Download className="h-4 w-4" />
+              View Full Whitepaper
+            </Link>
           </Button>
-          <Button size="lg" variant="outline" className="gap-2 bg-transparent">
-            <ExternalLink className="h-4 w-4" />
-            View on GitHub
+          <Button size="lg" variant="outline" className="gap-2 bg-transparent" asChild>
+            <Link href="/whitepaper">
+              <Download className="h-4 w-4" />
+              Download PDF
+            </Link>
           </Button>
         </div>
       </div>

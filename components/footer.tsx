@@ -39,9 +39,11 @@ export function Footer() {
                       ? "/privacy"
                       : link === "Terms"
                         ? "/terms"
-                        : link === "Security"
-                          ? "#security"
-                          : "#"
+                        : link === "Whitepaper"
+                          ? "/whitepaper"
+                          : link === "Security"
+                            ? "#security"
+                            : "#"
                   return (
                     <li key={link}>
                       <Link

@@ -84,10 +84,11 @@ export function Navbar() {
           </nav>
         </div>
         <div className="hidden items-center gap-4 md:flex">
-          <Button variant="ghost" size="sm">
-            Sign in
+          <Button size="sm" asChild>
+            <a href="#" target="_blank" rel="noopener noreferrer">
+              Get BTR/USDT
+            </a>
           </Button>
-          <Button size="sm">Get Started</Button>
         </div>
         <button className="md:hidden" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
           {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -139,10 +140,11 @@ export function Navbar() {
               Enterprise
             </a>
             <div className="flex flex-col gap-2 pt-4">
-              <Button variant="ghost" size="sm">
-                Sign in
+              <Button size="sm" asChild className="w-full">
+                <a href="#" target="_blank" rel="noopener noreferrer">
+                  Get BTR/USDT
+                </a>
               </Button>
-              <Button size="sm">Get Started</Button>
             </div>
           </nav>
         </div>

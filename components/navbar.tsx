@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
+import { Menu, X, Download } from "lucide-react"
 import Image from "next/image"
 
 export function Navbar() {
@@ -40,18 +40,18 @@ export function Navbar() {
           </Link>
           <nav className="hidden items-center gap-6 md:flex">
             <a
+              href="#how-it-works"
+              onClick={(e) => handleSmoothScroll(e, "#how-it-works")}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
+            >
+              How It Works
+            </a>
+            <a
               href="#features"
               onClick={(e) => handleSmoothScroll(e, "#features")}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
             >
-              Protocols
-            </a>
-            <a
-              href="#developer-experience"
-              onClick={(e) => handleSmoothScroll(e, "#developer-experience")}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
-            >
-              Benefits
+              Features
             </a>
             <a
               href="#applications"
@@ -61,11 +61,11 @@ export function Navbar() {
               Use Cases
             </a>
             <a
-              href="#docs"
-              onClick={(e) => handleSmoothScroll(e, "#docs")}
+              href="#developers"
+              onClick={(e) => handleSmoothScroll(e, "#developers")}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
             >
-              Whitepaper
+              Developers
             </a>
             <a
               href="#tokenomics"
@@ -85,8 +85,9 @@ export function Navbar() {
         </div>
         <div className="hidden items-center gap-4 md:flex">
           <Button size="sm" asChild>
-            <a href="#" target="_blank" rel="noopener noreferrer">
-              Get BTR/USDT
+            <a href="#download" onClick={(e) => handleSmoothScroll(e, "#download")} className="cursor-pointer">
+              <Download className="mr-2 h-4 w-4" />
+              Download App
             </a>
           </Button>
         </div>
@@ -98,32 +99,32 @@ export function Navbar() {
         <div className="border-t border-border/40 bg-background md:hidden">
           <nav className="flex flex-col gap-4 px-4 py-6">
             <a
+              href="#how-it-works"
+              onClick={(e) => handleSmoothScroll(e, "#how-it-works")}
+              className="text-sm text-muted-foreground cursor-pointer"
+            >
+              How It Works
+            </a>
+            <a
               href="#features"
               onClick={(e) => handleSmoothScroll(e, "#features")}
               className="text-sm text-muted-foreground cursor-pointer"
             >
-              Protocols
-            </a>
-            <a
-              href="#developer-experience"
-              onClick={(e) => handleSmoothScroll(e, "#developer-experience")}
-              className="text-sm text-muted-foreground cursor-pointer"
-            >
-              Benefits
+              Features
             </a>
             <a
               href="#applications"
               onClick={(e) => handleSmoothScroll(e, "#applications")}
               className="text-sm text-muted-foreground cursor-pointer"
             >
-              Applications
+              Use Cases
             </a>
             <a
-              href="#docs"
-              onClick={(e) => handleSmoothScroll(e, "#docs")}
+              href="#developers"
+              onClick={(e) => handleSmoothScroll(e, "#developers")}
               className="text-sm text-muted-foreground cursor-pointer"
             >
-              Whitepaper
+              Developers
             </a>
             <a
               href="#tokenomics"
@@ -141,8 +142,9 @@ export function Navbar() {
             </a>
             <div className="flex flex-col gap-2 pt-4">
               <Button size="sm" asChild className="w-full">
-                <a href="#" target="_blank" rel="noopener noreferrer">
-                  Get BTR/USDT
+                <a href="#download" onClick={(e) => handleSmoothScroll(e, "#download")} className="cursor-pointer">
+                  <Download className="mr-2 h-4 w-4" />
+                  Download App
                 </a>
               </Button>
             </div>

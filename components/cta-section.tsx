@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Download } from "lucide-react"
 
 export function CTASection() {
   return (
@@ -22,19 +22,20 @@ export function CTASection() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="font-mono text-3xl font-bold tracking-tight sm:text-4xl text-balance">
-            Ready to build faster?
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-balance">
+            Start gifting today
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Join thousands of developers shipping products faster with Devflow. Start your free trial today.
+            Join thousands of users sending gifts worldwide. Download the app or start building with our SDK.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Button size="lg" className="w-full sm:w-auto">
-              Start building free
+              <Download className="mr-2 h-4 w-4" />
+              Download the App
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent">
-              Talk to sales
+              Developer Signup
             </Button>
           </div>
         </div>

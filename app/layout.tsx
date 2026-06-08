@@ -10,9 +10,9 @@ const _geist = Geist({ subsets: ["latin"] })
 const _jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "BitRegalo — Proof-of-Existence & Integrity Engine for Digital Assets",
+  title: "BitRegalo — The Global Gifting Marketplace | Smart Contracts as a Service",
   description:
-    "A comprehensive verification layer abstracting over existing primitives—hashing, timestamping, signatures, and ledgers—to provide institutional-grade proof-of-existence, integrity verification, and ownership validation for digital assets and transactions.",
+    "Send gifts anywhere in the world with on-chain trust. BitRegalo is a decentralized marketplace for gifting, services, and escrow — powered by blockchain technology.",
   generator: "v0.app",
   icons: {
     icon: [
@@ -39,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body className={`font-sans antialiased`}>
         {children}
         <Analytics />

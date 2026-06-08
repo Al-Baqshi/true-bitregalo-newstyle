@@ -2,35 +2,52 @@
 
 import type React from "react"
 
-import { Lock, FileCheck, TrendingUp, Sparkles } from "lucide-react"
+import { Lock, FileCheck, TrendingUp, Key, Users, Coins, Sparkles } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
-import Image from "next/image"
 import Link from "next/link"
 
 const features = [
   {
     icon: Lock,
-    title: "Escrow Protocol",
+    title: "Escrow Smart Contracts",
     description:
-      "Secure multi-party transactions with automated release conditions. Eliminate intermediaries while maintaining trust through smart contracts.",
-    image: "/assets/escrow-card.svg",
+      "Secure multi-party transactions with automated release conditions. Funds are held safely until delivery is confirmed.",
     slug: "escrow",
   },
   {
     icon: FileCheck,
     title: "Request for Proposal (RFP)",
     description:
-      "On-chain RFP management system connecting demand with qualified suppliers. Transparent bid submission and evaluation process.",
-    image: "/assets/rfp.svg",
+      "Post your gift or service request. Providers submit proposals, and you choose the best match based on ratings and price.",
     slug: "rfp",
   },
   {
     icon: TrendingUp,
     title: "Request to Supply (RTS)",
     description:
-      "Streamlined supply-side protocol for vendors to offer services and products. Automated matching with demand requirements.",
-    image: "/assets/ert-escrow.svg",
+      "Service providers list their offerings. Buyers can browse, compare, and purchase directly from the marketplace.",
     slug: "rts",
+  },
+  {
+    icon: Key,
+    title: "Key Delivery Codes (KDC)",
+    description:
+      "Unique codes confirm gift delivery. Only when the recipient presents the code is payment released to the provider.",
+    slug: "kdc",
+  },
+  {
+    icon: Users,
+    title: "Decentralized Identity",
+    description:
+      "KYC-verified users with on-chain reputation. Build trust through transparent transaction history and ratings.",
+    slug: "identity",
+  },
+  {
+    icon: Coins,
+    title: "Project Tokenization",
+    description:
+      "Tokenize entire projects or ventures. Enable transparent tracking and financial management on-chain.",
+    slug: "tokenization",
   },
 ]
 
@@ -96,19 +113,18 @@ export function FeaturesSection() {
   const duplicatedFeatures = [...features, ...features]
 
   return (
-    <section id="features" className="py-24 sm:py-24">
+    <section id="features" className="py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:text-center">
           <div className="flex items-center justify-center gap-2 text-sm text-accent">
             <Sparkles className="h-4 w-4" />
-            <span className="font-mono uppercase tracking-wider">Smart Contract Protocols</span>
+            <span className="font-mono uppercase tracking-wider">Platform Features</span>
           </div>
-          <h2 className="mt-4 font-mono text-3xl font-bold tracking-tight sm:text-4xl text-balance">
-            Tools built with precision for every need
+          <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl text-balance">
+            Everything you need for global gifting
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Explore the durability and precision of BitRegalo protocols, designed for both professionals and
-            enthusiasts. Each protocol is crafted with precision and built to last.
+            BitRegalo provides a complete suite of tools for secure, transparent, and efficient gifting and service exchanges worldwide.
           </p>
         </div>
 
@@ -132,24 +148,13 @@ export function FeaturesSection() {
               <Link
                 key={index}
                 href={`/protocols/${feature.slug}`}
-                className="group relative flex-shrink-0 w-[380px] rounded-2xl border border-border/60 bg-card/50 p-8 transition-all hover:border-border hover:bg-card cursor-pointer"
+                className="group relative flex-shrink-0 w-[380px] rounded-2xl border border-border/60 bg-card/50 p-8 transition-all hover:border-accent/40 hover:bg-card cursor-pointer"
               >
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-secondary">
-                  <feature.icon className="h-6 w-6 text-foreground" />
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 text-accent">
+                  <feature.icon className="h-6 w-6" />
                 </div>
-                <h3 className="font-mono text-lg font-semibold">{feature.title}</h3>
+                <h3 className="text-lg font-semibold">{feature.title}</h3>
                 <p className="mt-2 text-muted-foreground text-sm">{feature.description}</p>
-                {feature.image && (
-                  <div className="mt-6">
-                    <Image
-                      src={feature.image || "/placeholder.svg"}
-                      alt={feature.title}
-                      width={300}
-                      height={200}
-                      className="rounded-lg border border-border/40"
-                    />
-                  </div>
-                )}
               </Link>
             ))}
           </div>

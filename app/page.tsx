@@ -1,14 +1,15 @@
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
-import { StatsSection } from "@/components/stats-section"
+import { TrustBar } from "@/components/trust-bar"
+import { HowItWorks } from "@/components/how-it-works"
+import { AppDownload } from "@/components/app-download"
 import { FeaturesSection } from "@/components/features-section"
-import { DeveloperExperience } from "@/components/developer-experience"
-import { CodeSection } from "@/components/code-section"
-import { DocsSection } from "@/components/docs-section"
-import { TokenomicsSection } from "@/components/tokenomics-section"
 import { UseCasesSection } from "@/components/use-cases-section"
+import { DeveloperPortal } from "@/components/developer-portal"
+import { TokenomicsSection } from "@/components/tokenomics-section"
 import { EnterpriseSection } from "@/components/enterprise-section"
 import { CTASection } from "@/components/cta-section"
+import { LegalDisclaimer } from "@/components/legal-disclaimer"
 import { Footer } from "@/components/footer"
 
 export default function Home() {
@@ -16,15 +17,16 @@ export default function Home() {
     <main className="min-h-screen bg-background">
       <Navbar />
       <HeroSection />
-      <StatsSection />
+      <TrustBar />
+      <HowItWorks />
+      <AppDownload />
       <FeaturesSection />
-      <DeveloperExperience />
-      <CodeSection />
-      <DocsSection />
       <UseCasesSection />
+      <DeveloperPortal />
       <TokenomicsSection />
       <EnterpriseSection />
       <CTASection />
+      <LegalDisclaimer />
       <Footer />
     </main>
   )

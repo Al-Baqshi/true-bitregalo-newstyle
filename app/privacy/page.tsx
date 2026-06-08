@@ -5,7 +5,7 @@ import Link from "next/link"
 
 export const metadata: Metadata = {
   title: "Privacy Policy — BitRegalo",
-  description: "Privacy Policy for BitRegalo services",
+  description: "Privacy Policy for BitRegalo platform services",
 }
 
 export default function PrivacyPage() {
@@ -26,140 +26,182 @@ export default function PrivacyPage() {
           <div className="rounded-2xl border border-border/60 bg-card p-8 sm:p-12">
             <h1 className="font-mono text-4xl font-bold tracking-tight sm:text-5xl">Privacy Policy</h1>
             <p className="mt-4 text-sm text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Compliant with the New Zealand Privacy Act 2020
+            </p>
 
             <div className="mt-12 space-y-8 text-sm leading-relaxed">
-              <section>
-                <h2 className="font-mono text-xl font-semibold mb-4">1. Introduction</h2>
+              <section className="p-4 rounded-lg bg-accent/10 border border-accent/20">
+                <p className="text-foreground font-semibold mb-2">Privacy Commitment</p>
                 <p className="text-muted-foreground">
-                  BitRegalo (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy explains
-                  how we collect, use, disclose, and safeguard your information when you use our Service. Please read
-                  this Privacy Policy carefully. If you do not agree with the terms of this Privacy Policy, please do
-                  not access the Service.
+                  BitRegalo® Limited is committed to protecting your privacy in accordance with the New Zealand Privacy Act 2020 and the 13 Information Privacy Principles (IPPs). This policy explains how we collect, use, store, and disclose your personal information.
                 </p>
               </section>
 
               <section>
-                <h2 className="font-mono text-xl font-semibold mb-4">2. Information We Collect</h2>
+                <h2 className="font-mono text-xl font-semibold mb-4">1. Information We Collect</h2>
                 
-                <h3 className="font-mono text-lg font-semibold mt-6 mb-3">2.1 Information You Provide</h3>
-                <p className="text-muted-foreground mb-4">
-                  We may collect information that you voluntarily provide to us when you:
-                </p>
+                <h3 className="font-mono text-lg font-semibold mt-6 mb-3">1.1 Account Information (All Users)</h3>
                 <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
-                  <li>Register for an account</li>
-                  <li>Use our Service features</li>
-                  <li>Contact us for support</li>
-                  <li>Subscribe to our newsletter or communications</li>
-                  <li>Participate in surveys or feedback</li>
+                  <li>Email address</li>
+                  <li>Wallet address (public blockchain address)</li>
+                  <li>Username (optional)</li>
+                  <li>Account creation date</li>
                 </ul>
-                <p className="text-muted-foreground mt-4">
-                  This information may include your name, email address, wallet address, and other contact or identifying
-                  information.
-                </p>
 
-                <h3 className="font-mono text-lg font-semibold mt-6 mb-3">2.2 Automatically Collected Information</h3>
-                <p className="text-muted-foreground mb-4">
-                  When you use our Service, we may automatically collect certain information, including:
+                <h3 className="font-mono text-lg font-semibold mt-6 mb-3">1.2 Verification Information (Tier 2+ Users)</h3>
+                <p className="text-muted-foreground mb-2">
+                  For users requiring identity verification (transactions ≥ NZD $1,000, service providers, enterprise clients):
                 </p>
                 <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
-                  <li>Device information (IP address, browser type, operating system)</li>
-                  <li>Usage data (pages visited, features used, time spent)</li>
-                  <li>Transaction data (on-chain transaction hashes and metadata)</li>
+                  <li>Government-issued photo ID (passport, driver&apos;s license, national ID)</li>
+                  <li>Selfie with ID (for liveness verification)</li>
+                  <li>Proof of address (utility bill, bank statement — service providers only)</li>
+                  <li>Business registration documents (service providers, if applicable)</li>
+                  <li>Tax identification number (service providers)</li>
+                </ul>
+
+                <h3 className="font-mono text-lg font-semibold mt-6 mb-3">1.3 Transaction Information</h3>
+                <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
+                  <li>Transaction hashes (public blockchain data)</li>
+                  <li>Transaction amounts and timestamps</li>
+                  <li>Escrow contract details</li>
+                  <li>RFP and RTS submissions</li>
+                </ul>
+
+                <h3 className="font-mono text-lg font-semibold mt-6 mb-3">1.4 Technical Information</h3>
+                <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
+                  <li>IP address</li>
+                  <li>Browser type and version</li>
+                  <li>Device information (operating system, device type)</li>
+                  <li>Usage data (pages visited, features used, time spent on Platform)</li>
                   <li>Log files and analytics data</li>
                 </ul>
 
-                <h3 className="font-mono text-lg font-semibold mt-6 mb-3">2.3 Blockchain Data</h3>
+                <h3 className="font-mono text-lg font-semibold mt-6 mb-3">1.5 Blockchain Data</h3>
                 <p className="text-muted-foreground">
-                  As a blockchain-based service, certain information is inherently public and immutable, including
-                  transaction hashes, wallet addresses, and on-chain verification records. This information is part of
-                  the blockchain&apos;s public ledger and cannot be deleted or modified.
+                  Certain information is inherently public and immutable on the blockchain, including transaction hashes, wallet addresses, and smart contract interactions. This data is part of the public ledger and cannot be deleted or modified by BitRegalo.
                 </p>
               </section>
 
               <section>
-                <h2 className="font-mono text-xl font-semibold mb-4">3. How We Use Your Information</h2>
-                <p className="text-muted-foreground mb-4">We use the information we collect to:</p>
-                <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
-                  <li>Provide, maintain, and improve our Service</li>
-                  <li>Process transactions and verify digital assets</li>
-                  <li>Authenticate users and prevent fraud</li>
-                  <li>Send you technical notices and support messages</li>
-                  <li>Respond to your comments, questions, and requests</li>
-                  <li>Monitor and analyze usage patterns and trends</li>
-                  <li>Develop new features and services</li>
-                  <li>Comply with legal obligations</li>
-                </ul>
-              </section>
-
-              <section>
-                <h2 className="font-mono text-xl font-semibold mb-4">4. Information Sharing and Disclosure</h2>
+                <h2 className="font-mono text-xl font-semibold mb-4">2. Purpose of Collection (IPP 1)</h2>
                 <p className="text-muted-foreground mb-4">
-                  We do not sell, trade, or rent your personal information to third parties. We may share your
-                  information in the following circumstances:
+                  We collect personal information for the following lawful purposes:
+                </p>
+                <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
+                  <li>To provide and maintain Platform services</li>
+                  <li>To process transactions and verify digital assets</li>
+                  <li>To authenticate users and prevent fraud</li>
+                  <li>To comply with legal obligations (AML/CFT Act for high-value transactions)</li>
+                  <li>To communicate with you about your account and Platform updates</li>
+                  <li>To improve Platform features and user experience</li>
+                  <li>To monitor and analyze usage patterns</li>
+                  <li>To enforce our Terms of Service</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="font-mono text-xl font-semibold mb-4">3. Source of Information (IPP 2)</h2>
+                <p className="text-muted-foreground mb-4">
+                  We collect information from:
+                </p>
+                <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
+                  <li><strong>You directly:</strong> When you register, submit verification documents, or use Platform features</li>
+                  <li><strong>Automated collection:</strong> Through cookies, log files, and analytics tools</li>
+                  <li><strong>Third-party providers:</strong> Identity verification services (e.g., SumSub)</li>
+                  <li><strong>Public blockchain:</strong> Transaction data that is publicly available</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="font-mono text-xl font-semibold mb-4">4. Use of Information (IPP 10)</h2>
+                <p className="text-muted-foreground mb-4">
+                  We use your information only for the purposes for which it was collected:
+                </p>
+                <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
+                  <li>Account management and authentication</li>
+                  <li>Transaction processing and escrow management</li>
+                  <li>Identity verification (where required)</li>
+                  <li>Customer support and communication</li>
+                  <li>Platform improvement and development</li>
+                  <li>Security monitoring and fraud prevention</li>
+                  <li>Legal compliance and regulatory reporting</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="font-mono text-xl font-semibold mb-4">5. Disclosure of Information (IPP 11)</h2>
+                <p className="text-muted-foreground mb-4">
+                  We do NOT sell, trade, or rent your personal information. We may disclose information only in the following circumstances:
                 </p>
                 <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
                   <li>
-                    <strong>Service Providers:</strong> We may share information with third-party service providers who
-                    perform services on our behalf, such as hosting, analytics, and customer support.
+                    <strong>Service Providers:</strong> Third-party vendors who perform services on our behalf (hosting, verification, analytics, customer support). These providers are contractually obligated to protect your data.
                   </li>
                   <li>
-                    <strong>Legal Requirements:</strong> We may disclose information if required by law or in response to
-                    valid requests by public authorities.
+                    <strong>Legal Requirements:</strong> When required by law, court order, or government authority (e.g., AML/CFT reporting obligations).
                   </li>
                   <li>
-                    <strong>Business Transfers:</strong> In the event of a merger, acquisition, or sale of assets, your
-                    information may be transferred as part of that transaction.
+                    <strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets.
                   </li>
                   <li>
-                    <strong>With Your Consent:</strong> We may share your information with your explicit consent or at
-                    your direction.
+                    <strong>With Your Consent:</strong> When you explicitly authorize disclosure.
+                  </li>
+                  <li>
+                    <strong>Protection of Rights:</strong> To protect the rights, property, or safety of BitRegalo, users, or the public.
                   </li>
                 </ul>
               </section>
 
               <section>
-                <h2 className="font-mono text-xl font-semibold mb-4">5. Blockchain and Public Data</h2>
-                <p className="text-muted-foreground">
-                  When you use our Service to create verifications, timestamps, or other on-chain records, this
-                  information becomes part of the public blockchain. This includes transaction hashes, verification
-                  metadata, and associated wallet addresses. This data is permanent, publicly accessible, and cannot be
-                  deleted. By using our Service, you acknowledge and consent to this public disclosure of verification
-                  data.
+                <h2 className="font-mono text-xl font-semibold mb-4">6. Data Storage & Security (IPP 5)</h2>
+                <p className="text-muted-foreground mb-4">
+                  We implement appropriate technical and organizational measures to protect your information:
                 </p>
-              </section>
-
-              <section>
-                <h2 className="font-mono text-xl font-semibold mb-4">6. Data Security</h2>
-                <p className="text-muted-foreground">
-                  We implement appropriate technical and organizational security measures to protect your information
-                  against unauthorized access, alteration, disclosure, or destruction. However, no method of
-                  transmission over the internet or electronic storage is 100% secure. While we strive to use
-                  commercially acceptable means to protect your information, we cannot guarantee absolute security.
+                <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
+                  <li>Encryption at rest and in transit (TLS 1.3, AES-256)</li>
+                  <li>Secure data centers with physical access controls</li>
+                  <li>Regular security audits and penetration testing</li>
+                  <li>Access controls and authentication for employees</li>
+                  <li>Incident response procedures for data breaches</li>
+                </ul>
+                <p className="text-muted-foreground mt-4">
+                  However, no method of transmission or storage is 100% secure. We cannot guarantee absolute security.
                 </p>
               </section>
 
               <section>
                 <h2 className="font-mono text-xl font-semibold mb-4">7. Data Retention</h2>
-                <p className="text-muted-foreground">
-                  We retain your information for as long as necessary to fulfill the purposes outlined in this Privacy
-                  Policy, unless a longer retention period is required or permitted by law. Note that blockchain data
-                  cannot be deleted once recorded on-chain.
+                <p className="text-muted-foreground mb-4">
+                  We retain your information as follows:
                 </p>
+                <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
+                  <li><strong>Account information:</strong> Duration of account + 7 years after closure (AML/CFT Act Section 48)</li>
+                  <li><strong>Verification documents:</strong> 7 years after account closure (AML/CFT Act Section 48)</li>
+                  <li><strong>Transaction records:</strong> 7 years after transaction (legal requirement)</li>
+                  <li><strong>Technical logs:</strong> 12 months (for security and analytics)</li>
+                  <li><strong>Blockchain data:</strong> Permanent (cannot be deleted — public ledger)</li>
+                </ul>
               </section>
 
               <section>
-                <h2 className="font-mono text-xl font-semibold mb-4">8. Your Rights and Choices</h2>
-                <p className="text-muted-foreground mb-4">Depending on your location, you may have certain rights regarding your information:</p>
+                <h2 className="font-mono text-xl font-semibold mb-4">8. Your Rights (IPPs 6, 7, 8)</h2>
+                <p className="text-muted-foreground mb-4">
+                  Under the Privacy Act 2020, you have the following rights:
+                </p>
                 <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
                   <li>
-                    <strong>Access:</strong> You may request access to the personal information we hold about you.
+                    <strong>Access (IPP 6):</strong> You may request access to the personal information we hold about you.
                   </li>
                   <li>
-                    <strong>Correction:</strong> You may request correction of inaccurate or incomplete information.
+                    <strong>Correction (IPP 7):</strong> You may request correction of inaccurate or incomplete information.
                   </li>
                   <li>
-                    <strong>Deletion:</strong> You may request deletion of your personal information, subject to legal
-                    and operational requirements.
+                    <strong>Accuracy (IPP 8):</strong> We take reasonable steps to ensure information is accurate, up-to-date, and complete before use.
+                  </li>
+                  <li>
+                    <strong>Deletion:</strong> You may request deletion of your personal information, subject to legal retention requirements (e.g., AML/CFT Act).
                   </li>
                   <li>
                     <strong>Objection:</strong> You may object to certain processing of your information.
@@ -169,60 +211,95 @@ export default function PrivacyPage() {
                   </li>
                 </ul>
                 <p className="text-muted-foreground mt-4">
-                  To exercise these rights, please contact us using the information provided in the Contact section.
+                  To exercise these rights, contact us at privacy@bitregalo.com or through our support channels.
                 </p>
               </section>
 
               <section>
-                <h2 className="font-mono text-xl font-semibold mb-4">9. Cookies and Tracking Technologies</h2>
-                <p className="text-muted-foreground">
-                  We may use cookies, web beacons, and similar tracking technologies to collect and store information
-                  about your use of our Service. You can control cookies through your browser settings, though this may
-                  affect your ability to use certain features of the Service.
+                <h2 className="font-mono text-xl font-semibold mb-4">9. Cookies & Tracking (IPP 3)</h2>
+                <p className="text-muted-foreground mb-4">
+                  We use cookies and similar technologies to:
+                </p>
+                <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
+                  <li>Remember your preferences and settings</li>
+                  <li>Authenticate your session</li>
+                  <li>Analyze Platform usage and performance</li>
+                  <li>Improve user experience</li>
+                </ul>
+                <p className="text-muted-foreground mt-4">
+                  You can control cookies through your browser settings. Disabling cookies may affect Platform functionality.
                 </p>
               </section>
 
               <section>
-                <h2 className="font-mono text-xl font-semibold mb-4">10. Third-Party Links</h2>
+                <h2 className="font-mono text-xl font-semibold mb-4">10. International Data Transfers (IPP 12)</h2>
                 <p className="text-muted-foreground">
-                  Our Service may contain links to third-party websites or services. We are not responsible for the
-                  privacy practices of these third parties. We encourage you to read the privacy policies of any
-                  third-party sites you visit.
+                  Your information may be transferred to and processed in countries other than New Zealand. These countries may have different data protection laws. We ensure appropriate safeguards are in place, including:
                 </p>
+                <ul className="ml-6 list-disc space-y-2 text-muted-foreground mt-2">
+                  <li>Contractual clauses requiring equivalent privacy protection</li>
+                  <li>Data processing agreements with service providers</li>
+                  <li>Compliance with New Zealand&apos;s cross-border disclosure requirements</li>
+                </ul>
               </section>
 
               <section>
                 <h2 className="font-mono text-xl font-semibold mb-4">11. Children&apos;s Privacy</h2>
                 <p className="text-muted-foreground">
-                  Our Service is not intended for individuals under the age of 18. We do not knowingly collect personal
-                  information from children. If you become aware that a child has provided us with personal
-                  information, please contact us, and we will take steps to delete such information.
+                  The Platform is not intended for individuals under 18 years of age. We do not knowingly collect personal information from children. If you become aware that a child has provided us with personal information, please contact us and we will delete it.
                 </p>
               </section>
 
               <section>
-                <h2 className="font-mono text-xl font-semibold mb-4">12. International Data Transfers</h2>
+                <h2 className="font-mono text-xl font-semibold mb-4">12. Data Breaches</h2>
+                <p className="text-muted-foreground mb-4">
+                  In the event of a privacy breach that poses a risk of serious harm, we will:
+                </p>
+                <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
+                  <li>Notify the Privacy Commissioner as soon as practicable</li>
+                  <li>Notify affected individuals as soon as practicable</li>
+                  <li>Take steps to contain the breach and prevent further harm</li>
+                  <li>Investigate the cause and implement corrective measures</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="font-mono text-xl font-semibold mb-4">13. Third-Party Links</h2>
                 <p className="text-muted-foreground">
-                  Your information may be transferred to and processed in countries other than your country of
-                  residence. These countries may have data protection laws that differ from those in your country. By
-                  using our Service, you consent to the transfer of your information to these countries.
+                  The Platform may contain links to third-party websites or services. We are not responsible for the privacy practices of these third parties. We encourage you to read their privacy policies.
                 </p>
               </section>
 
               <section>
-                <h2 className="font-mono text-xl font-semibold mb-4">13. Changes to This Privacy Policy</h2>
+                <h2 className="font-mono text-xl font-semibold mb-4">14. Changes to This Policy</h2>
                 <p className="text-muted-foreground">
-                  We may update this Privacy Policy from time to time. We will notify you of any changes by posting the
-                  new Privacy Policy on this page and updating the &quot;Last updated&quot; date. You are advised to review this
-                  Privacy Policy periodically for any changes.
+                  We may update this Privacy Policy from time to time. Material changes will be notified via email or Platform announcement. Your continued use of the Platform after changes constitutes acceptance of the updated policy.
                 </p>
               </section>
 
               <section>
-                <h2 className="font-mono text-xl font-semibold mb-4">14. Contact Us</h2>
+                <h2 className="font-mono text-xl font-semibold mb-4">15. Complaints</h2>
+                <p className="text-muted-foreground mb-4">
+                  If you believe your privacy has been breached, you may:
+                </p>
+                <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
+                  <li>Contact us directly to resolve the issue</li>
+                  <li>Complain to the New Zealand Privacy Commissioner</li>
+                  <li>Visit: www.privacy.org.nz or call 0800 803 734</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="font-mono text-xl font-semibold mb-4">16. Contact Information</h2>
                 <p className="text-muted-foreground">
-                  If you have any questions about this Privacy Policy or our privacy practices, please contact us
-                  through our official channels or visit our website for support information.
+                  For privacy-related inquiries or to exercise your rights, please contact:
+                </p>
+                <p className="text-muted-foreground mt-2">
+                  <strong>BitRegalo® Limited</strong><br />
+                  Privacy Officer<br />
+                  Email: privacy@bitregalo.com<br />
+                  Website: bitregalo.com<br />
+                  New Zealand Registration: 7699356
                 </p>
               </section>
             </div>

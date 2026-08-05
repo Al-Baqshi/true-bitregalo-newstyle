@@ -298,8 +298,7 @@ export default function PrivacyPage() {
                   <strong>BitRegalo® Limited</strong><br />
                   Privacy Officer<br />
                   Email: privacy@bitregalo.com<br />
-                  Website: bitregalo.com<br />
-                  New Zealand Registration: 7699356
+                  Website: bitregalo.com
                 </p>
               </section>
             </div>

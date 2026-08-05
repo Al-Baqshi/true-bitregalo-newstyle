@@ -11,7 +11,7 @@ export function LegalDisclaimer() {
             <div>
               <h3 className="text-lg font-semibold">Legal Notice & Regulatory Compliance</h3>
               <p className="text-xs text-muted-foreground mt-1">
-                BitRegalo® Limited — New Zealand Registration: 7699356
+                BitRegalo® Limited — New Zealand
               </p>
             </div>
           </div>
@@ -23,7 +23,7 @@ export function LegalDisclaimer() {
                 <div>
                   <h4 className="text-sm font-semibold mb-1">Technology Platform, Not Financial Service</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    BitRegalo is a technology platform providing marketplace infrastructure and utility tokens. We are NOT a financial institution, reporting entity under the AML/CFT Act 2009, or issuer of financial products under the FMC Act 2013.
+                    BitRegalo is a technology platform providing decentralised escrow infrastructure. We are NOT a financial institution, reporting entity under the AML/CFT Act 2009, or issuer of financial products under the FMC Act 2013.
                   </p>
                 </div>
               </div>
@@ -31,9 +31,9 @@ export function LegalDisclaimer() {
               <div className="flex items-start gap-3">
                 <FileText className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-sm font-semibold mb-1">Utility Tokens Only</h4>
+                  <h4 className="text-sm font-semibold mb-1">No Token, No Offering</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    BTR and Regalo tokens are prepaid utility credits for platform access only. They are NOT securities, financial products, or investment contracts. No expectation of profit is created. Token value may fluctuate; you bear all risk of loss.
+                    BitRegalo does not have a token. There is no token sale, no initial offering, and no fundraising instrument of any kind. Nothing on this site is an invitation to acquire or register interest in any token, security, or financial product.
                   </p>
                 </div>
               </div>
@@ -55,7 +55,7 @@ export function LegalDisclaimer() {
                 <div>
                   <h4 className="text-sm font-semibold mb-1">Risk Acknowledgment</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Blockchain technology involves inherent risks including technical failures, regulatory changes, and market volatility. By using BitRegalo, you acknowledge and accept these risks. We provide no guarantees regarding token value or platform availability.
+                    Blockchain technology involves inherent risks including technical failures and regulatory changes. By using BitRegalo, you acknowledge and accept these risks. We provide no guarantees regarding platform availability.
                   </p>
                 </div>
               </div>
@@ -63,7 +63,7 @@ export function LegalDisclaimer() {
           </div>
 
           <div className="mt-8 pt-6 border-t border-border/40">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-center">
+            <div className="grid gap-4 sm:grid-cols-3 text-center">
               <Link 
                 href="/terms" 
                 className="text-xs text-accent hover:underline transition-colors"
@@ -76,14 +76,8 @@ export function LegalDisclaimer() {
               >
                 Privacy Policy
               </Link>
-              <Link 
-                href="/token-terms" 
-                className="text-xs text-accent hover:underline transition-colors"
-              >
-                Token Terms
-              </Link>
-              <Link 
-                href="/kyc-policy" 
+              <Link
+                href="/kyc-policy"
                 className="text-xs text-accent hover:underline transition-colors"
               >
                 KYC Policy

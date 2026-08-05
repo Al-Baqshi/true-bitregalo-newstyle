@@ -299,7 +299,6 @@ export default function TokenTermsPage() {
                 </p>
                 <p className="text-muted-foreground mt-2">
                   <strong>BitRegalo® Limited</strong><br />
-                  New Zealand Registration: 7699356<br />
                   Website: bitregalo.com
                 </p>
               </section>

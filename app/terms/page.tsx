@@ -27,7 +27,7 @@ export default function TermsPage() {
             <h1 className="font-mono text-4xl font-bold tracking-tight sm:text-5xl">Terms of Service</h1>
             <p className="mt-4 text-sm text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              BitRegalo® Limited | New Zealand Registration: 7699356
+              BitRegalo® Limited | New Zealand
             </p>
 
             <div className="mt-12 space-y-8 text-sm leading-relaxed">
@@ -299,7 +299,6 @@ export default function TermsPage() {
                 </p>
                 <p className="text-muted-foreground mt-2">
                   <strong>BitRegalo® Limited</strong><br />
-                  New Zealand Registration: 7699356<br />
                   Website: bitregalo.com
                 </p>
               </section>

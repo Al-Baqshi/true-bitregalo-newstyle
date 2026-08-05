@@ -277,4 +277,3 @@ yarn install --force
 ## License
 
 © 2026 BitRegalo® Limited. All rights reserved.  
-New Zealand Registration: 7699356

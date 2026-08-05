@@ -4,7 +4,7 @@ import Image from "next/image"
 const footerLinks = {
   Protocol: ["Escrow", "RFP", "RTS", "Whitepaper"],
   Company: ["Contact", "GitHub"],
-  Legal: ["Privacy", "Terms", "Token Terms", "KYC Policy"],
+  Legal: ["Privacy", "Terms", "KYC Policy"],
 }
 
 export function Footer() {
@@ -55,20 +55,18 @@ export function Footer() {
                       ? "/privacy"
                       : link === "Terms"
                         ? "/terms"
-                        : link === "Token Terms"
-                          ? "/token-terms"
-                          : link === "KYC Policy"
-                            ? "/kyc-policy"
-                            : link === "Whitepaper"
-                              ? "/whitepaper"
-                              : link === "Escrow"
-                                ? "/protocols/escrow"
-                                : link === "RFP"
-                                  ? "/protocols/rfp"
-                                  : link === "RTS"
-                                    ? "/protocols/rts"
-                                    : link === "Contact"
-                                      ? "/contact"
+                        : link === "KYC Policy"
+                          ? "/kyc-policy"
+                          : link === "Whitepaper"
+                            ? "/whitepaper"
+                            : link === "Escrow"
+                              ? "/protocols/escrow"
+                              : link === "RFP"
+                                ? "/protocols/rfp"
+                                : link === "RTS"
+                                  ? "/protocols/rts"
+                                  : link === "Contact"
+                                    ? "/contact"
                                       : link === "GitHub"
                                         ? "https://github.com/bitregalo"
                                         : "#"

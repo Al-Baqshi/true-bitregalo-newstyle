@@ -7,9 +7,8 @@ By Al Baqshi Mohammed
 
 Table of Contents
 [IMPORTANT INFORMATION: 4](http://#_Toc142341163)
-[Token Benefits: 4](http://#_Toc142341164)
+[No Token, No Offering: 4](http://#_Toc142341164)
 [Regulatory Compliance: 4](http://#_Toc142341165)
-[Purchase Considerations: 4](http://#_Toc142341166)
 [Platform Role: 4](http://#_Toc142341167)
 [Information Authenticity: 5](http://#_Toc142341168)
 [Contractual Implications: 5](http://#_Toc142341169)
@@ -53,44 +52,32 @@ Table of Contents
 [How BitRegalo Works in Real Life. 15](http://#_Toc142341207)
 [Technical Overview.. 15](http://#_Toc142341208)
 [Addressing Corruption and Uplifting Transparency with BitRegalo: 17](http://#_Toc142341209)
-[Bitregalo Tokenomic. 19](http://#_Toc142341210)
-[BTR Token. 19](http://#_Toc142341211)
-[Distribution Strategy. 19](http://#_Toc142341212)
-[Utility Insights. 19](http://#_Toc142341213)
-[Regalo Token. 19](http://#_Toc142341214)
+[The zk-regalo Network Vision. 19](http://#_Toc142341217)
 [Platform Features. 19](http://#_Toc142341215)
-[Utility Insights. 20](http://#_Toc142341216)
-[The zk-regalo Main Network Vision. 20](http://#_Toc142341217)
-[Emphasis on Token Holders. 20](http://#_Toc142341218)
 [Important Note. 20](http://#_Toc142341219)
-[Join Us. 21](http://#_Toc142341220)
 [Bitregalo: A New Era of Smart Contract Services. 21](http://#_Toc142341221)
-[How our BTR tokens will fuel our growth and innovation. 21](http://#_Toc142341222)
-[Application of Funds. 21](http://#_Toc142341223)
+[Where We Invest. 21](http://#_Toc142341223)
 [Envisioning a Paradigm Shift. 22](http://#_Toc142341224)
 [Word of Caution. 22](http://#_Toc142341225)
 [BitRegalo: Pioneering the New Dawn of Digital Contract Management 22](http://#_Toc142341226)
 [Join the BitRegalo Odyssey. 23](http://#_Toc142341227)
-[\-BTR Smart Contract Address: 23](http://#_Toc142341228)
-[\-ENS Name: 23](http://#_Toc142341229)
+[Contact. 23](http://#_Toc142341229)
 
 BitRegalo Whitepaper
 
 # IMPORTANT INFORMATION: 
 **Introduction**:
-This document, curated by Al Baqshi, serves to educate potential BTR stakeholders about BitRegalo's technical intricacies and is accessible via [BitRegalo.com](http://bitregalo.com/). The primary aim is to provide insights into the BitRegalo application, a service of BitRegalo® Limited, New Zealand (Registration Number: 7699356). It presents potential utility scenarios surrounding the BitRegalo Token (BTR) while inviting enthusiasts to engage in the BitRegalo Initial UTILITY TOKEN Offering.
+This document, curated by Al Baqshi, explains the design and purpose of BitRegalo and is accessible via [BitRegalo.com](http://bitregalo.com/). Its aim is to provide insight into the BitRegalo application — a service of BitRegalo® Limited, New Zealand — and into the escrow, RFP, and RTS protocols that the platform is built on.
 
-Token Benefits: Upon participation, individuals have the opportunity to acquire REGALO, applicable towards Application Fees, Partnership Fees, Priority Fees, Regional Partner Fees, and more. Additionally, they gain privileged access to unique BitRegalo updates and advantages of early adoption. However, it's crucial to note that this document remains informational, with no member of BitRegalo, or its associated entities, making any assurances regarding the utility or potential value of the BitRegalo Utility Token.
+No Token, No Offering: BitRegalo does not have a token. There is no BitRegalo token in existence, no token sale, no initial offering, and no fundraising instrument of any kind connected to this document. Nothing here is an invitation to acquire, subscribe for, or register interest in any token, coin, security, or financial product. Where this document explains tokens as a technology, it does so purely as background education on how blockchains work.
 
-Regulatory Compliance: In accordance with the Financial Markets Conduct Act 2013 (FMC Act) - Part 3, neither this white paper nor its related content classifies as a financial product offering to BitRegalo® registrants or readers. It isn’t a product disclosure statement under the FMC Act and might lack some requisite details as per New Zealand regulatory standards. Explicitly, any sale associated with a BTR Holders Certificate showcased here aligns with the FMC Act's Part 3 stipulations. This is relevant for entities or individuals falling under specific categories of the FMC Act, inclusive of large enterprises, investment ventures, governmental agencies, and certified investors holding an investor designation.
+Regulatory Compliance: In accordance with the Financial Markets Conduct Act 2013 (FMC Act), neither this white paper nor its related content constitutes an offer of financial products to BitRegalo® registrants or readers. It is not a product disclosure statement under the FMC Act and may lack details that New Zealand regulatory standards would require of such a document. BitRegalo is a technology platform: it is not a financial institution and it does not issue financial products.
 
-Purchase Considerations: The information within this document should not be misconstrued as a promotional solicitation or sales offering. It isn't designed to entice any retail investor in any jurisdiction towards any securities-related transaction. Those interested in acquiring BTR Utility Tokens will be subject to stringent protocols against money laundering and counter-terrorism financing.
+Platform Role: BitRegalo's web platform and application are software provided by BitRegalo® Limited. BitRegalo does not provide financial, investment, legal, or tax advice, and it takes no custody of user assets. Users interact directly with smart contracts deployed on public blockchains, and the operation of those contracts is not underwritten by BitRegalo or any other entity.
 
-Platform Role: BitRegalo's web platform and application serve as intermediaries for BitRegalo® Limited, steering clear from any financial advisories regarding BTR stakeholder participation. The efficacy of the BitRegalo platforms, commitments associated with the BitRegalo application, or the operational dynamics of the Utility Token, are not underwritten by BitRegalo's stakeholders or other entities.
+Information Authenticity: No individual is permitted to disseminate any information or representation about BitRegalo outside of this White Paper without BitRegalo's explicit consent.
 
-Information Authenticity: No individual is permitted to disseminate any information or representation outside of this White Paper and its accompanying Subscription Agreement without BitRegalo's explicit consent.
-
-Contractual Implications: This white paper neither forms a contract between BitRegalo® Limited and any other entity nor qualifies as a direct proposal urging any individual to engage in transactions involving BTR Utility Tokens. Its purpose remains informational, aimed at offering general insights rather than concrete advice for potential BTR Utility Token stakeholders or UTILITY TOKEN issuers. It neither persuades individuals to invest in BTR UTILITY TOKENs nor does it express any direct endorsement.
+Contractual Implications: This white paper neither forms a contract between BitRegalo® Limited and any other entity nor qualifies as a proposal urging any individual to engage in any transaction. Its purpose remains informational, aimed at offering general insight into the platform rather than concrete advice of any kind.
 #   
 
 # Introduction & Terminologies
@@ -405,49 +392,20 @@ Beyond gifting, BitRegalo has vast implications. It's a one-stop-shop for transa
 
 Join BitRegalo, and be a part of the digital revolution. Dive into a world where transactions are decentralized, where creativity flourishes, and opportunities abound. With BitRegalo, we don't just imagine a better future; we build it, one transparent transaction at a time.
 
-# Bitregalo Tokenomic
-Welcome to the Bitregalo Tokenomic, where we introduce our innovative ecosystem that aims to revolutionize smart contract services using blockchain technology. In this document, we will explain the features and functions of our two tokens: BTR and Regalo, as well as our vision for the zk-regalo main network.
-## BTR Token
-BTR is the fundraising token for our project. It is based on the Binance Smart Chain (BSC BEP20) platform and has a fixed supply of 70 million tokens. BTR token holders will be able to swap their tokens for Regalo tokens once our zk-regalo main network is launched.
-### Distribution Strategy
-We have divided our BTR token distribution into two phases:
-*   Private Fundraising: We will sell 35 million BTR tokens in two rounds of private fundraising. The first round will offer 20 million BTR tokens at $1.6 each, while the second round will offer 15 million BTR tokens at $3.0 each.
-*   DEX Listings: We will list the remaining 35 million BTR tokens on decentralized exchanges after the private fundraising is completed. This will allow more people to access our tokens and join our community.
-### Utility Insights
-BTR token has two main utilities:
-*   Fundraising: BTR token is the primary way for us to raise funds for our project development and marketing. By purchasing BTR tokens, you are supporting our vision and becoming part of our journey.
-*   Swapping: BTR token holders will be able to swap their tokens for Regalo tokens at a 1:1 ratio once our zk-regalo main network is live. This will give them access to our core platform and services.
-## Regalo Token
-Regalo is the main token for our zk-regalo main network. It is based on our own platform that supports zero-knowledge proof computation. Regalo token has an adaptive supply that adjusts according to the demand and usage of our platform.
-### Platform Features
-Our zk-regalo main network has several features that make it unique and superior to other smart contract platforms:
-*   Scalability: Our platform uses zk-rollup technology, which transfers computation and state storage off-chain, while submitting transaction data and proofs to Ethereum. This allows us to process thousands of transactions per second with minimal fees and latency.
-*   Privacy: Our platform uses zero-knowledge proofs, which verify the correctness of program execution without revealing the inputs and outputs. This ensures the confidentiality and security of our users’ data and transactions.
-*   Compatibility: Our platform is compatible with the Ethereum Virtual Machine, which means that most existing smart contracts, developer tools, and wallets can work seamlessly on our platform.
-### Utility Insights
-Regalo token has three main utilities:
-*   Service Operations: Regalo token is used to power our smart contract as a service operations. Users can create, deploy, execute, and verify smart contracts on our platform using Regalo tokens.
-*   Fee Management: Regalo token is used to manage various platform-associated fees, such as gas fees, storage fees, verification fees, etc. Users can pay or receive fees in Regalo tokens depending on their activities on our platform.
-*   Feature Access: Regalo token is used to enable access to unique features and integrations on our platform, such as advanced analytics, custom templates, third-party protocols, etc. Users can unlock or upgrade these features using Regalo tokens.
-## The zk-regalo Main Network Vision
-Our vision is to redefine the smart contract landscape by providing a scalable, private, and compatible platform that empowers users to create and execute smart contracts with ease and efficiency. We believe that smart contracts are the future of decentralized applications and we want to make them accessible and affordable for everyone.
-## Emphasis on Token Holders
-We value our token holders as our core supporters and visionaries. They play an instrumental role in the development and growth of our platform. We reward our token holders with various benefits, such as:
-*   Token Swapping: BTR token holders will be able to swap their tokens for Regalo tokens at a 1:1 ratio once our zk-regalo main network is live. This will give them access to our core platform and services.
-*   Token Staking: Regalo token holders will be able to stake their tokens to participate in the network governance and security. By staking their tokens, they can participate in governance and influence the platform decisions.
-*   Token Burning: Regalo token has an adaptive supply that adjusts according to the demand and usage of our platform. A portion of the fees collected on our platform will be burned, reducing the total supply over time.
+# The zk-regalo Network Vision
+Our long-term vision is to redefine the smart contract landscape by providing a scalable, private, and compatible platform that empowers users to create and execute smart contracts with ease and efficiency. We believe that smart contracts are the future of decentralized applications, and we want to make them accessible and affordable for everyone.
+## Platform Features
+The zk-regalo network is designed around three properties:
+*   Scalability: zk-rollup technology transfers computation and state storage off-chain while submitting transaction data and proofs to the settlement layer. This allows thousands of transactions per second with minimal fees and latency.
+*   Privacy: Zero-knowledge proofs verify the correctness of program execution without revealing the inputs and outputs. This protects the confidentiality and security of user data and transactions.
+*   Compatibility: The network is compatible with the Ethereum Virtual Machine, which means that most existing smart contracts, developer tools, and wallets can work on it without modification.
 ## Important Note
-Both BTR and Regalo tokens are utility tokens that serve specific purposes on our platform. They are not securities or financial instruments and should not be treated as such. Potential and existing token holders should understand that token value can be volatile and subject to market risks. Our platform makes no guarantees of financial returns or profits.
-## Join Us
-We invite you to join us in our journey to create the best smart contract platform in the world. You can acquire BTR tokens through our platform distribution or on decentralized exchanges. You can also follow us on our social media channels and website for more updates and information.
+This section describes engineering direction, not a financial product. BitRegalo does not issue, sell, or distribute any token, and nothing in this roadmap commits BitRegalo to doing so. Should that ever change, it would be announced separately and would be subject to the regulatory requirements applicable at that time. Nothing here should be read as an offer or as a promise of future value.
 
 # Bitregalo: A New Era of Smart Contract Services
-## How our BTR tokens will fuel our growth and innovation
-Bitregalo is a cutting-edge platform that enables users to create and execute smart contracts with ease and efficiency. We use blockchain technology, smart contract algorithms, and zero-knowledge proofs to ensure transparency and security in contract administration. We are distributing our BTR tokens to support our development and marketing, as well as to reward our loyal supporters and partners. By acquiring BTR tokens, you will gain access to our core platform and services, as well as to our future features and integrations.
-### Application of Funds
-The capital amassed from this utility token sale delineates our commitment to Bitregalo’s robust growth trajectory.
-
- The CEO will helm the fund deployment, ensuring each allocation aligns with our overarching goals:
+Bitregalo is a platform that enables users to create and execute smart contracts with ease and efficiency. We use blockchain technology, smart contract algorithms, and zero-knowledge proofs to ensure transparency and security in contract administration.
+### Where We Invest
+As the company grows, resources are allocated against the priorities below, with the CEO accountable for ensuring each allocation aligns with our overarching goals:
 
 | Allocation | Percentage | <br><br> Description<br><br> |
 | ---| ---| --- |
@@ -459,34 +417,32 @@ The capital amassed from this utility token sale delineates our commitment to Bi
 ###   
 
 ### Envisioning a Paradigm Shift
-Bitregalo, with its avant-garde stance on contract formalization and oversight, harbors the potential to recalibrate sectoral benchmarks. Through the amalgamation of blockchain paradigms, astute contract algorithms, and a decentralized operational modus operandi, Bitregalo pledges unyielding transparency and security in contract administration. The fiscal injections via our utility token sale are earmarked for diverse growth avenues, encompassing operational scaling, R&D undertakings, core team recognitions, and legal fortifications.
+Bitregalo, with its avant-garde stance on contract formalization and oversight, harbors the potential to recalibrate sectoral benchmarks. Through the amalgamation of blockchain paradigms, astute contract algorithms, and a decentralized operational modus operandi, Bitregalo pledges unyielding transparency and security in contract administration.
 ###   
 
 ### Word of Caution
-The narrative shared herein serves purely informational purposes. It doesn’t don the hat of financial counsel or investment guidance. We advocate for potential users to juxtapose risks against benefits linked with BTR tokens, and liaise with trusted financial consultants prior to decision-making.
+The narrative shared herein serves purely informational purposes. It is not financial counsel or investment guidance, and it is not an offer of any product. Blockchain technology carries technical and regulatory risks, and users should weigh those risks before relying on any decentralized platform.
 # BitRegalo: Pioneering the New Dawn of Digital Contract Management
 As we journey into the Digital Age, BitRegalo emerges as a beacon of innovation, reshaping the very fabric of contract creation and administration. Driven by a decentralized Software as a Service (SaaS) model, BitRegalo seamlessly integrates the brilliance of blockchain technology, the precision of smart contract algorithms, and a decentralized structure. The result is enhanced security, unparalleled transparency, and robust efficiency in contractual engagements tailored for a spectrum of industrial needs.
 Diving deeper, BitRegalo’s unique approach to Request for Proposal (RFP) and escrow contract management signifies a paradigm shift. Whether it is facilitating protected interactions between entities or orchestrating a fair and streamlined dispute resolution mechanism, the platform is poised to redefine the terrain of online transactional dynamics.
-Central to BitRegalo’s evolution and proliferation is the issuance of BTR utility tokens. It is imperative to comprehend that while the inherent value of these tokens is intrinsically tied to market vagaries and does not assure a concrete utility outcome, they remain pivotal to BitRegalo’s platform architecture. Our meticulously crafted fund allocation strategy spans across pivotal domains such as marketing, cutting-edge R&D, core team incentivization, and legal groundwork, thereby propelling BitRegalo’s mission to continually refine its platform and set new industry benchmarks.
+BitRegalo's development is funded and directed by BitRegalo® Limited, with resources committed across pivotal domains such as engineering, cutting-edge R&D, core team incentivization, and legal groundwork, thereby propelling BitRegalo's mission to continually refine its platform and set new industry benchmarks.
 
 Furthermore, BitRegalo emerges as a vanguard in the surging tide of decentralized SaaS platforms, presenting trailblazing solutions for contract creation and management. As traditional centralized systems face an existential challenge, BitRegalo’s promise of heightened control, fortified security, and heightened efficiency becomes ever more salient.
 Therefore, BitRegalo offers not just a platform, but a transformative vision - one that instills trust, streamlines complex processes, and augments operational efficiency. Embracing trailblazing solutions like BitRegalo paves the way for businesses to harness the immense potential of modern technology, positioning them at the forefront of digital contract management’s next chapter.
 
-Disclaimer: This document aims to inform and educate. It does not serve as financial or investment advice. We fervently encourage potential investors to undertake comprehensive due diligence and consult seasoned financial experts before any investment endeavors.
+Disclaimer: This document aims to inform and educate. It does not serve as financial or investment advice, and it is not an offer of any financial product.
 # Join the BitRegalo Odyssey
-We warmly beckon you to be part of our ambitious quest to sculpt the most advanced smart contract platform globally. Engage with us by procuring BTR tokens during our exclusive private fundraising phase or via decentralized exchanges. For the latest updates, breakthroughs, and insights, keep a tab on our social media conduits and official website.
+We warmly beckon you to be part of our ambitious quest to sculpt the most advanced smart contract platform globally. Engage with us by putting the protocols to work on a real project, or by reaching out directly. For the latest updates, breakthroughs, and insights, keep a tab on our social media conduits and official website.
 Are you prepared to voyage into the future alongside BitRegalo? Let us chart this exhilarating course together! 😊
 : [https://twitter.com/bitregalo](https://twitter.com/bitregalo) : [https://bitregalo.com](https://bitregalo.com/)
 
-## \-BTR Smart Contract Address:
+## Contact
 
-0xca5878dd174bc2805d9f827d86998103d53db1a6
+Email:
+[ceo@bitregalo.com](mailto:ceo@bitregalo.com)
 
-## \-ENS Name:
+Mobile (New Zealand):
++64 27 338 5000
+
+ENS Name:
 Bitregalo.eth
-
-Support:
-[support@bitregalo.com](mailto:support@bitregalo.com)
-
-Private Sale upon request
-[Info@bitregalo.com](mailto:Info@bitregalo.com)

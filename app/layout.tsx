@@ -10,9 +10,9 @@ const _geist = Geist({ subsets: ["latin"] })
 const _jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "BitRegalo — The Global Gifting Marketplace | Smart Contracts as a Service",
+  title: "BitRegalo — Decentralised Escrow Infrastructure",
   description:
-    "Send gifts anywhere in the world with on-chain trust. BitRegalo is a decentralized marketplace for gifting, services, and escrow — powered by blockchain technology.",
+    "Non-custodial escrow on multiple chains. The issuer can only release, the receiver can only cancel, and expired escrows return automatically. No middleman, no custodian.",
   generator: "v0.app",
   icons: {
     icon: [

@@ -5,21 +5,26 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Download } from "lucide-react"
+import { Menu, X } from "lucide-react"
 import Image from "next/image"
+
+const navLinks = [
+  { label: "How it works", href: "#lifecycle" },
+  { label: "Why BitRegalo", href: "#assurance" },
+  { label: "Use cases", href: "#use-cases" },
+  { label: "Protocol", href: "#protocol" },
+  { label: "Docs", href: "/protocols/escrow" },
+]
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
 
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (!href.startsWith("#")) return
     e.preventDefault()
-    const targetId = href.replace("#", "")
-    const element = document.getElementById(targetId)
+    const element = document.getElementById(href.slice(1))
     if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      })
+      element.scrollIntoView({ behavior: "smooth", block: "start" })
     }
     setIsOpen(false)
   }
@@ -29,66 +34,41 @@ export function Navbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2.5">
-            <Image 
-              src="/BrandLogo copy.svg" 
-              alt="BitRegalo" 
-              width={135} 
-              height={40} 
+            <Image
+              src="/BrandLogo copy.svg"
+              alt="BitRegalo"
+              width={135}
+              height={40}
               className="h-10 w-auto flex-shrink-0"
               priority
             />
           </Link>
           <nav className="hidden items-center gap-6 md:flex">
-            <a
-              href="#how-it-works"
-              onClick={(e) => handleSmoothScroll(e, "#how-it-works")}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
-            >
-              How It Works
-            </a>
-            <a
-              href="#features"
-              onClick={(e) => handleSmoothScroll(e, "#features")}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
-            >
-              Features
-            </a>
-            <a
-              href="#applications"
-              onClick={(e) => handleSmoothScroll(e, "#applications")}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
-            >
-              Use Cases
-            </a>
-            <a
-              href="#developers"
-              onClick={(e) => handleSmoothScroll(e, "#developers")}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
-            >
-              Developers
-            </a>
-            <a
-              href="#tokenomics"
-              onClick={(e) => handleSmoothScroll(e, "#tokenomics")}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
-            >
-              Tokenomics
-            </a>
-            <a
-              href="#enterprise"
-              onClick={(e) => handleSmoothScroll(e, "#enterprise")}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
-            >
-              Enterprise
-            </a>
+            {navLinks.map((link) =>
+              link.href.startsWith("#") ? (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  onClick={(e) => handleSmoothScroll(e, link.href)}
+                  className="cursor-pointer text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {link.label}
+                </Link>
+              ),
+            )}
           </nav>
         </div>
         <div className="hidden items-center gap-4 md:flex">
           <Button size="sm" asChild>
-            <a href="#download" onClick={(e) => handleSmoothScroll(e, "#download")} className="cursor-pointer">
-              <Download className="mr-2 h-4 w-4" />
-              Download App
-            </a>
+            <Link href="/contact">Contact us</Link>
           </Button>
         </div>
         <button className="md:hidden" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
@@ -98,54 +78,32 @@ export function Navbar() {
       {isOpen && (
         <div className="border-t border-border/40 bg-background md:hidden">
           <nav className="flex flex-col gap-4 px-4 py-6">
-            <a
-              href="#how-it-works"
-              onClick={(e) => handleSmoothScroll(e, "#how-it-works")}
-              className="text-sm text-muted-foreground cursor-pointer"
-            >
-              How It Works
-            </a>
-            <a
-              href="#features"
-              onClick={(e) => handleSmoothScroll(e, "#features")}
-              className="text-sm text-muted-foreground cursor-pointer"
-            >
-              Features
-            </a>
-            <a
-              href="#applications"
-              onClick={(e) => handleSmoothScroll(e, "#applications")}
-              className="text-sm text-muted-foreground cursor-pointer"
-            >
-              Use Cases
-            </a>
-            <a
-              href="#developers"
-              onClick={(e) => handleSmoothScroll(e, "#developers")}
-              className="text-sm text-muted-foreground cursor-pointer"
-            >
-              Developers
-            </a>
-            <a
-              href="#tokenomics"
-              onClick={(e) => handleSmoothScroll(e, "#tokenomics")}
-              className="text-sm text-muted-foreground cursor-pointer"
-            >
-              Tokenomics
-            </a>
-            <a
-              href="#enterprise"
-              onClick={(e) => handleSmoothScroll(e, "#enterprise")}
-              className="text-sm text-muted-foreground cursor-pointer"
-            >
-              Enterprise
-            </a>
+            {navLinks.map((link) =>
+              link.href.startsWith("#") ? (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  onClick={(e) => handleSmoothScroll(e, link.href)}
+                  className="cursor-pointer text-sm text-muted-foreground"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className="text-sm text-muted-foreground"
+                >
+                  {link.label}
+                </Link>
+              ),
+            )}
             <div className="flex flex-col gap-2 pt-4">
               <Button size="sm" asChild className="w-full">
-                <a href="#download" onClick={(e) => handleSmoothScroll(e, "#download")} className="cursor-pointer">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download App
-                </a>
+                <Link href="/contact" onClick={() => setIsOpen(false)}>
+                  Contact us
+                </Link>
               </Button>
             </div>
           </nav>

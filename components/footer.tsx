@@ -2,10 +2,9 @@ import Link from "next/link"
 import Image from "next/image"
 
 const footerLinks = {
-  Product: ["How It Works", "Features", "Use Cases", "Enterprise", "Pricing"],
-  Developers: ["SDK", "API Reference", "Documentation", "GitHub", "Status"],
-  Company: ["About", "Blog", "Careers", "Contact", "Press"],
-  Legal: ["Privacy", "Terms", "Token Terms", "KYC Policy", "Security", "Whitepaper", "Disclaimer"],
+  Protocol: ["Escrow", "RFP", "RTS", "Whitepaper"],
+  Company: ["Contact", "GitHub"],
+  Legal: ["Privacy", "Terms", "Token Terms", "KYC Policy"],
 }
 
 export function Footer() {
@@ -24,7 +23,8 @@ export function Footer() {
               />
             </Link>
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              The global gifting marketplace powered by blockchain. Send gifts anywhere with secure escrow and on-chain trust.
+              Decentralised escrow infrastructure, on multiple chains. The issuer can only release,
+              the receiver can only cancel — and no one else can touch the escrow.
             </p>
             <div className="mt-6 flex gap-4">
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Twitter">
@@ -61,13 +61,17 @@ export function Footer() {
                             ? "/kyc-policy"
                             : link === "Whitepaper"
                               ? "/whitepaper"
-                              : link === "Security"
-                                ? "#security"
-                                : link === "Disclaimer"
-                                  ? "#disclaimer"
-                                  : link === "GitHub"
-                                    ? "https://github.com/bitregalo"
-                                    : "#"
+                              : link === "Escrow"
+                                ? "/protocols/escrow"
+                                : link === "RFP"
+                                  ? "/protocols/rfp"
+                                  : link === "RTS"
+                                    ? "/protocols/rts"
+                                    : link === "Contact"
+                                      ? "/contact"
+                                      : link === "GitHub"
+                                        ? "https://github.com/bitregalo"
+                                        : "#"
                   return (
                     <li key={link}>
                       <Link

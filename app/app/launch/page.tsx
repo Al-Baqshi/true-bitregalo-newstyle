@@ -70,8 +70,8 @@ export default function LaunchWizard() {
 
   const steps: WizardStep[] = [
     {
-      id: "basics", title: "Your instance", caption: "Who it is for and what it will do.",
-      valid: !name.trim() ? "Give your instance a name" : true,
+      id: "basics", title: "Your workspace", caption: "Who it is for and what it will do.",
+      valid: !name.trim() ? "Give your workspace a name" : true,
       content: (
         <div className="grid gap-6">
           <Label title="Name" hint="Shown to you in this app. The chain itself records addresses, not names.">
@@ -83,7 +83,7 @@ export default function LaunchWizard() {
               value={purpose} onChange={choosePurpose} columns={2}
               options={[
                 { value: "procurement", title: "Tendering & procurement", description: "Post requests, suppliers bid, the winner is paid through escrow." },
-                { value: "marketplace", title: "Marketplace & supply", description: "Suppliers list offers, buyers confirm and pay directly or by escrow." },
+                { value: "marketplace", title: "Marketplace & supply", description: "Suppliers list what they sell, buyers take it and pay and pay directly or by escrow." },
                 { value: "grants", title: "Grants & community funds", description: "Every payment tied to a request, visible to donors and members." },
                 { value: "records", title: "Records only", description: "Prove who asked, who won and when — no money on-chain." },
               ]}
@@ -98,7 +98,7 @@ export default function LaunchWizard() {
       content: (
         <div className="grid gap-4">
           <AddOn checked={escrow} onChange={setEscrow} title="Escrow" description="The payer's funds lock in your vault. Only the payer can release them to the payee; only the payee can cancel back; when the term ends they return to the payer." />
-          <AddOn checked={direct} onChange={setDirect} title="Direct payment" description="The payee is paid the moment a request is awarded or an offer is confirmed." />
+          <AddOn checked={direct} onChange={setDirect} title="Direct payment" description="The payee is paid the moment a request is awarded or a listing is taken." />
           {paid && (
             <div className="mt-2 grid gap-4 rounded-xl border border-border p-4">
               <p className="bq-label">Currencies you accept</p>
@@ -118,7 +118,7 @@ export default function LaunchWizard() {
               </Label>
             </div>
           )}
-          {!paid && <Note>No paid options: your instance records requests, bids and awards without moving money. You can switch payments on later in Settings.</Note>}
+          {!paid && <Note>No paid options: your workspace records requests, bids and awards without moving money. You can switch payments on later in Settings.</Note>}
         </div>
       ),
     },
@@ -146,8 +146,8 @@ export default function LaunchWizard() {
     valid: true,
     content: (
       <div className="grid gap-3">
-        <AddOn checked={withProject} onChange={setWithProject} title="Start a project" description="A named project inside your instance — a site, a programme, a product line. Requests and tokens can be linked to it." />
-        <AddOn checked={withToken} onChange={setWithToken} title="Launch your own token" description="Credits, vouchers or memberships for your instance. It will be accepted as payment right away." />
+        <AddOn checked={withProject} onChange={setWithProject} title="Start a project" description="A named project inside your workspace — a site, a programme, a product line. Requests and tokens can be linked to it." />
+        <AddOn checked={withToken} onChange={setWithToken} title="Launch your own token" description="Credits, vouchers or memberships for your workspace. It will be accepted as payment right away." />
         <AddOn checked={withRequest} onChange={setWithRequest} title="Post your first request" description="Open a request for proposals so suppliers can start bidding the moment you are live." />
       </div>
     ),
@@ -179,7 +179,7 @@ export default function LaunchWizard() {
   }
   if (withRequest) {
     const settleOpts = [
-      { value: "2" as Pay, title: "Escrow", description: "Winner's pay locks until you release it.", disabled: escrow ? undefined : "Escrow is off for this instance" },
+      { value: "2" as Pay, title: "Escrow", description: "Winner's pay locks until you release it.", disabled: escrow ? undefined : "Escrow is off for this workspace" },
       { value: "1" as Pay, title: "Direct", description: "Winner is paid when you award.", disabled: direct ? undefined : "Direct payment is off" },
       { value: "0" as Pay, title: "Record only", description: "No payment on-chain." },
     ]
@@ -196,7 +196,7 @@ export default function LaunchWizard() {
             <Choice<"usdt" | "own">
               value={reqCurrency} onChange={setReqCurrency} columns={2}
               options={[
-                { value: "usdt", title: "Pay in USDT", disabled: useUsdt ? undefined : "Not accepted by this instance" },
+                { value: "usdt", title: "Pay in USDT", disabled: useUsdt ? undefined : "Not accepted by this workspace" },
                 { value: "own", title: `Pay in ${sym || "your token"}`, disabled: withToken ? undefined : "Switch on “Launch your own token”" },
               ]}
             />
@@ -214,10 +214,10 @@ export default function LaunchWizard() {
     plan.push({ id: "fee", label: "Approve the launch fee", run: async ({ tx }) => { await tx("Approve launch fee", { address: deployFeeToken, abi: abis.erc20, functionName: "approve", args: [addresses.mother, maxUint256] }) } })
   }
   plan.push({
-    id: "launch", label: `Launch “${name.trim() || "your instance"}”`, detail: "The mother contract deploys your marketplace and your vault, with you as admin.",
+    id: "launch", label: `Launch “${name.trim() || "your workspace"}”`, detail: "The mother contract deploys your marketplace and your vault, with you as admin.",
     run: async ({ tx, results }) => {
       const version = ((versionCount as bigint | undefined) ?? 1n) - 1n
-      const r = await tx("Launch instance", {
+      const r = await tx("Launch workspace", {
         address: addresses.mother, abi: abis.mother, functionName: "launchTenant",
         args: [{
           admin: address!, version, tokens: paid ? baseTokens : [], decimals: paid ? baseTokens.map(() => 18) : [],
@@ -275,12 +275,12 @@ export default function LaunchWizard() {
 
   return (
     <Wizard
-      eyebrow="Create · instance"
-      title="Launch your own instance"
-      intro="Your company's own requests, offers, escrows and tokens — launched from the BitRegalo mother contract with the same audited rules as everyone else. You stay the admin."
+      eyebrow="Create · workspace"
+      title="Create your own workspace"
+      intro="Your organisation's own requests, listings, escrows and tokens — launched from the BitRegalo mother contract with the same audited rules as everyone else. You stay the admin."
       steps={steps}
       plan={plan}
-      signLabel="Launch"
+      signLabel="Create workspace"
       summary={[
         { label: "Instance", value: name.trim() || "—" },
         { label: "Purpose", value: { procurement: "Tendering & procurement", marketplace: "Marketplace & supply", grants: "Grants & community funds", records: "Records only" }[purpose] },
@@ -295,13 +295,13 @@ export default function LaunchWizard() {
           title={`${name.trim()} is live`}
           actions={
             <>
-              <Button asChild><Link href={`/app/t/${String(r.tenantId)}`}>Open my instance</Link></Button>
+              <Button asChild><Link href={`/app/t/${String(r.tenantId)}`}>Open my workspace</Link></Button>
               {r.rfpId !== undefined && <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/rfps/${String(r.rfpId)}`}>View my request</Link></Button>}
               {r.token !== undefined && <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/tokens/${String(r.token)}`}>View {sym}</Link></Button>}
             </>
           }
         >
-          <p>Instance <b className="text-foreground">#{String(r.tenantId)}</b> has its own marketplace contract (<span className="bq-mono">{short(String(r.instance))}</span>) and vault (<span className="bq-mono">{short(String(r.vault))}</span>). You are its admin.</p>
+          <p>Workspace <b className="text-foreground">#{String(r.tenantId)}</b> has its own marketplace contract (<span className="bq-mono">{short(String(r.instance))}</span>) and vault (<span className="bq-mono">{short(String(r.vault))}</span>). You are its admin.</p>
           <p>Share <span className="bq-mono text-foreground">/app/t/{String(r.tenantId)}</span> with your suppliers and customers — anyone with a wallet can bid, list offers and get paid through it.</p>
         </Done>
       )}

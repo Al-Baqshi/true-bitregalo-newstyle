@@ -8,11 +8,11 @@ import { instanceName, useInstances } from "@/lib/bitregalo/instances"
 type Item = { title: string; body: string; href: (id: string) => string; icon: React.ReactNode; needsInstance: boolean; time: string }
 
 const ITEMS: Item[] = [
-  { title: "Launch your instance", body: "Your company's own requests, offers, escrows and tokens, with you as admin. Optionally start a project, a token and a first request in the same flow.", href: () => "/app/launch", icon: <Building2 className="size-5" />, needsInstance: false, time: "5 steps" },
-  { title: "Create a token", body: "A named ERC-20 for credits, vouchers or memberships, linked to an instance and a project, and accepted as payment if you are the admin.", href: (id) => `/app/create/token?instance=${id}`, icon: <Coins className="size-5" />, needsInstance: false, time: "4 steps" },
+  { title: "Create your workspace", body: "Your organisation's own requests, listings, escrows and tokens, with you as admin. Optionally start a project, a token and a first request in the same flow.", href: () => "/app/launch", icon: <Building2 className="size-5" />, needsInstance: false, time: "5 steps" },
+  { title: "Create a token", body: "A named ERC-20 for credits, vouchers or memberships, linked to a workspace and a project, and accepted as payment if you are the admin.", href: (id) => `/app/create/token?instance=${id}`, icon: <Coins className="size-5" />, needsInstance: false, time: "4 steps" },
   { title: "Start a project", body: "Group requests, offers, escrows and tokens under one name — a site, a programme, a product line.", href: (id) => `/app/t/${id}/projects/new`, icon: <FolderKanban className="size-5" />, needsInstance: true, time: "1 step" },
   { title: "Post a request", body: "Ask for proposals. Suppliers bid their price and time; you award one and pay by escrow, directly, or just record it.", href: (id) => `/app/t/${id}/rfps/new`, icon: <FileSearch className="size-5" />, needsInstance: true, time: "3 steps" },
-  { title: "List an offer", body: "Offer to supply at a price and delivery time — to anyone, or as a direct ask to one buyer.", href: (id) => `/app/t/${id}/offers/new`, icon: <PackageCheck className="size-5" />, needsInstance: true, time: "2 steps" },
+  { title: "Create a listing", body: "Sell something at a fixed price and delivery time — to anyone, or to one buyer you name.", href: (id) => `/app/t/${id}/offers/new`, icon: <PackageCheck className="size-5" />, needsInstance: true, time: "2 steps" },
 ]
 
 export default function CreateHub() {
@@ -36,7 +36,7 @@ export default function CreateHub() {
             </option>
           ))}
         </select>
-        <span className="text-xs text-muted-foreground">Used by the wizards that work inside an instance.</span>
+        <span className="text-xs text-muted-foreground">Used by the wizards that work inside a workspace.</span>
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">

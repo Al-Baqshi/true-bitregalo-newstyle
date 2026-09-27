@@ -17,17 +17,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         { href: base, label: "Overview", exact: true },
         { href: `${base}/projects`, label: "Projects" },
         { href: `${base}/rfps`, label: "Requests" },
-        { href: `${base}/offers`, label: "Offers" },
+        { href: `${base}/offers`, label: "Listings" },
         { href: `${base}/escrows`, label: "Escrows" },
         { href: `${base}/tokens`, label: "Tokens" },
         { href: `${base}/admin`, label: "Settings" },
       ]
     : [
-        { href: "/app", label: "Instances", exact: true },
+        { href: "/app", label: "Workspaces", exact: true },
         { href: "/app/create", label: "Create" },
-        { href: "/app/operator", label: "Operator" },
+        { href: "/app/operator", label: "Platform" },
       ]
-  const title = tenant ? (instanceName(BigInt(tenant)) ?? (tenant === "0" ? "Public template" : `Instance #${tenant}`)) : null
+  const title = tenant ? (instanceName(BigInt(tenant)) ?? (tenant === "0" ? "Public workspace" : `Workspace #${tenant}`)) : null
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-border bg-[#090b0e]/85 backdrop-blur-xl">
@@ -49,7 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto px-4 pb-2 text-sm">
           {tenant && (
             <>
-              <Link href="/app" className="shrink-0 rounded-md px-2.5 py-1.5 text-muted-foreground hover:text-foreground">Instances</Link>
+              <Link href="/app" className="shrink-0 rounded-md px-2.5 py-1.5 text-muted-foreground hover:text-foreground">Workspaces</Link>
               <span className="text-muted-foreground/50">/</span>
               <span className="mr-2 shrink-0 px-2 py-1.5 text-foreground">{title}</span>
             </>

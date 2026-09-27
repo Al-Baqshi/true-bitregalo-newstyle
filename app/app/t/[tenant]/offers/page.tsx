@@ -1,4 +1,5 @@
 "use client"
+import { Explainer } from "@/components/app/explain"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import Link from "next/link"
 import { useOverview, useOffers } from "@/lib/bitregalo/hooks"
@@ -13,7 +14,9 @@ export default function OffersPage() {
   const count = ov.data?.[1]?.result as bigint | undefined
   const offers = useOffers(count)
   return (
-    <Card title={`Requests to supply (${count ?? "…"})`} action={<Button asChild size="sm"><Link href={`${base}/offers/new`}>List an offer</Link></Button>}>
+    <div>
+      <Explainer id="listings" title="What is a listing?"><p>The other direction from a request: a supplier advertises what they sell, at a fixed price and delivery time, and a buyer takes it. A listing can be open to anyone or meant for one named buyer.</p><p>When someone takes it, the payment settles the way the supplier chose — recorded only, paid straight away, or held in escrow.</p></Explainer>
+    <Card title={`Listings (${count ?? "…"})`} action={<Button asChild size="sm"><Link href={`${base}/offers/new`}>Create a listing</Link></Button>}>
       {offers.data.map((o, i) => o && (
         <Row key={String(offers.ids[i])} href={`${base}/offers/${offers.ids[i]}`}>
           <span className="font-mono text-xs text-muted-foreground">#{String(offers.ids[i])}</span>
@@ -23,5 +26,6 @@ export default function OffersPage() {
       ))}
       {offers.data.length === 0 && <p className="text-sm text-muted-foreground">No offers listed yet.</p>}
     </Card>
+    </div>
   )
 }

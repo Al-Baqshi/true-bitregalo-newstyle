@@ -15,9 +15,9 @@ export function ProjectWizard() {
   const [vis, setVis] = useState<"public" | "private">("public")
   return (
     <Wizard
-      eyebrow={`Instance #${t.id} · project`}
+      eyebrow={`Workspace #${t.id} · project`}
       title="Start a project"
-      intro="A project groups your requests, offers, escrows and tokens under one name — a building site, a programme, a product line."
+      intro="A project groups your requests, listings, escrows and tokens under one name — a building site, a programme, a product line."
       steps={[{
         id: "name", title: "Name it",
         valid: !name.trim() ? "Name the project" : vis === "public" && labelBytes(name) > 31 ? "Public names are at most 31 characters" : true,
@@ -28,7 +28,7 @@ export function ProjectWizard() {
               value={vis} onChange={setVis} columns={2}
               options={[
                 { value: "public", title: "Public name", description: "Readable by anyone on-chain." },
-                { value: "private", title: "Private", description: "Only a fingerprint on-chain; the name stays with you." },
+                { value: "private", title: "Hidden name", description: "Only a fingerprint of the name is stored; the words stay with you." },
               ]}
             />
           </div>

@@ -11,9 +11,10 @@ const Ctx = createContext<TenantAddrs | null>(null)
 export function TenantProvider({ id, children }: { id: bigint; children: React.ReactNode }) {
   const q = useReadContract({ address: addresses.mother, abi: abis.mother, functionName: "tenants", args: [id] })
   const t = q.data as { instance: Address; vault: Address; admin: Address; version: bigint } | undefined
+  const liveAdmin = useReadContract({ address: t?.instance, abi: abis.instance, functionName: "admin", query: { enabled: !!t, refetchInterval: 20_000 } })
   if (q.isLoading) return <p className="text-sm text-muted-foreground">Loading instance #{String(id)}…</p>
   if (!t || /^0x0{40}$/.test(t.instance)) return <p className="text-sm text-muted-foreground">No instance #{String(id)} on this network.</p>
-  return <Ctx.Provider value={{ id, instance: t.instance, vault: t.vault, admin: t.admin, version: t.version }}>{children}</Ctx.Provider>
+  return <Ctx.Provider value={{ id, instance: t.instance, vault: t.vault, admin: (liveAdmin.data as Address | undefined) ?? t.admin, version: t.version }}>{children}</Ctx.Provider>
 }
 
 export function useTenant(): TenantAddrs {

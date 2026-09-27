@@ -33,14 +33,14 @@ export function OfferWizard() {
   const steps: WizardStep[] = [
     {
       id: "price", title: "Price and payment",
-      valid: (settle === "2" && !rules.escrow) || (settle === "1" && !rules.direct) ? "That payment option is off here" : paid && !chosen ? "This instance accepts no currency yet" : paid && !(Number(price) > 0) ? "Set a price" : true,
+      valid: (settle === "2" && !rules.escrow) || (settle === "1" && !rules.direct) ? "That payment option is off here" : paid && !chosen ? "This workspace accepts no currency yet" : paid && !(Number(price) > 0) ? "Set a price" : true,
       content: (
         <div className="grid gap-5">
           <Choice<Pay>
             value={settle} onChange={setSettle}
             options={[
-              { value: "2", title: "Escrow", description: "The buyer's payment locks when they confirm; they release it to you on delivery.", disabled: rules.loaded && !rules.escrow ? "Off in this instance" : undefined },
-              { value: "1", title: "Direct payment", description: "You are paid the moment a buyer confirms.", disabled: rules.loaded && !rules.direct ? "Off in this instance" : undefined },
+              { value: "2", title: "Escrow", description: "The buyer's payment locks when they confirm; they release it to you on delivery.", disabled: rules.loaded && !rules.escrow ? "Off in this workspace" : undefined },
+              { value: "1", title: "Direct payment", description: "You are paid the moment a buyer confirms.", disabled: rules.loaded && !rules.direct ? "Off in this workspace" : undefined },
               { value: "0", title: "Record only", description: "A recorded commitment to supply, no payment on-chain." },
             ]}
           />
@@ -79,18 +79,18 @@ export function OfferWizard() {
               {projects.list.filter((p) => p.active).map((p) => <option key={String(p.id)} value={String(p.id)}>#{String(p.id)} · {p.label ?? "private project"}</option>)}
             </select>
           </Label>
-          <Note>Offers carry no text on-chain. Tell buyers what you are supplying where you meet them, and send them the offer link.</Note>
+          <Note>Listings carry no description on-chain — only the price, time and currency. Tell buyers what you are selling where you meet them, and send them the listing link.</Note>
         </div>
       ),
     },
   ]
   return (
     <Wizard
-      eyebrow={`Instance #${t.id} · offer`}
-      title="List an offer to supply"
-      intro="Say what you charge and how fast you deliver. A buyer confirms, and the payment settles by the option you choose."
+      eyebrow={`Workspace #${t.id} · listing`}
+      title="Create a listing"
+      intro="The other direction from a request: you say what you charge and how fast you deliver, and a buyer takes it. Payment settles the way you choose."
       steps={steps}
-      signLabel="List offer"
+      signLabel="Publish listing"
       plan={[{
         id: "list", label: paid && chosen ? `List at ${price || "…"} ${chosen.symbol}` : "List offer (record only)", detail: `Delivery ${days} days · ${who === "one" ? "one buyer" : "open to anyone"}`,
         run: async ({ tx, results }) => {
@@ -108,8 +108,8 @@ export function OfferWizard() {
         { label: "Buyer", value: who === "one" ? (buyer ? `${buyer.slice(0, 8)}…` : "…") : "anyone" },
       ]}
       done={(r) => (
-        <Done title="Your offer is listed" actions={<><Button asChild><Link href={`${base}/offers/${String(r.offerId)}`}>Open offer #{String(r.offerId)}</Link></Button><Button asChild variant="secondary"><Link href={`${base}/offers`}>All offers</Link></Button></>}>
-          <p>Send the offer link to {who === "one" ? "your buyer" : "buyers"}. When one confirms, you will see it on the offer page.</p>
+        <Done title="Your listing is live" actions={<><Button asChild><Link href={`${base}/offers/${String(r.offerId)}`}>Open listing #{String(r.offerId)}</Link></Button><Button asChild variant="secondary"><Link href={`${base}/offers`}>All listings</Link></Button></>}>
+          <p>Send the listing link to {who === "one" ? "your buyer" : "buyers"}. When someone takes it, you will see it on the listing page.</p>
         </Done>
       )}
     />

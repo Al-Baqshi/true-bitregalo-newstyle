@@ -33,7 +33,7 @@ export function RequestWizard() {
 
   const chosenToken = tokens.accepted.find((x) => x.address === token) ?? tokens.accepted[0]
   const paid = settle !== "0"
-  const settleValid = (settle === "2" && !rules.escrow) || (settle === "1" && !rules.direct) ? "That payment option is off in this instance" : null
+  const settleValid = (settle === "2" && !rules.escrow) || (settle === "1" && !rules.direct) ? "That payment option is off in this workspace" : null
 
   const steps: WizardStep[] = [
     {
@@ -47,8 +47,8 @@ export function RequestWizard() {
           <Choice<Vis>
             value={vis} onChange={setVis} columns={2}
             options={[
-              { value: "public", title: "Public title", description: "The title is readable on-chain by anyone." },
-              { value: "private", title: "Private", description: "Only a fingerprint goes on-chain; you share the details with bidders directly and can prove them later." },
+              { value: "public", title: "Public title", description: "Anyone can read the title on the blockchain. Best for open tenders." },
+              { value: "private", title: "Hidden title", description: "Only a fingerprint of your text is stored, so the words are not readable. You share the details with suppliers yourself and can prove them later. Note: who posted it, the offers and any payment are still public — that is how blockchains work." },
             ]}
           />
           {vis === "private" && (
@@ -60,16 +60,16 @@ export function RequestWizard() {
       ),
     },
     {
-      id: "pay", title: "How the winner is paid",
-      valid: settleValid ?? (paid && !chosenToken ? "This instance accepts no currency yet" : true),
+      id: "pay", title: "How the chosen supplier is paid",
+      valid: settleValid ?? (paid && !chosenToken ? "This workspace accepts no currency yet" : true),
       content: (
         <div className="grid gap-5">
           <Choice<Pay>
             value={settle} onChange={setSettle}
             options={[
-              { value: "2", title: "Escrow", description: "When you award a bid, its amount locks in the instance vault. You release it when the work is done; if you never do, it returns to you at the end of the term.", disabled: rules.loaded && !rules.escrow ? "Off in this instance" : undefined },
-              { value: "1", title: "Direct payment", description: "The winner is paid in full the moment you award the bid.", disabled: rules.loaded && !rules.direct ? "Off in this instance" : undefined },
-              { value: "0", title: "Record only", description: "No money moves on-chain; the request, the bids and your award are the record." },
+              { value: "2", title: "Escrow", description: "When you choose an offer, its price moves from your wallet into the workspace vault. You release it when the work is done; if you never do, it returns to you once the supplier's delivery time is over.", disabled: rules.loaded && !rules.escrow ? "Off in this workspace" : undefined },
+              { value: "1", title: "Direct payment", description: "The supplier is paid in full the moment you choose their offer.", disabled: rules.loaded && !rules.direct ? "Off in this workspace" : undefined },
+              { value: "0", title: "Record only", description: "No money moves on-chain; the request, the offers and your choice are the record." },
             ]}
           />
           {paid && (
@@ -79,18 +79,18 @@ export function RequestWizard() {
                   {tokens.accepted.map((x) => <option key={x.address} value={x.address}>{x.symbol}</option>)}
                 </select>
               </Label>
-            ) : <Note>This instance does not accept any currency yet. The admin can add one under Settings.</Note>
+            ) : <Note>This workspace does not accept any currency yet. The admin can add one under Settings.</Note>
           )}
-          {paid && <Note>Bidders name their price. Awarding charges you the bid plus a service fee{chosenToken ? ` of ${Number(chosenToken.serviceFee) / 1e18} ${chosenToken.symbol}` : ""}; the platform fee of {rules.feeBps / 100}% is taken from what the winner receives.</Note>}
+          {paid && <Note>Suppliers name their price. Choosing an offer charges you the bid plus a service fee{chosenToken ? ` of ${Number(chosenToken.serviceFee) / 1e18} ${chosenToken.symbol}` : ""}; the platform fee of {rules.feeBps / 100}% is taken from what the supplier receives.</Note>}
         </div>
       ),
     },
     {
-      id: "when", title: "Timing and project",
+      id: "when", title: "How long offers stay open",
       valid: !(Number(days) >= 1) ? "Bidding needs at least a day" : true,
       content: (
         <div className="grid gap-5">
-          <Label title="Bidding stays open for (days)" hint="You can still award after bidding closes.">
+          <Label title="Accept offers for (days)" hint="After this, nobody can send a new offer — but you can still choose from the ones you have.">
             <input className={`${input} bq-mono max-w-40`} type="number" min="1" value={days} onChange={(e) => setDays(e.target.value)} />
           </Label>
           <Label title="Project (optional)" hint="Only your own projects can carry your requests.">
@@ -106,9 +106,9 @@ export function RequestWizard() {
 
   return (
     <Wizard
-      eyebrow={`Instance #${t.id} · request`}
-      title="Post a request for proposals"
-      intro="Describe what you need, choose how the winner gets paid, and suppliers bid their price and time frame. You pick the winner."
+      eyebrow={`Workspace #${t.id} · request`}
+      title="Post a request"
+      intro="Say what you need and how the chosen supplier will be paid. Suppliers send offers with their price and time; you choose one."
       steps={steps}
       signLabel="Post request"
       plan={[{
@@ -129,7 +129,7 @@ export function RequestWizard() {
       ]}
       done={(r) => (
         <Done title="Your request is open" actions={<><Button asChild><Link href={`${base}/rfps/${String(r.rfpId)}`}>Open request #{String(r.rfpId)}</Link></Button><Button asChild variant="secondary"><Link href={`${base}/rfps`}>All requests</Link></Button></>}>
-          <p>Share the link with suppliers. Each bid shows up on the request page, and you award the one you want.</p>
+          <p>Share the link with suppliers. Their offers appear on the request page, and you choose the one you want.</p>
         </Done>
       )}
     />

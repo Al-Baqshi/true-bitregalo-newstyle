@@ -90,8 +90,8 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
     {
       id: "link",
       title: "Link it",
-      caption: "Tokens belong to an instance, and optionally to one of its projects.",
-      valid: !inst ? "Choose an instance" : projectMode === "existing" && !projectId ? "Pick a project" : projectMode === "new" && !projectName.trim() ? "Name the new project" : projectMode === "new" && labelBytes(projectName) > 31 ? "Project names are at most 31 characters" : true,
+      caption: "Tokens belong to a workspace, and optionally to one of its projects.",
+      valid: !inst ? "Choose a workspace" : projectMode === "existing" && !projectId ? "Pick a project" : projectMode === "new" && !projectName.trim() ? "Name the new project" : projectMode === "new" && labelBytes(projectName) > 31 ? "Project names are at most 31 characters" : true,
       content: (
         <div className="grid gap-5">
           {fixedTenant === undefined ? (
@@ -112,7 +112,7 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
             onChange={setProjectMode}
             columns={3}
             options={[
-              { value: "none", title: "No project", description: "The token serves the whole instance." },
+              { value: "none", title: "No project", description: "The token serves the whole workspace." },
               { value: "existing", title: "Existing project", description: "One of your projects.", disabled: myProjects.length === 0 ? "You have no projects here yet" : undefined },
               { value: "new", title: "New project", description: "Create one now and link it." },
             ]}
@@ -143,9 +143,9 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
           <AddOn
             checked={accept && isAdmin}
             onChange={(v) => setAccept(v)}
-            title="Accept it as payment in this instance"
+            title="Accept it as payment in this workspace"
             tag={isAdmin ? undefined : "admin only"}
-            description={isAdmin ? "Requests, offers and escrows in your instance can then be paid in this token." : "Only the instance admin can do this. Ask them after the token is created."}
+            description={isAdmin ? "Requests, offers and escrows in your workspace can then be paid in this token." : "Only the workspace admin can do this. Ask them after the token is created."}
           />
           {accept && isAdmin && (
             <div className="pl-2 sm:pl-14">
@@ -175,7 +175,7 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
   const plan: WizardAction[] = []
   if (projectMode === "new") {
     plan.push({
-      id: "project", label: `Create project “${projectName.trim()}”`, detail: `On instance #${tenant}`,
+      id: "project", label: `Create project “${projectName.trim()}”`, detail: `On workspace #${tenant}`,
       run: async ({ tx, results }) => {
         const r = await tx("Create project", { address: inst!.instance, abi: abis.instance, functionName: "createProject", args: [encodeLabel(projectName)] })
         results.projectId = eventArgs<{ projectId: bigint }>(r, abis.instance, "ProjectCreated").projectId
@@ -222,7 +222,7 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
     <Wizard
       eyebrow="Create · token"
       title="Create a token for your project"
-      intro="Launch a named ERC-20 — credits, vouchers, memberships, loyalty points — tied to your instance and, if you like, one project. It takes a few minutes and a few signatures."
+      intro="Launch a named ERC-20 — credits, vouchers, memberships, loyalty points — tied to your workspace and, if you like, one project. It takes a few minutes and a few signatures."
       steps={steps}
       plan={plan}
       signLabel="Create token"

@@ -51,7 +51,7 @@ export default function OfferDetail({ params }: { params: Promise<{ id: string }
       </div>
       <div className="mt-5 flex flex-wrap gap-3">
         {canConfirm && <Button disabled={isPending} onClick={confirm}>{offer.settlement === 2 ? "Confirm and fund escrow" : offer.settlement === 1 ? "Confirm and pay" : "Confirm"}</Button>}
-        {listed && isSupplier && <Button variant="secondary" disabled={isPending} onClick={withdraw}>Withdraw offer</Button>}
+        {listed && isSupplier && <Button variant="secondary" disabled={isPending} onClick={withdraw}>Withdraw listing</Button>}
         {listed && designated && !canConfirm && isConnected && !isSupplier && <p className="text-xs text-muted-foreground">Only the designated buyer can confirm this offer.</p>}
       </div>
       {canConfirm && paid && <p className="mt-3 text-xs text-muted-foreground">Confirming pulls the price plus the service fee ({cfg ? <Amount value={cfg[2]} decimals={erc.decimals} symbol={erc.symbol} /> : "…"}) from your wallet; balance <Amount value={erc.balance} decimals={erc.decimals} symbol={erc.symbol} />.</p>}

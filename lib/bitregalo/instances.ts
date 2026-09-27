@@ -17,11 +17,17 @@ export function useInstances() {
     contracts: Array.from({ length: n }, (_, i) => ({ address: addresses.mother, abi: abis.mother, functionName: "tenants", args: [BigInt(i)] })),
     query: { enabled: n > 0 },
   })
-  const list: InstanceInfo[] = (q.data ?? []).flatMap((r, i) => {
-    const t = r.result as { instance: Address; vault: Address; admin: Address } | undefined
-    return t && !ZERO.test(t.instance) ? [{ id: BigInt(i), instance: t.instance, vault: t.vault, admin: t.admin }] : []
+  const raw = (q.data ?? []).map((r) => r.result as { instance: Address; vault: Address; admin: Address } | undefined)
+  // The mother records the admin at launch only; the workspace contract holds the current one.
+  const admins = useReadContracts({
+    contracts: raw.map((t) => ({ address: t?.instance ?? ("0x0000000000000000000000000000000000000000" as Address), abi: abis.instance, functionName: "admin" })),
+    query: { enabled: raw.length > 0, refetchInterval: 20_000 },
   })
-  return { list, isLoading: count.isLoading || q.isLoading, refetch: () => { count.refetch(); q.refetch() } }
+  const list: InstanceInfo[] = raw.flatMap((t, i) => {
+    const admin = (admins.data?.[i]?.result as Address | undefined) ?? t?.admin
+    return t && !ZERO.test(t.instance) ? [{ id: BigInt(i), instance: t.instance, vault: t.vault, admin: admin! }] : []
+  })
+  return { list, isLoading: count.isLoading || q.isLoading, refetch: () => { count.refetch(); q.refetch(); admins.refetch() } }
 }
 
 export function useProjects(instance: Address | undefined) {

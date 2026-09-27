@@ -1,4 +1,5 @@
 "use client"
+import { Explainer } from "@/components/app/explain"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import { useOverview, useEscrows } from "@/lib/bitregalo/hooks"
 import { Card, Addr, Pill, Row, Amount, timeLeft } from "@/components/app/ui"
@@ -11,6 +12,8 @@ export default function EscrowsPage() {
   const count = ov.data?.[2]?.result as bigint | undefined
   const escrows = useEscrows(count)
   return (
+    <div>
+      <Explainer id="escrows" title="What is an escrow?"><p>Money held safely by the workspace vault while work is done. It ends in one of three ways: the <b>buyer releases</b> it to the supplier, the <b>supplier hands it back</b>, or the <b>deadline passes</b> and it returns to the buyer.</p><p>No person holds the money — not BitRegalo, not the workspace admin. Escrows are created automatically when a request or listing is paid by escrow.</p></Explainer>
     <Card title={`Escrows (${count ?? "…"})`}>
       {escrows.data.map((e, i) => e && (
         <Row key={String(escrows.ids[i])} href={`${base}/escrows/${escrows.ids[i]}`}>
@@ -19,7 +22,8 @@ export default function EscrowsPage() {
           <Pill tone={e.state === 1 ? "accent" : e.state === 2 ? "good" : "muted"}>{ESCROW_STATE[e.state]}</Pill>
         </Row>
       ))}
-      {escrows.data.length === 0 && <p className="text-sm text-muted-foreground">No escrows yet. Award an RFP or confirm an offer with escrow settlement to open one.</p>}
+      {escrows.data.length === 0 && <p className="text-sm text-muted-foreground">No escrows yet. One opens when someone chooses an offer on a request — or takes a listing — that is paid by escrow.</p>}
     </Card>
+    </div>
   )
 }

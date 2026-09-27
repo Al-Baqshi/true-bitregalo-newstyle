@@ -31,12 +31,12 @@ export default function ProjectsPage() {
   })
   return (
     <Card title={`Projects (${projects.list.length})`} action={<Button asChild size="sm"><Link href={`${base}/projects/new`}>Start a project</Link></Button>}>
-      {projects.list.length === 0 && <p className="text-sm text-muted-foreground">No projects yet. A project groups requests, offers and tokens under one name.</p>}
+      {projects.list.length === 0 && <p className="text-sm text-muted-foreground">No projects yet. A project groups requests, listings and tokens under one name.</p>}
       {projects.list.slice().reverse().map((p) => (
         <Row key={String(p.id)}>
           <span className="bq-mono text-xs text-muted-foreground">#{String(p.id)}</span>
           <span className="min-w-0 text-sm">
-            <span className="font-medium">{p.label ?? <span className="text-muted-foreground">Private project</span>}</span>
+            <span className="font-medium">{p.label ?? <span className="text-muted-foreground">Hidden name</span>}</span>
             <span className="text-muted-foreground"> · owner <Addr a={p.owner} /></span>
             {(byProject.get(String(p.id)) ?? []).map((tk) => (
               <Link key={tk.address} href={`${base}/tokens/${tk.address}`} className="bq-mono ml-2 rounded-full border border-primary/40 px-2 py-0.5 text-[10px] text-primary">{tk.symbol}</Link>

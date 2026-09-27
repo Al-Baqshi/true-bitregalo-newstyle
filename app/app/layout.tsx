@@ -9,7 +9,7 @@ const display = Playfair_Display({ subsets: ["latin"], variable: "--font-app-dis
 
 export const metadata: Metadata = {
   title: "BitRegalo App",
-  description: "Launch your own instance, post requests, settle by escrow or direct payment, and create tokens for your projects — on BNB Smart Chain.",
+  description: "Launch your own workspace, post requests, settle by escrow or direct payment, and create tokens for your projects — on BNB Smart Chain.",
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

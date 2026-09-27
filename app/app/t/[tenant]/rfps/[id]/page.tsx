@@ -1,13 +1,16 @@
 "use client"
+import { useTenant } from "@/lib/bitregalo/tenant"
 import { use, useState } from "react"
 import { useAccount } from "wagmi"
 import { parseUnits, maxUint256 } from "viem"
 import { useRfp, useTx, useErc20, useTokenCfg } from "@/lib/bitregalo/hooks"
-import { abis, addresses, RFP_STATE, SETTLEMENT } from "@/lib/bitregalo/config"
+import { abis, RFP_STATE, SETTLEMENT } from "@/lib/bitregalo/config"
 import { Card, Addr, Pill, Amount, Field, inputCls, timeLeft } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
 
 export default function RfpDetail({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTenant()
+  const base = `/app/t/${t.id}`
   const { id: raw } = use(params)
   const id = BigInt(raw)
   const { address, isConnected } = useAccount()
@@ -25,17 +28,17 @@ export default function RfpDetail({ params }: { params: Promise<{ id: string }> 
   async function bid(e: React.FormEvent) {
     e.preventDefault()
     const amt = paid ? parseUnits(amount || "0", erc.decimals) : 0n
-    await send("Submit bid", { address: addresses.instance, abi: abis.instance, functionName: "bid", args: [id, amt, BigInt(Number(days) * 86400)] })
+    await send("Submit bid", { address: t.instance, abi: abis.instance, functionName: "bid", args: [id, amt, BigInt(Number(days) * 86400)] })
     refetch()
   }
   async function award(bidId: bigint, amt: bigint) {
     if (paid) {
       const need = amt + (cfg?.[2] ?? 0n)
       if (erc.allowance < need) {
-        await send("Approve vault", { address: rfp!.token, abi: abis.erc20, functionName: "approve", args: [addresses.vault, maxUint256] })
+        await send("Approve vault", { address: rfp!.token, abi: abis.erc20, functionName: "approve", args: [t.vault, maxUint256] })
       }
     }
-    await send("Award bid", { address: addresses.instance, abi: abis.instance, functionName: "acceptBid", args: [id, bidId] })
+    await send("Award bid", { address: t.instance, abi: abis.instance, functionName: "acceptBid", args: [id, bidId] })
     refetch(); erc.refetch()
   }
   return (
@@ -47,7 +50,7 @@ export default function RfpDetail({ params }: { params: Promise<{ id: string }> 
           <span className="text-muted-foreground">requester <Addr a={rfp.requester} /></span>
           <span className="text-muted-foreground">deadline {timeLeft(rfp.deadline)}</span>
           {paid && <span className="text-muted-foreground">token {erc.symbol} <Addr a={rfp.token} /></span>}
-          {rfp.state === 2 && rfp.settlementId > 0n && rfp.settlement === 2 && <a className="text-accent underline-offset-2 hover:underline" href={`/app/escrows/${rfp.settlementId}`}>escrow #{String(rfp.settlementId)}</a>}
+          {rfp.state === 2 && rfp.settlementId > 0n && rfp.settlement === 2 && <a className="text-accent underline-offset-2 hover:underline" href={`${base}/escrows/${rfp.settlementId}`}>escrow #{String(rfp.settlementId)}</a>}
         </div>
         <p className="mt-3 font-mono text-xs text-muted-foreground">scope hash {rfp.scopeHash}</p>
       </Card>

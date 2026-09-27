@@ -1,13 +1,16 @@
 "use client"
+import { useTenant } from "@/lib/bitregalo/tenant"
 import { use, useState } from "react"
 import { useAccount, useReadContracts } from "wagmi"
 import { parseUnits, isAddress, type Address } from "viem"
 import { useTx, useTokenCfg } from "@/lib/bitregalo/hooks"
-import { abis, addresses } from "@/lib/bitregalo/config"
+import { abis } from "@/lib/bitregalo/config"
 import { Card, Addr, Amount, Field, inputCls, Pill } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
 
 export default function TokenDetail({ params }: { params: Promise<{ address: string }> }) {
+  const t = useTenant()
+  const base = `/app/t/${t.id}`
   const { address: raw } = use(params)
   const token = raw as Address
   const { address, isConnected } = useAccount()
@@ -20,7 +23,7 @@ export default function TokenDetail({ params }: { params: Promise<{ address: str
       { address: token, abi: abis.utilityToken, functionName: "totalSupply" },
       { address: token, abi: abis.utilityToken, functionName: "cap" },
       { address: token, abi: abis.utilityToken, functionName: "owner" },
-      { address: token, abi: abis.erc20, functionName: "balanceOf", args: [address ?? addresses.vault] },
+      { address: token, abi: abis.erc20, functionName: "balanceOf", args: [address ?? t.vault] },
     ],
     query: { refetchInterval: 10_000 },
   })

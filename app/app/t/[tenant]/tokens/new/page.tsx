@@ -1,4 +1,5 @@
 "use client"
+import { useTenant } from "@/lib/bitregalo/tenant"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAccount } from "wagmi"
@@ -9,6 +10,8 @@ import { Card, Field, inputCls } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
 
 export default function NewToken() {
+  const t = useTenant()
+  const base = `/app/t/${t.id}`
   const { isConnected } = useAccount()
   const { send, isPending } = useTx()
   const router = useRouter()
@@ -20,9 +23,9 @@ export default function NewToken() {
     e.preventDefault()
     await send("Launch token", {
       address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "createToken",
-      args: [{ name, symbol: symbol.toUpperCase(), decimals: 18, cap: cap ? parseUnits(cap, 18) : 0n, initialSupply: parseUnits(supply || "0", 18), owner: zeroAddress, tenantId: 0n, projectId: 0n }],
+      args: [{ name, symbol: symbol.toUpperCase(), decimals: 18, cap: cap ? parseUnits(cap, 18) : 0n, initialSupply: parseUnits(supply || "0", 18), owner: zeroAddress, tenantId: t.id, projectId: 0n }],
     })
-    router.push("/app/tokens")
+    router.push(`${base}/tokens`)
   }
   return (
     <Card title="Launch a utility token">

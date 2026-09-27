@@ -1,12 +1,15 @@
 "use client"
+import { useTenant } from "@/lib/bitregalo/tenant"
 import { use } from "react"
 import { useAccount } from "wagmi"
 import { useEscrow, useTx, useErc20 } from "@/lib/bitregalo/hooks"
-import { abis, addresses, ESCROW_STATE } from "@/lib/bitregalo/config"
+import { abis, ESCROW_STATE } from "@/lib/bitregalo/config"
 import { Card, Addr, Pill, Amount, timeLeft } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
 
 export default function EscrowDetail({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTenant()
+  const base = `/app/t/${t.id}`
   const { id: raw } = use(params)
   const id = BigInt(raw)
   const { address } = useAccount()
@@ -21,7 +24,7 @@ export default function EscrowDetail({ params }: { params: Promise<{ id: string 
   const elapsed = Number(escrow.expiresAt) <= Math.floor(Date.now() / 1000)
   const fee = (escrow.amount * BigInt(escrow.feeBps)) / 10_000n
   const act = (label: string, fn: string) => async () => {
-    await send(label, { address: addresses.vault, abi: abis.vault, functionName: fn, args: [id] })
+    await send(label, { address: t.vault, abi: abis.vault, functionName: fn, args: [id] })
     refetch()
   }
   return (

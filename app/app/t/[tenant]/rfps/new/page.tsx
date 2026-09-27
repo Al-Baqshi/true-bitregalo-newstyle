@@ -1,4 +1,5 @@
 "use client"
+import { useTenant } from "@/lib/bitregalo/tenant"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAccount } from "wagmi"
@@ -9,6 +10,8 @@ import { Card, Field, inputCls } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
 
 export default function NewRfp() {
+  const t = useTenant()
+  const base = `/app/t/${t.id}`
   const { isConnected } = useAccount()
   const { send, isPending } = useTx()
   const router = useRouter()
@@ -23,10 +26,10 @@ export default function NewRfp() {
     const deadline = BigInt(Math.floor(Date.now() / 1000) + Number(days) * 86400)
     const scopeHash = keccak256(toBytes(scope.trim()))
     await send("Post RFP", {
-      address: addresses.instance, abi: abis.instance, functionName: "postRfp",
+      address: t.instance, abi: abis.instance, functionName: "postRfp",
       args: [scopeHash, deadline, paid ? token : zeroAddress, 0n, Number(settlement)],
     })
-    router.push("/app/rfps")
+    router.push(`${base}/rfps`)
   }
   return (
     <Card title="Post a request for proposal">

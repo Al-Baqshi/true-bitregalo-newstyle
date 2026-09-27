@@ -1,4 +1,5 @@
 "use client"
+import { useTenant } from "@/lib/bitregalo/tenant"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAccount } from "wagmi"
@@ -9,6 +10,8 @@ import { Card, Field, inputCls } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
 
 export default function NewOffer() {
+  const t = useTenant()
+  const base = `/app/t/${t.id}`
   const { isConnected } = useAccount()
   const { send, isPending } = useTx()
   const router = useRouter()
@@ -23,10 +26,10 @@ export default function NewOffer() {
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     await send("List offer", {
-      address: addresses.instance, abi: abis.instance, functionName: "listOffer",
+      address: t.instance, abi: abis.instance, functionName: "listOffer",
       args: [paid ? token : zeroAddress, paid ? parseUnits(amount || "0", erc.decimals) : 0n, BigInt(Number(days) * 86400), 0n, Number(settlement), buyer && isAddress(buyer) ? buyer : zeroAddress],
     })
-    router.push("/app/offers")
+    router.push(`${base}/offers`)
   }
   return (
     <Card title="List an offer (request to supply)">

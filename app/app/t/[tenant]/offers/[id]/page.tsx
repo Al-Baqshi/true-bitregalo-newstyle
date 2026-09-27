@@ -1,13 +1,16 @@
 "use client"
+import { useTenant } from "@/lib/bitregalo/tenant"
 import { use } from "react"
 import { useAccount } from "wagmi"
 import { maxUint256 } from "viem"
 import { useOffer, useTx, useErc20, useTokenCfg } from "@/lib/bitregalo/hooks"
-import { abis, addresses, OFFER_STATE, SETTLEMENT } from "@/lib/bitregalo/config"
+import { abis, OFFER_STATE, SETTLEMENT } from "@/lib/bitregalo/config"
 import { Card, Addr, Pill, Amount } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
 
 export default function OfferDetail({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTenant()
+  const base = `/app/t/${t.id}`
   const { id: raw } = use(params)
   const id = BigInt(raw)
   const { address, isConnected } = useAccount()
@@ -25,13 +28,13 @@ export default function OfferDetail({ params }: { params: Promise<{ id: string }
   async function confirm() {
     if (paid) {
       const need = offer!.amount + (cfg?.[2] ?? 0n)
-      if (erc.allowance < need) await send("Approve vault", { address: offer!.token, abi: abis.erc20, functionName: "approve", args: [addresses.vault, maxUint256] })
+      if (erc.allowance < need) await send("Approve vault", { address: offer!.token, abi: abis.erc20, functionName: "approve", args: [t.vault, maxUint256] })
     }
-    await send("Confirm offer", { address: addresses.instance, abi: abis.instance, functionName: "confirmOffer", args: [id] })
+    await send("Confirm offer", { address: t.instance, abi: abis.instance, functionName: "confirmOffer", args: [id] })
     refetch(); erc.refetch()
   }
   async function withdraw() {
-    await send("Withdraw offer", { address: addresses.instance, abi: abis.instance, functionName: "withdrawOffer", args: [id] })
+    await send("Withdraw offer", { address: t.instance, abi: abis.instance, functionName: "withdrawOffer", args: [id] })
     refetch()
   }
   return (
@@ -44,7 +47,7 @@ export default function OfferDetail({ params }: { params: Promise<{ id: string }
         <span className="text-muted-foreground">{Number(offer.timeframe) / 86400} days</span>
         {designated && <span className="text-muted-foreground">for <Addr a={offer.designatedBuyer} /></span>}
         {offer.state === 2 && <span className="text-muted-foreground">buyer <Addr a={offer.buyer} /></span>}
-        {offer.state === 2 && offer.settlement === 2 && offer.settlementId > 0n && <a className="text-accent underline-offset-2 hover:underline" href={`/app/escrows/${offer.settlementId}`}>escrow #{String(offer.settlementId)}</a>}
+        {offer.state === 2 && offer.settlement === 2 && offer.settlementId > 0n && <a className="text-accent underline-offset-2 hover:underline" href={`${base}/escrows/${offer.settlementId}`}>escrow #{String(offer.settlementId)}</a>}
       </div>
       <div className="mt-5 flex flex-wrap gap-3">
         {canConfirm && <Button disabled={isPending} onClick={confirm}>{offer.settlement === 2 ? "Confirm and fund escrow" : offer.settlement === 1 ? "Confirm and pay" : "Confirm"}</Button>}

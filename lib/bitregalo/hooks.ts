@@ -4,6 +4,7 @@ import { useReadContract, useReadContracts, useWriteContract, useWaitForTransact
 import { toast } from "sonner"
 import type { Abi, Address } from "viem"
 import { abis, addresses, chain, explorerTx } from "./config"
+import { useTenant } from "./tenant"
 
 export type Rfp = {
   requester: Address; token: Address; scopeHash: `0x${string}`; deadline: bigint; state: number
@@ -20,11 +21,18 @@ export type Escrow = {
 }
 export type TokenCfg = readonly [boolean, number, bigint]
 
-const instance = { address: addresses.instance, abi: abis.instance } as const
-const vault = { address: addresses.vault, abi: abis.vault } as const
 const factory = { address: addresses.tokenFactory, abi: abis.tokenFactory } as const
+function useContracts() {
+  const t = useTenant()
+  return {
+    instance: { address: t.instance, abi: abis.instance } as const,
+    vault: { address: t.vault, abi: abis.vault } as const,
+    t,
+  }
+}
 
 export function useOverview() {
+  const { instance, vault, t } = useContracts()
   return useReadContracts({
     contracts: [
       { ...instance, functionName: "rfpCount" },
@@ -37,7 +45,7 @@ export function useOverview() {
       { ...instance, functionName: "escrowEnabled" },
       { ...instance, functionName: "minTerm" },
       { ...instance, functionName: "maxTerm" },
-      { ...factory, functionName: "tokenCount" },
+      { ...factory, functionName: "tenantTokens", args: [t.id] },
     ],
     query: { refetchInterval: 15_000 },
   })
@@ -51,6 +59,7 @@ function idList(count: bigint | undefined, max = 50) {
 }
 
 export function useRfps(count: bigint | undefined) {
+  const { instance, vault, t } = useContracts()
   const ids = idList(count)
   const q = useReadContracts({
     contracts: ids.map((id) => ({ ...instance, functionName: "getRfp", args: [id] })),
@@ -59,6 +68,7 @@ export function useRfps(count: bigint | undefined) {
   return { ids, data: (q.data ?? []).map((r) => r.result as Rfp | undefined), isLoading: q.isLoading }
 }
 export function useOffers(count: bigint | undefined) {
+  const { instance, vault, t } = useContracts()
   const ids = idList(count)
   const q = useReadContracts({
     contracts: ids.map((id) => ({ ...instance, functionName: "getOffer", args: [id] })),
@@ -67,6 +77,7 @@ export function useOffers(count: bigint | undefined) {
   return { ids, data: (q.data ?? []).map((r) => r.result as Offer | undefined), isLoading: q.isLoading }
 }
 export function useEscrows(count: bigint | undefined) {
+  const { instance, vault, t } = useContracts()
   const ids = idList(count)
   const q = useReadContracts({
     contracts: ids.map((id) => ({ ...vault, functionName: "getEscrow", args: [id] })),
@@ -75,6 +86,7 @@ export function useEscrows(count: bigint | undefined) {
   return { ids, data: (q.data ?? []).map((r) => r.result as Escrow | undefined), isLoading: q.isLoading }
 }
 export function useRfp(id: bigint) {
+  const { instance, vault, t } = useContracts()
   const rfp = useReadContract({ ...instance, functionName: "getRfp", args: [id], query: { refetchInterval: 10_000 } })
   const bidCount = useReadContract({ ...instance, functionName: "bidCount", args: [id], query: { refetchInterval: 10_000 } })
   const n = Number((bidCount.data as bigint | undefined) ?? 0n)
@@ -89,24 +101,28 @@ export function useRfp(id: bigint) {
   }
 }
 export function useOffer(id: bigint) {
+  const { instance, vault, t } = useContracts()
   const q = useReadContract({ ...instance, functionName: "getOffer", args: [id], query: { refetchInterval: 10_000 } })
   return { offer: q.data as Offer | undefined, refetch: q.refetch }
 }
 export function useEscrow(id: bigint) {
+  const { instance, vault, t } = useContracts()
   const q = useReadContract({ ...vault, functionName: "getEscrow", args: [id], query: { refetchInterval: 10_000 } })
   return { escrow: q.data as Escrow | undefined, refetch: q.refetch }
 }
 export function useTokenCfg(token: Address | undefined) {
-  const q = useReadContract({ ...instance, functionName: "tokens", args: [token ?? addresses.usdt], query: { enabled: !!token } })
+  const { instance, vault, t } = useContracts()
+  const q = useReadContract({ ...instance, functionName: "tokens", args: [token ?? addresses.usdt], query: { enabled: !!token && !!instance.address } })
   return q.data as TokenCfg | undefined
 }
 export function useErc20(token: Address | undefined, owner: Address | undefined) {
+  const { instance, vault, t } = useContracts()
   const q = useReadContracts({
     contracts: [
       { address: token!, abi: abis.utilityToken, functionName: "symbol" },
       { address: token!, abi: abis.utilityToken, functionName: "decimals" },
-      { address: token!, abi: abis.erc20, functionName: "balanceOf", args: [owner ?? addresses.vault] },
-      { address: token!, abi: abis.erc20, functionName: "allowance", args: [owner ?? addresses.vault, addresses.vault] },
+      { address: token!, abi: abis.erc20, functionName: "balanceOf", args: [owner ?? vault.address] },
+      { address: token!, abi: abis.erc20, functionName: "allowance", args: [owner ?? vault.address, vault.address] },
     ],
     query: { enabled: !!token, refetchInterval: 10_000 },
   })

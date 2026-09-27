@@ -1,4 +1,5 @@
 "use client"
+import { decodeLabel } from "@/lib/bitregalo/instances"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import Link from "next/link"
 import { useOverview, useRfps } from "@/lib/bitregalo/hooks"
@@ -13,11 +14,11 @@ export default function RfpsPage() {
   const rfpCount = ov.data?.[0]?.result as bigint | undefined
   const rfps = useRfps(rfpCount)
   return (
-    <Card title={`Requests for proposal (${rfpCount ?? "…"})`} action={<Button asChild size="sm"><Link href={`${base}/rfps/new`}>Post an RFP</Link></Button>}>
+    <Card title={`Requests (${rfpCount ?? "…"})`} action={<Button asChild size="sm"><Link href={`${base}/rfps/new`}>Post an RFP</Link></Button>}>
       {rfps.data.map((r, i) => r && (
         <Row key={String(rfps.ids[i])} href={`${base}/rfps/${rfps.ids[i]}`}>
           <span className="font-mono text-xs text-muted-foreground">#{String(rfps.ids[i])}</span>
-          <span className="text-sm">by <Addr a={r.requester} /> · {SETTLEMENT[r.settlement]} · deadline {timeLeft(r.deadline)}</span>
+          <span className="min-w-0 truncate text-sm"><span className="font-medium">{decodeLabel(r.scopeHash) ?? "Private request"}</span> · by <Addr a={r.requester} /> · {SETTLEMENT[r.settlement]} · deadline {timeLeft(r.deadline)}</span>
           <Pill tone={r.state === 1 ? "accent" : r.state === 2 ? "good" : "muted"}>{RFP_STATE[r.state]}</Pill>
         </Row>
       ))}

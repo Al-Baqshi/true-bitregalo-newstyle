@@ -1,4 +1,5 @@
 "use client"
+import { decodeLabel } from "@/lib/bitregalo/instances"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import { use, useState } from "react"
 import { useAccount } from "wagmi"
@@ -52,7 +53,8 @@ export default function RfpDetail({ params }: { params: Promise<{ id: string }> 
           {paid && <span className="text-muted-foreground">token {erc.symbol} <Addr a={rfp.token} /></span>}
           {rfp.state === 2 && rfp.settlementId > 0n && rfp.settlement === 2 && <a className="text-accent underline-offset-2 hover:underline" href={`${base}/escrows/${rfp.settlementId}`}>escrow #{String(rfp.settlementId)}</a>}
         </div>
-        <p className="mt-3 font-mono text-xs text-muted-foreground">scope hash {rfp.scopeHash}</p>
+        <h1 className="bq-display mt-4 text-3xl font-semibold">{decodeLabel(rfp.scopeHash) ?? "Private request"}</h1>
+        {!decodeLabel(rfp.scopeHash) && <p className="bq-mono mt-2 break-all text-xs text-muted-foreground">fingerprint {rfp.scopeHash}</p>}
       </Card>
       <Card title={`Bids (${bids.length})`}>
         {bids.length === 0 && <p className="text-sm text-muted-foreground">No bids yet.</p>}

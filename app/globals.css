@@ -182,3 +182,57 @@
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
+
+/* ── BitRegalo app: baqshi design language (obsidian, ivory, gold, emerald) ───────────── */
+.bq-app {
+  --background: #090b0e;
+  --foreground: #f4efe4;
+  --card: #111419;
+  --card-foreground: #f4efe4;
+  --popover: #171b22;
+  --popover-foreground: #f4efe4;
+  --primary: #d8b46a;
+  --primary-foreground: #0b0c0e;
+  --secondary: #1f242c;
+  --secondary-foreground: #f4efe4;
+  --muted: #171b22;
+  --muted-foreground: #a39d90;
+  --accent: #51bb94;
+  --accent-foreground: #05100c;
+  --destructive: #e5484d;
+  --destructive-foreground: #f4efe4;
+  --border: rgba(233, 224, 205, 0.11);
+  --input: #0c0f13;
+  --ring: #d8b46a;
+  --radius: 0.75rem;
+  --bq-gold: #d8b46a;
+  --bq-gold-bright: #f0d79a;
+  --bq-emerald: #2f9e79;
+  --bq-ivory-dim: #cfc8ba;
+  --bq-graphite-2: #171b22;
+  --bq-line-strong: rgba(233, 224, 205, 0.18);
+  color-scheme: dark;
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(216, 180, 106, 0.07), transparent 60%),
+    radial-gradient(900px 400px at -10% 10%, rgba(47, 158, 121, 0.05), transparent 60%),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-app-sans), "Geist", system-ui, sans-serif;
+}
+.bq-app .font-mono,
+.bq-mono { font-family: var(--font-app-mono), "Geist Mono", ui-monospace, monospace; }
+.bq-display { font-family: var(--font-app-display), "Playfair Display", Georgia, serif; letter-spacing: -0.02em; }
+.bq-label {
+  font-family: var(--font-app-mono), "Geist Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.bq-app [data-variant="ghost"]:hover { background: var(--secondary); color: var(--foreground); }
+.bq-app input, .bq-app select, .bq-app textarea { color-scheme: dark; }
+.bq-app ::selection { background: rgba(216, 180, 106, 0.3); }
+@media (prefers-reduced-motion: no-preference) {
+  .bq-rise { animation: bq-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+}
+@keyframes bq-rise { from { opacity: 0.001; transform: translateY(6px); } to { opacity: 1; transform: none; } }

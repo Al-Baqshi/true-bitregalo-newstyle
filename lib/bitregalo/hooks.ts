@@ -159,7 +159,7 @@ export function useTx() {
           description: `${hash.slice(0, 10)}…`,
           action: { label: "View", onClick: () => window.open(explorerTx(hash), "_blank") },
         })
-        return hash
+        return receipt
       } catch (e) {
         const msg = (e as Error).message ?? String(e)
         toast.error(`${label} failed`, { id, description: msg.split("\n")[0].slice(0, 160) })

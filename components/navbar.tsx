@@ -14,6 +14,7 @@ const navLinks = [
   { label: "Use cases", href: "#use-cases" },
   { label: "Protocol", href: "#protocol" },
   { label: "Docs", href: "/protocols/escrow" },
+  { label: "App", href: "/app" },
 ]
 
 export function Navbar() {

@@ -30,7 +30,10 @@ export const abis = {
 
 export const wagmiConfig = createConfig({
   chains: [chain],
+  // EIP-6963 discovery adds one connector per installed wallet; `injected()` is the
+  // legacy window.ethereum fallback for browsers that don't announce wallets.
   connectors: [injected()],
+  multiInjectedProviderDiscovery: true,
   transports: { [chain.id]: http(RPC_URL) },
   ssr: true,
 })

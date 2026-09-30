@@ -19,6 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         { href: `${base}/rfps`, label: "Requests" },
         { href: `${base}/offers`, label: "Listings" },
         { href: `${base}/escrows`, label: "Escrows" },
+        { href: `${base}/payments`, label: "Payments" },
         { href: `${base}/tokens`, label: "Tokens" },
         { href: `${base}/admin`, label: "Settings" },
       ]

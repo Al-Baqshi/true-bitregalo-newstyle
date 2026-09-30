@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import type { Address, Hex } from "viem"
-import { FileSearch, PackageCheck, Coins, FolderKanban } from "lucide-react"
+import { FileSearch, PackageCheck, Coins, FolderKanban, Send, QrCode } from "lucide-react"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import { useOverview, useRfps, useEscrows } from "@/lib/bitregalo/hooks"
 import { decodeLabel, instanceName } from "@/lib/bitregalo/instances"
@@ -17,7 +17,12 @@ export default function Overview() {
   const rfps = useRfps(rfpCount as bigint | undefined)
   const escrows = useEscrows(escrowCount as bigint | undefined)
   const name = instanceName(t.id) ?? (t.id === 0n ? "BitRegalo public template" : `Workspace #${t.id}`)
+  const hasPay = t.version >= 1n
   const actions = [
+    ...(hasPay ? [
+      { href: `${base}/pay`, label: "Pay someone", icon: <Send className="size-4" /> },
+      { href: `${base}/get-paid`, label: "Get paid", icon: <QrCode className="size-4" /> },
+    ] : []),
     { href: `${base}/rfps/new`, label: "Post a request", icon: <FileSearch className="size-4" /> },
     { href: `${base}/offers/new`, label: "Create a listing", icon: <PackageCheck className="size-4" /> },
     { href: `${base}/projects/new`, label: "Start a project", icon: <FolderKanban className="size-4" /> },
@@ -30,7 +35,7 @@ export default function Overview() {
         title={name}
         intro={t.id === 0n ? "The open workspace anyone can use: post requests, list offers, settle by escrow or direct payment, and create tokens. Every action is a transaction you sign." : "Requests, offers, escrows and tokens for this workspace. Share this page with the people you work with."}
       />
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className={`grid grid-cols-2 gap-3 ${hasPay ? "md:grid-cols-3 lg:grid-cols-6" : "md:grid-cols-4"}`}>
         {actions.map((a) => (
           <Link key={a.href} href={a.href} className="group flex items-center gap-3 rounded-xl border border-border bg-card/70 px-4 py-3.5 text-sm transition hover:border-primary/50">
             <span className="flex size-8 items-center justify-center rounded-lg bg-secondary text-[color:var(--bq-ivory-dim)] group-hover:text-primary">{a.icon}</span>

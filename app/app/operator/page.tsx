@@ -2,9 +2,9 @@
 import { useState } from "react"
 import { useAccount, useReadContracts } from "wagmi"
 import { parseUnits, type Address } from "viem"
-import { ArrowDownToLine, Coins, Percent, Rocket, Receipt, Fuel } from "lucide-react"
+import { ArrowDownToLine, Coins, Percent, Rocket, Receipt, Fuel, Layers } from "lucide-react"
 import { useTx } from "@/lib/bitregalo/hooks"
-import { abis, addresses, short } from "@/lib/bitregalo/config"
+import { abis, addresses, short, versions } from "@/lib/bitregalo/config"
 import { Card, Addr, Amount, Pill, PageHead } from "@/components/app/ui"
 import { Explainer } from "@/components/app/explain"
 import { input } from "@/components/app/wizard/fields"
@@ -38,11 +38,14 @@ export default function Platform() {
       { address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "creationFeeToken" },
       { address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "tokenCount" },
       { address: ENTRY_POINT, abi: entryPointAbi, functionName: "balanceOf", args: [addresses.paymaster] },
+      { address: addresses.mother, abi: abis.mother, functionName: "versionCount" },
     ],
     query: { refetchInterval: 15_000 },
   })
   const r = (head.data ?? []).map((x) => x.result)
-  const [mOwner, mPending, tOwner, tPending, fOwner, fPending, tenantCount, feeBps, deployFee, , tokenFee, , tokenCount, gasDeposit] = r as [Address?, Address?, Address?, Address?, Address?, Address?, bigint?, number?, bigint?, Address?, bigint?, Address?, bigint?, bigint?]
+  const [mOwner, mPending, tOwner, tPending, fOwner, fPending, tenantCount, feeBps, deployFee, , tokenFee, , tokenCount, gasDeposit, versionCount] = r as [Address?, Address?, Address?, Address?, Address?, Address?, bigint?, number?, bigint?, Address?, bigint?, Address?, bigint?, bigint?, bigint?]
+  const registered = Number(versionCount ?? 0n)
+  const unregistered = versions.filter((v) => v.n >= registered)
   const me = address?.toLowerCase()
   const isOwner = !!me && mOwner?.toLowerCase() === me
   const ownsTreasury = !!me && tOwner?.toLowerCase() === me
@@ -157,6 +160,24 @@ export default function Platform() {
           </div></div>
         </Card>
       </div>
+
+      <Card title="Contract versions">
+        <div className="flex items-start gap-3"><Layers className="mt-0.5 size-5 shrink-0 text-primary" /><div className="min-w-0 flex-1">
+          <p className="text-sm leading-relaxed text-muted-foreground">Each workspace keeps the contract version it was created with; new workspaces get the newest registered one. Registering a version tells the platform rules contract about a new implementation pair. It changes nothing for existing workspaces.</p>
+          <div className="mt-4 divide-y divide-border text-sm">
+            {versions.map((v) => (
+              <div key={v.n} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <div><span className="font-medium">Version {v.n}</span><span className="ml-2 text-xs text-muted-foreground">{v.n === 0 ? "requests, listings, escrow, tokens" : "adds open-amount payments: pay links, QR codes, receipts"}</span>
+                  <p className="bq-mono mt-1 text-[11px] text-muted-foreground">instance {short(v.instanceImpl)} · vault {short(v.vaultImpl)}</p></div>
+                {v.n < registered ? <Pill tone="good">registered</Pill>
+                  : isOwner ? <Button size="sm" disabled={isPending || v.n !== registered} onClick={() => send(`Register version ${v.n}`, { address: addresses.mother, abi: abis.mother, functionName: "registerVersion", args: [v.instanceImpl, v.vaultImpl] }).then(refresh)}>Register version {v.n}</Button>
+                  : <Pill>deployed, not registered</Pill>}
+              </div>
+            ))}
+          </div>
+          {unregistered.length > 0 && !isOwner && <p className="mt-3 text-xs text-muted-foreground">Only the owner of the platform rules contract can register a version.</p>}
+        </div></div>
+      </Card>
 
       <Card title="Your contracts, in plain words">
         <div className="divide-y divide-border text-sm">

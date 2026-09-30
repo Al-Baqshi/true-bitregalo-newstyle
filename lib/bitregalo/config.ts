@@ -5,7 +5,8 @@ import bundle from "./bitregalo.json"
 import type { Abi, Address } from "viem"
 
 export const chain = bscTestnet
-export const RPC_URL = "https://data-seed-prebsc-1-s1.bnbchain.org:8545"
+/** Overridable at build time so the same app can point at a local fork for testing. */
+export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://data-seed-prebsc-1-s1.bnbchain.org:8545"
 export const EXPLORER = "https://testnet.bscscan.com"
 
 const dep = bundle.deployments
@@ -18,6 +19,11 @@ export const addresses = {
   vault: dep.tenants.t0.vault as Address,
   usdt: dep.tenants.t0.tokens["0"] as Address,
 }
+
+/** Implementation pairs from the deployments file, oldest first. Registration state lives on the mother. */
+export const versions = Object.entries(dep.versions as Record<string, { instanceImpl: string; vaultImpl: string }>)
+  .map(([k, v]) => ({ n: Number(k.replace(/^v/, "")), instanceImpl: v.instanceImpl as Address, vaultImpl: v.vaultImpl as Address }))
+  .sort((a, b) => a.n - b.n)
 
 export const abis = {
   mother: bundle.abis.mother as Abi,

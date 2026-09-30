@@ -20,6 +20,9 @@ export type Escrow = {
   state: number; projectId: bigint
 }
 export type TokenCfg = readonly [boolean, number, bigint]
+export type Payment = {
+  payer: Address; payee: Address; token: Address; amount: bigint; ref: `0x${string}`; projectId: bigint; settlementId: bigint
+}
 
 const factory = { address: addresses.tokenFactory, abi: abis.tokenFactory } as const
 function useContracts() {
@@ -84,6 +87,26 @@ export function useEscrows(count: bigint | undefined) {
     query: { enabled: ids.length > 0, refetchInterval: 15_000 },
   })
   return { ids, data: (q.data ?? []).map((r) => r.result as Escrow | undefined), isLoading: q.isLoading }
+}
+/** Open-amount payments (instance version 1+). `enabled` false on older workspaces, where the function does not exist. */
+export function usePaymentCount(enabled: boolean) {
+  const { instance } = useContracts()
+  const q = useReadContract({ ...instance, functionName: "paymentCount", query: { enabled, refetchInterval: 15_000 } })
+  return { count: q.data as bigint | undefined, refetch: q.refetch }
+}
+export function usePayments(count: bigint | undefined) {
+  const { instance } = useContracts()
+  const ids = idList(count)
+  const q = useReadContracts({
+    contracts: ids.map((id) => ({ ...instance, functionName: "getPayment", args: [id] })),
+    query: { enabled: ids.length > 0, refetchInterval: 15_000 },
+  })
+  return { ids, data: (q.data ?? []).map((r) => r.result as Payment | undefined), isLoading: q.isLoading }
+}
+export function usePayment(id: bigint) {
+  const { instance } = useContracts()
+  const q = useReadContract({ ...instance, functionName: "getPayment", args: [id], query: { refetchInterval: 10_000 } })
+  return { payment: q.data as Payment | undefined, refetch: q.refetch }
 }
 export function useRfp(id: bigint) {
   const { instance, vault, t } = useContracts()

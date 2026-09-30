@@ -21,8 +21,8 @@ export const addresses = {
 }
 
 /** Implementation pairs from the deployments file, oldest first. Registration state lives on the mother. */
-export const versions = Object.entries(dep.versions as Record<string, { instanceImpl: string; vaultImpl: string }>)
-  .map(([k, v]) => ({ n: Number(k.replace(/^v/, "")), instanceImpl: v.instanceImpl as Address, vaultImpl: v.vaultImpl as Address }))
+export const versions = Object.entries(dep.versions as Record<string, { instanceImpl: string; vaultImpl: string; treasuryImpl?: string }>)
+  .map(([k, v]) => ({ n: Number(k.replace(/^v/, "")), instanceImpl: v.instanceImpl as Address, vaultImpl: v.vaultImpl as Address, treasuryImpl: v.treasuryImpl as Address | undefined }))
   .sort((a, b) => a.n - b.n)
 
 export const abis = {
@@ -32,7 +32,13 @@ export const abis = {
   tokenFactory: bundle.abis.tokenFactory as Abi,
   utilityToken: bundle.abis.utilityToken as Abi,
   erc20: bundle.abis.erc20 as Abi,
+  workspaceTreasury: (bundle.abis as { workspaceTreasury?: unknown }).workspaceTreasury as Abi,
 }
+
+/** Stablecoins the app offers by name on this network. Any other ERC-20 can be added by address. */
+export const STABLES: { symbol: string; name: string; address: Address }[] = [
+  { symbol: "USDT", name: "Tether USD (testnet)", address: addresses.usdt },
+]
 
 export const wagmiConfig = createConfig({
   chains: [chain],

@@ -167,8 +167,8 @@ export default function Platform() {
           <div className="mt-4 divide-y divide-border text-sm">
             {versions.map((v) => (
               <div key={v.n} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <div><span className="font-medium">Version {v.n}</span><span className="ml-2 text-xs text-muted-foreground">{v.n === 0 ? "requests, listings, escrow, tokens" : "adds open-amount payments: pay links, QR codes, receipts"}</span>
-                  <p className="bq-mono mt-1 text-[11px] text-muted-foreground">instance {short(v.instanceImpl)} · vault {short(v.vaultImpl)}</p></div>
+                <div><span className="font-medium">Version {v.n}</span><span className="ml-2 text-xs text-muted-foreground">{v.n === 0 ? "requests, listings, escrow, tokens" : "adds a workspace treasury, utility sales with redemption, and payment links"}</span>
+                  <p className="bq-mono mt-1 text-[11px] text-muted-foreground">instance {short(v.instanceImpl)} · vault {short(v.vaultImpl)}{v.treasuryImpl ? ` · treasury ${short(v.treasuryImpl)}` : ""}</p></div>
                 {v.n < registered ? <Pill tone="good">registered</Pill>
                   : isOwner ? <Button size="sm" disabled={isPending || v.n !== registered} onClick={() => send(`Register version ${v.n}`, { address: addresses.mother, abi: abis.mother, functionName: "registerVersion", args: [v.instanceImpl, v.vaultImpl] }).then(refresh)}>Register version {v.n}</Button>
                   : <Pill>deployed, not registered</Pill>}

@@ -9,10 +9,11 @@ import { Wizard, type WizardAction, type WizardStep } from "@/components/app/wiz
 import { AddOn, Choice, Done, Label, Note, input } from "@/components/app/wizard/fields"
 import { Button } from "@/components/ui/button"
 
-type Purpose = "procurement" | "marketplace" | "grants" | "records"
+type Purpose = "shop" | "procurement" | "marketplace" | "grants" | "records"
 type Pay = "0" | "1" | "2"
 
 const PRESETS: Record<Purpose, { direct: boolean; escrow: boolean }> = {
+  shop: { direct: true, escrow: true },
   procurement: { direct: false, escrow: true },
   marketplace: { direct: true, escrow: true },
   grants: { direct: false, escrow: true },
@@ -33,10 +34,10 @@ export default function LaunchWizard() {
 
   // basics
   const [name, setName] = useState("")
-  const [purpose, setPurpose] = useState<Purpose>("procurement")
+  const [purpose, setPurpose] = useState<Purpose>("shop")
   // payments
-  const [direct, setDirect] = useState(PRESETS.procurement.direct)
-  const [escrow, setEscrow] = useState(PRESETS.procurement.escrow)
+  const [direct, setDirect] = useState(PRESETS.shop.direct)
+  const [escrow, setEscrow] = useState(PRESETS.shop.escrow)
   const [useUsdt, setUseUsdt] = useState(true)
   const [extraTokens, setExtraTokens] = useState<string[]>([])
   const [newToken, setNewToken] = useState("")
@@ -82,6 +83,7 @@ export default function LaunchWizard() {
             <Choice<Purpose>
               value={purpose} onChange={choosePurpose} columns={2}
               options={[
+                { value: "shop", title: "Sell utilities & take payments", description: "Sell your own vouchers, credits or memberships for stablecoins into your treasury; take payments by link or QR." },
                 { value: "procurement", title: "Tendering & procurement", description: "Post requests, suppliers bid, the winner is paid through escrow." },
                 { value: "marketplace", title: "Marketplace & supply", description: "Suppliers list what they sell, buyers take it and pay and pay directly or by escrow." },
                 { value: "grants", title: "Grants & community funds", description: "Every payment tied to a request, visible to donors and members." },
@@ -277,13 +279,13 @@ export default function LaunchWizard() {
     <Wizard
       eyebrow="Create · workspace"
       title="Create your own workspace"
-      intro="Your organisation's own requests, listings, escrows and tokens — launched from the BitRegalo mother contract with the same audited rules as everyone else. You stay the admin."
+      intro="Your organisation's own shop, treasury, payments, requests, escrows and tokens — launched from the BitRegalo mother contract with the same audited rules as everyone else. You stay the admin, and the treasury is yours alone."
       steps={steps}
       plan={plan}
       signLabel="Create workspace"
       summary={[
         { label: "Instance", value: name.trim() || "—" },
-        { label: "Purpose", value: { procurement: "Tendering & procurement", marketplace: "Marketplace & supply", grants: "Grants & community funds", records: "Records only" }[purpose] },
+        { label: "Purpose", value: { shop: "Sell utilities & take payments", procurement: "Tendering & procurement", marketplace: "Marketplace & supply", grants: "Grants & community funds", records: "Records only" }[purpose] },
         { label: "Payments", value: [escrow && "escrow", direct && "direct"].filter(Boolean).join(" + ") || "records only" },
         { label: "Currencies", value: paid ? `${baseTokens.length}${withToken ? ` + ${sym || "own token"}` : ""}` : "—" },
         { label: "Platform fee", value: feeBps !== undefined ? `${Number(feeBps) / 100}% per payment${paid ? ` + ${serviceFee} service` : ""}` : "…" },
@@ -296,12 +298,13 @@ export default function LaunchWizard() {
           actions={
             <>
               <Button asChild><Link href={`/app/t/${String(r.tenantId)}`}>Open my workspace</Link></Button>
+              <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/sales/new`}>Sell a utility</Link></Button>
               {r.rfpId !== undefined && <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/rfps/${String(r.rfpId)}`}>View my request</Link></Button>}
               {r.token !== undefined && <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/tokens/${String(r.token)}`}>View {sym}</Link></Button>}
             </>
           }
         >
-          <p>Workspace <b className="text-foreground">#{String(r.tenantId)}</b> has its own marketplace contract (<span className="bq-mono">{short(String(r.instance))}</span>) and vault (<span className="bq-mono">{short(String(r.vault))}</span>). You are its admin.</p>
+          <p>Workspace <b className="text-foreground">#{String(r.tenantId)}</b> has its own marketplace contract (<span className="bq-mono">{short(String(r.instance))}</span>), vault (<span className="bq-mono">{short(String(r.vault))}</span>) and treasury. You are its admin and the treasury&apos;s owner.</p>
           <p>Share <span className="bq-mono text-foreground">/app/t/{String(r.tenantId)}</span> with your suppliers and customers — anyone with a wallet can bid, list offers and get paid through it.</p>
         </Done>
       )}

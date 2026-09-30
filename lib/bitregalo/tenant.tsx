@@ -4,7 +4,7 @@ import { useReadContract } from "wagmi"
 import type { Address } from "viem"
 import { abis, addresses } from "./config"
 
-export type TenantAddrs = { id: bigint; instance: Address; vault: Address; admin: Address; version: bigint }
+export type TenantAddrs = { id: bigint; instance: Address; vault: Address; admin: Address; version: bigint; treasury?: Address }
 const Ctx = createContext<TenantAddrs | null>(null)
 
 /** Resolves a tenant id to its instance + vault addresses from the mother registry. */
@@ -12,9 +12,11 @@ export function TenantProvider({ id, children }: { id: bigint; children: React.R
   const q = useReadContract({ address: addresses.mother, abi: abis.mother, functionName: "tenants", args: [id] })
   const t = q.data as { instance: Address; vault: Address; admin: Address; version: bigint } | undefined
   const liveAdmin = useReadContract({ address: t?.instance, abi: abis.instance, functionName: "admin", query: { enabled: !!t, refetchInterval: 20_000 } })
+  // Version 1+ workspaces own a treasury; the call does not exist on older contracts.
+  const treasury = useReadContract({ address: t?.instance, abi: abis.instance, functionName: "treasury", query: { enabled: !!t && t.version >= 1n } })
   if (q.isLoading) return <p className="text-sm text-muted-foreground">Loading instance #{String(id)}…</p>
   if (!t || /^0x0{40}$/.test(t.instance)) return <p className="text-sm text-muted-foreground">No instance #{String(id)} on this network.</p>
-  return <Ctx.Provider value={{ id, instance: t.instance, vault: t.vault, admin: (liveAdmin.data as Address | undefined) ?? t.admin, version: t.version }}>{children}</Ctx.Provider>
+  return <Ctx.Provider value={{ id, instance: t.instance, vault: t.vault, admin: (liveAdmin.data as Address | undefined) ?? t.admin, version: t.version, treasury: treasury.data as Address | undefined }}>{children}</Ctx.Provider>
 }
 
 export function useTenant(): TenantAddrs {

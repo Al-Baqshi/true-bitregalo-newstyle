@@ -20,6 +20,10 @@ export type Escrow = {
   state: number; projectId: bigint
 }
 export type TokenCfg = readonly [boolean, number, bigint]
+export type Sale = {
+  token: Address; payToken: Address; price: bigint; unit: bigint; remaining: bigint; sold: bigint; maxPerBuyer: bigint
+  start: bigint; end: bigint; active: boolean; projectId: bigint; metaHash: `0x${string}`
+}
 export type Payment = {
   payer: Address; payee: Address; token: Address; amount: bigint; ref: `0x${string}`; projectId: bigint; settlementId: bigint
 }
@@ -107,6 +111,26 @@ export function usePayment(id: bigint) {
   const { instance } = useContracts()
   const q = useReadContract({ ...instance, functionName: "getPayment", args: [id], query: { refetchInterval: 10_000 } })
   return { payment: q.data as Payment | undefined, refetch: q.refetch }
+}
+/** Utility sales (instance version 1+). */
+export function useSaleCount(enabled: boolean) {
+  const { instance } = useContracts()
+  const q = useReadContract({ ...instance, functionName: "saleCount", query: { enabled, refetchInterval: 15_000 } })
+  return { count: q.data as bigint | undefined, refetch: q.refetch }
+}
+export function useSales(count: bigint | undefined) {
+  const { instance } = useContracts()
+  const ids = idList(count)
+  const q = useReadContracts({
+    contracts: ids.map((id) => ({ ...instance, functionName: "getSale", args: [id] })),
+    query: { enabled: ids.length > 0, refetchInterval: 15_000 },
+  })
+  return { ids, data: (q.data ?? []).map((r) => r.result as Sale | undefined), isLoading: q.isLoading, refetch: q.refetch }
+}
+export function useSale(id: bigint) {
+  const { instance } = useContracts()
+  const q = useReadContract({ ...instance, functionName: "getSale", args: [id], query: { refetchInterval: 10_000 } })
+  return { sale: q.data as Sale | undefined, refetch: q.refetch }
 }
 export function useRfp(id: bigint) {
   const { instance, vault, t } = useContracts()

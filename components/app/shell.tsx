@@ -15,12 +15,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const nav = tenant
     ? [
         { href: base, label: "Overview", exact: true },
-        { href: `${base}/projects`, label: "Projects" },
+        { href: `${base}/sales`, label: "Shop" },
+        { href: `${base}/payments`, label: "Payments" },
         { href: `${base}/rfps`, label: "Requests" },
         { href: `${base}/offers`, label: "Listings" },
         { href: `${base}/escrows`, label: "Escrows" },
-        { href: `${base}/payments`, label: "Payments" },
+        { href: `${base}/projects`, label: "Projects" },
         { href: `${base}/tokens`, label: "Tokens" },
+        { href: `${base}/treasury`, label: "Treasury" },
         { href: `${base}/admin`, label: "Settings" },
       ]
     : [

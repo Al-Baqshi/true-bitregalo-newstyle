@@ -2,13 +2,15 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useAccount } from "wagmi"
-import { ArrowRight, Building2, Coins, FolderKanban, FileSearch, PackageCheck } from "lucide-react"
+import { ArrowRight, Building2, Coins, FolderKanban, FileSearch, PackageCheck, Store, QrCode } from "lucide-react"
 import { instanceName, useInstances } from "@/lib/bitregalo/instances"
 
 type Item = { title: string; body: string; href: (id: string) => string; icon: React.ReactNode; needsInstance: boolean; time: string }
 
 const ITEMS: Item[] = [
-  { title: "Create your workspace", body: "Your organisation's own requests, listings, escrows and tokens, with you as admin. Optionally start a project, a token and a first request in the same flow.", href: () => "/app/launch", icon: <Building2 className="size-5" />, needsInstance: false, time: "5 steps" },
+  { title: "Create your workspace", body: "Your organisation's own shop, treasury, payments, requests, escrows and tokens, with you as admin. Optionally start a project, a token and a first request in the same flow.", href: () => "/app/launch", icon: <Building2 className="size-5" />, needsInstance: false, time: "5 steps" },
+  { title: "Sell a utility", body: "Put one of your tokens on sale at a stablecoin price. Buyers pay into your treasury and get the tokens at once; they redeem them with you later.", href: (id) => `/app/t/${id}/sales/new`, icon: <Store className="size-5" />, needsInstance: true, time: "3 steps" },
+  { title: "Get paid", body: "A link or QR code anyone can open to pay you, or your treasury, in a stablecoin. Fixed amount or open, with a reference on the receipt.", href: (id) => `/app/t/${id}/get-paid`, icon: <QrCode className="size-5" />, needsInstance: true, time: "no signing" },
   { title: "Create a token", body: "A named ERC-20 for credits, vouchers or memberships, linked to a workspace and a project, and accepted as payment if you are the admin.", href: (id) => `/app/create/token?instance=${id}`, icon: <Coins className="size-5" />, needsInstance: false, time: "4 steps" },
   { title: "Start a project", body: "Group requests, offers, escrows and tokens under one name — a site, a programme, a product line.", href: (id) => `/app/t/${id}/projects/new`, icon: <FolderKanban className="size-5" />, needsInstance: true, time: "1 step" },
   { title: "Post a request", body: "Ask for proposals. Suppliers bid their price and time; you award one and pay by escrow, directly, or just record it.", href: (id) => `/app/t/${id}/rfps/new`, icon: <FileSearch className="size-5" />, needsInstance: true, time: "3 steps" },

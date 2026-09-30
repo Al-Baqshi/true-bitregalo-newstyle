@@ -1,9 +1,9 @@
 "use client"
 import Link from "next/link"
 import type { Address, Hex } from "viem"
-import { FileSearch, PackageCheck, Coins, FolderKanban, Send, QrCode } from "lucide-react"
+import { FileSearch, PackageCheck, Coins, FolderKanban, Send, QrCode, Store, Landmark } from "lucide-react"
 import { useTenant } from "@/lib/bitregalo/tenant"
-import { useOverview, useRfps, useEscrows } from "@/lib/bitregalo/hooks"
+import { useOverview, useRfps, useEscrows, useSaleCount } from "@/lib/bitregalo/hooks"
 import { decodeLabel, instanceName } from "@/lib/bitregalo/instances"
 import { Card, Stat, Addr, Pill, Row, Amount, PageHead, Empty, timeLeft } from "@/components/app/ui"
 import { RFP_STATE, ESCROW_STATE, SETTLEMENT } from "@/lib/bitregalo/config"
@@ -18,10 +18,13 @@ export default function Overview() {
   const escrows = useEscrows(escrowCount as bigint | undefined)
   const name = instanceName(t.id) ?? (t.id === 0n ? "BitRegalo public template" : `Workspace #${t.id}`)
   const hasPay = t.version >= 1n
+  const { count: saleCount } = useSaleCount(hasPay)
   const actions = [
     ...(hasPay ? [
-      { href: `${base}/pay`, label: "Pay someone", icon: <Send className="size-4" /> },
+      { href: `${base}/sales`, label: "Shop", icon: <Store className="size-4" /> },
       { href: `${base}/get-paid`, label: "Get paid", icon: <QrCode className="size-4" /> },
+      { href: `${base}/pay`, label: "Pay someone", icon: <Send className="size-4" /> },
+      { href: `${base}/treasury`, label: "Treasury", icon: <Landmark className="size-4" /> },
     ] : []),
     { href: `${base}/rfps/new`, label: "Post a request", icon: <FileSearch className="size-4" /> },
     { href: `${base}/offers/new`, label: "Create a listing", icon: <PackageCheck className="size-4" /> },
@@ -33,9 +36,9 @@ export default function Overview() {
       <PageHead
         eyebrow={`Workspace #${t.id}`}
         title={name}
-        intro={t.id === 0n ? "The open workspace anyone can use: post requests, list offers, settle by escrow or direct payment, and create tokens. Every action is a transaction you sign." : "Requests, offers, escrows and tokens for this workspace. Share this page with the people you work with."}
+        intro={t.id === 0n ? "The open workspace anyone can use: post requests, list offers, settle by escrow or direct payment, and create tokens. Every action is a transaction you sign." : hasPay ? "This organisation's shop, payments, requests, escrows, tokens and treasury. Share this page with the people you work with." : "Requests, offers, escrows and tokens for this workspace. Share this page with the people you work with."}
       />
-      <div className={`grid grid-cols-2 gap-3 ${hasPay ? "md:grid-cols-3 lg:grid-cols-6" : "md:grid-cols-4"}`}>
+      <div className={`grid grid-cols-2 gap-3 ${hasPay ? "md:grid-cols-4" : "md:grid-cols-4"}`}>
         {actions.map((a) => (
           <Link key={a.href} href={a.href} className="group flex items-center gap-3 rounded-xl border border-border bg-card/70 px-4 py-3.5 text-sm transition hover:border-primary/50">
             <span className="flex size-8 items-center justify-center rounded-lg bg-secondary text-[color:var(--bq-ivory-dim)] group-hover:text-primary">{a.icon}</span>
@@ -43,7 +46,8 @@ export default function Overview() {
           </Link>
         ))}
       </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+      <div className={`grid grid-cols-2 gap-3 ${hasPay ? "md:grid-cols-6" : "md:grid-cols-5"}`}>
+        {hasPay && <Stat label="Sales" value={String(saleCount ?? "…")} />}
         <Stat label="Requests" value={String(rfpCount ?? "…")} />
         <Stat label="Listings" value={String(offerCount ?? "…")} />
         <Stat label="Escrows" value={String(escrowCount ?? "…")} />

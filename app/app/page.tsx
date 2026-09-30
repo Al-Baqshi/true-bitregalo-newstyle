@@ -22,10 +22,10 @@ export default function Home() {
       <section className="pt-4">
         <p className="bq-label">BitRegalo · practice network</p>
         <h1 className="bq-display mt-3 max-w-3xl text-4xl font-semibold leading-[1.1] text-balance sm:text-5xl">
-          Agree, deliver, get paid — with a record nobody can alter.
+          Sell, get paid and settle deliveries — from your organisation&apos;s own contract.
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-relaxed text-[color:var(--bq-ivory-dim)]">
-          Post what you need, collect offers, choose one, and settle the payment the way that suits you. Every step is written to a public blockchain, so buyers, suppliers, donors and auditors all see the same history.
+          Launch a workspace with its own treasury. Sell vouchers, credits or memberships for stablecoins, take payments by link or QR, post requests and hold money in escrow until work is delivered. Every step is written to a public blockchain that nobody, including BitRegalo, can alter.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild size="lg"><Link href="/app/t/0">Try it in the public workspace</Link></Button>

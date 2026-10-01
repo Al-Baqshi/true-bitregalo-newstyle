@@ -6,6 +6,7 @@ import { instanceName, useInstances } from "@/lib/bitregalo/instances"
 import { Addr, Row, Pill } from "@/components/app/ui"
 import { HowItWorks, SettleModes, Glossary } from "@/components/app/explain"
 import { Button } from "@/components/ui/button"
+import { FaucetButton } from "@/components/app/faucet"
 
 export default function Home() {
   const { address } = useAccount()
@@ -30,8 +31,9 @@ export default function Home() {
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild size="lg"><Link href="/app/t/0">Try it in the public workspace</Link></Button>
           <Button asChild size="lg" variant="secondary"><Link href="/app/launch">Create your own workspace</Link></Button>
+          <FaucetButton size="lg" />
         </div>
-        <p className="mt-4 text-xs text-muted-foreground">You need a wallet such as MetaMask set to BNB Smart Chain Testnet. The money here is practice money with no value.</p>
+        <p className="mt-4 text-xs text-muted-foreground">You need a wallet such as MetaMask set to BNB Smart Chain Testnet. Connect it and take free tUSD from the faucet: practice money with no value, enough to try everything.</p>
       </section>
 
       <section>

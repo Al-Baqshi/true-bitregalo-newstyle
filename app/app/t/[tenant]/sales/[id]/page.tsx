@@ -7,10 +7,11 @@ import { useTenant } from "@/lib/bitregalo/tenant"
 import { useErc20, useSale, useTx } from "@/lib/bitregalo/hooks"
 import { decodeLabel, useSettlementTokens, useProjects } from "@/lib/bitregalo/instances"
 import { useInstanceRules } from "@/lib/bitregalo/instance-rules"
-import { abis, explorerAddress, short } from "@/lib/bitregalo/config"
+import { abis, addresses, explorerAddress, short } from "@/lib/bitregalo/config"
 import { Card, Amount, PageHead, Pill } from "@/components/app/ui"
 import { Label, Note, input } from "@/components/app/wizard/fields"
 import { Button } from "@/components/ui/button"
+import { FaucetButton } from "@/components/app/faucet"
 import { saleStatus } from "@/lib/bitregalo/sales"
 
 export default function SalePage({ params }: { params: Promise<{ id: string }> }) {
@@ -83,6 +84,7 @@ export default function SalePage({ params }: { params: Promise<{ id: string }> }
                 </Note>
               )}
               {s.price === 0n && <Note>Free. You only sign the transaction.</Note>}
+              {s.price > 0n && address && erc.balance < total && s.payToken.toLowerCase() === (addresses.testStable ?? "").toLowerCase() && <div><FaucetButton onDone={() => erc.refetch()} /></div>}
               {overLimit && <p className="text-xs text-destructive">That would exceed the per-buyer limit.</p>}
               {overStock && <p className="text-xs text-destructive">Only <Amount value={s.remaining} decimals={decimals} /> left.</p>}
               <div><Button disabled={!canBuy || isPending} onClick={buy}>{s.price > 0n ? `Pay and receive ${qty || "…"} ${sym}` : `Claim ${qty || "…"} ${sym}`}</Button>{!isConnected && <p className="mt-2 text-xs text-muted-foreground">Connect a wallet to buy.</p>}</div>

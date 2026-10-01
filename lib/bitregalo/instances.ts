@@ -1,7 +1,7 @@
 "use client"
 import { useReadContract, useReadContracts } from "wagmi"
 import { decodeEventLog, hexToBytes, keccak256, stringToHex, toBytes, type Abi, type Address, type Hex, type TransactionReceipt } from "viem"
-import { abis, addresses } from "./config"
+import { abis, addresses, STABLES } from "./config"
 
 export type InstanceInfo = { id: bigint; instance: Address; vault: Address; admin: Address }
 export type ProjectInfo = { id: bigint; owner: Address; metaHash: Hex; active: boolean; label: string | null }
@@ -53,7 +53,7 @@ export function useSettlementTokens(instance: Address | undefined, tenantId: big
     address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "tenantTokens", args: [tenantId ?? 0n],
     query: { enabled: tenantId !== undefined, refetchInterval: 20_000 },
   })
-  const candidates = [addresses.usdt, ...(((factoryTokens.data as Address[] | undefined) ?? []))]
+  const candidates = Array.from(new Set([...STABLES.map((s) => s.address), ...(((factoryTokens.data as Address[] | undefined) ?? []))]))
   const q = useReadContracts({
     contracts: candidates.flatMap((t) => [
       { address: instance!, abi: abis.instance, functionName: "tokens", args: [t] },

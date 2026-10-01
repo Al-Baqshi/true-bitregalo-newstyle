@@ -2,8 +2,9 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useAccount, useReadContracts } from "wagmi"
-import { isAddress, maxUint256, parseUnits, zeroAddress, type Address } from "viem"
-import { abis, addresses, short } from "@/lib/bitregalo/config"
+import { formatUnits, isAddress, maxUint256, parseUnits, zeroAddress, type Address } from "viem"
+import { abis, addresses, short, STABLES } from "@/lib/bitregalo/config"
+import { FaucetButton } from "@/components/app/faucet"
 import { encodeLabel, eventArgs, labelBytes, rememberInstanceName } from "@/lib/bitregalo/instances"
 import { Wizard, type WizardAction, type WizardStep } from "@/components/app/wizard/wizard"
 import { AddOn, Choice, Done, Label, Note, input } from "@/components/app/wizard/fields"
@@ -31,6 +32,8 @@ export default function LaunchWizard() {
     ],
   })
   const [deployFee, deployFeeToken, feeBps, versionCount] = (mother.data ?? []).map((r) => r.result) as [bigint?, Address?, number?, bigint?]
+  const fee = (deployFee as bigint | undefined) ?? 0n
+  const feeStable = STABLES.find((x) => x.address.toLowerCase() === (deployFeeToken ?? "").toLowerCase())
 
   // basics
   const [name, setName] = useState("")
@@ -38,7 +41,8 @@ export default function LaunchWizard() {
   // payments
   const [direct, setDirect] = useState(PRESETS.shop.direct)
   const [escrow, setEscrow] = useState(PRESETS.shop.escrow)
-  const [useUsdt, setUseUsdt] = useState(true)
+  const [stables, setStables] = useState<string[]>(STABLES.map((x) => x.address))
+  const useUsdt = stables.includes(addresses.usdt)
   const [extraTokens, setExtraTokens] = useState<string[]>([])
   const [newToken, setNewToken] = useState("")
   const [serviceFee, setServiceFee] = useState("0.1")
@@ -58,7 +62,7 @@ export default function LaunchWizard() {
   const [reqDays, setReqDays] = useState("7")
 
   const paid = direct || escrow
-  const baseTokens = [...(useUsdt ? [addresses.usdt] : []), ...extraTokens] as Address[]
+  const baseTokens = [...stables, ...extraTokens] as Address[]
   const sym = tokenSymbol.trim().toUpperCase()
   const requestNeedsProject = withRequest && withProject
 
@@ -104,7 +108,9 @@ export default function LaunchWizard() {
           {paid && (
             <div className="mt-2 grid gap-4 rounded-xl border border-border p-4">
               <p className="bq-label">Currencies you accept</p>
-              <AddOn checked={useUsdt} onChange={setUseUsdt} title="USDT (testnet)" description={`Tether on BNB Smart Chain Testnet · ${short(addresses.usdt)}`} />
+              {STABLES.map((st) => (
+                <AddOn key={st.address} checked={stables.includes(st.address)} onChange={(v) => setStables(v ? [...stables, st.address] : stables.filter((x) => x !== st.address))} title={st.symbol} tag={st.faucet ? "free test money" : undefined} description={`${st.name} · ${short(st.address)}`} />
+              ))}
               {extraTokens.map((t) => (
                 <div key={t} className="flex items-center justify-between rounded-lg border border-border px-4 py-2.5 text-sm">
                   <span className="bq-mono text-xs">{t}</span>
@@ -121,6 +127,12 @@ export default function LaunchWizard() {
             </div>
           )}
           {!paid && <Note>No paid options: your workspace records requests, bids and awards without moving money. You can switch payments on later in Settings.</Note>}
+          {fee > 0n && feeStable && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border px-4 py-3 text-sm">
+              <span>Creating a workspace costs <b>{formatUnits(fee, 18)} {feeStable.symbol}</b>, paid to the platform when you sign.</span>
+              {feeStable.faucet && <FaucetButton />}
+            </div>
+          )}
         </div>
       ),
     },
@@ -210,10 +222,9 @@ export default function LaunchWizard() {
   }
 
   // ── plan ────────────────────────────────────────────────────────────────
-  const fee = (deployFee as bigint | undefined) ?? 0n
   const plan: WizardAction[] = []
   if (fee > 0n && deployFeeToken) {
-    plan.push({ id: "fee", label: "Approve the launch fee", run: async ({ tx }) => { await tx("Approve launch fee", { address: deployFeeToken, abi: abis.erc20, functionName: "approve", args: [addresses.mother, maxUint256] }) } })
+    plan.push({ id: "fee", label: `Approve the launch fee (${formatUnits(fee, 18)} ${feeStable?.symbol ?? "tokens"})`, run: async ({ tx }) => { await tx("Approve launch fee", { address: deployFeeToken, abi: abis.erc20, functionName: "approve", args: [addresses.mother, maxUint256] }) } })
   }
   plan.push({
     id: "launch", label: `Launch “${name.trim() || "your workspace"}”`, detail: "The mother contract deploys your marketplace and your vault, with you as admin.",

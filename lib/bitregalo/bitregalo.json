@@ -33,7 +33,8 @@
    }
   },
   "tokenFactory": "0xa0562E2d41BF4629002FC8f949e223AEe24c85F3",
-  "utilityTokenImpl": "0x985E21210D15043912202121092F011AA847AE12"
+  "utilityTokenImpl": "0x985E21210D15043912202121092F011AA847AE12",
+  "testStable": "0x45feEF694EeF438606b28e808Ff5876097060fC3"
  },
  "abis": {
   "mother": [

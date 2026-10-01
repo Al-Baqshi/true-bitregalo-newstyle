@@ -18,6 +18,8 @@ export const addresses = {
   instance: dep.tenants.t0.instance as Address,
   vault: dep.tenants.t0.vault as Address,
   usdt: dep.tenants.t0.tokens["0"] as Address,
+  /** Practice stablecoin with a public faucet; undefined on networks without one. */
+  testStable: (dep as { testStable?: string }).testStable as Address | undefined,
 }
 
 /** Implementation pairs from the deployments file, oldest first. Registration state lives on the mother. */
@@ -36,7 +38,8 @@ export const abis = {
 }
 
 /** Stablecoins the app offers by name on this network. Any other ERC-20 can be added by address. */
-export const STABLES: { symbol: string; name: string; address: Address }[] = [
+export const STABLES: { symbol: string; name: string; address: Address; faucet?: boolean }[] = [
+  ...(addresses.testStable ? [{ symbol: "tUSD", name: "BitRegalo Test Dollar — free from the faucet", address: addresses.testStable, faucet: true }] : []),
   { symbol: "USDT", name: "Tether USD (testnet)", address: addresses.usdt },
 ]
 

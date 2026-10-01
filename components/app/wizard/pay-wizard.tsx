@@ -3,7 +3,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useAccount } from "wagmi"
 import { formatUnits, isAddress, maxUint256, parseUnits, type Address } from "viem"
-import { abis } from "@/lib/bitregalo/config"
+import { abis, addresses } from "@/lib/bitregalo/config"
 import { useErc20 } from "@/lib/bitregalo/hooks"
 import { encodeLabel, eventArgs, labelBytes, useProjects, useSettlementTokens } from "@/lib/bitregalo/instances"
 import { useInstanceRules } from "@/lib/bitregalo/instance-rules"
@@ -12,6 +12,7 @@ import { Wizard, type WizardAction, type WizardStep } from "./wizard"
 import { Done, Label, Note, input } from "./fields"
 import { Amount } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
+import { FaucetButton } from "@/components/app/faucet"
 
 /** Values a payment link can carry. `fixed` locks the amount so the payer only confirms. */
 export type PayPrefill = { to?: string; token?: string; amount?: string; ref?: string; project?: string; fixed?: boolean }
@@ -65,6 +66,9 @@ export function PayWizard({ prefill = {} }: { prefill?: PayPrefill }) {
               Your balance: <Amount value={erc.balance} decimals={erc.decimals} symbol={erc.symbol} />.
               {erc.balance < total && value > 0n && <strong className="text-destructive"> Not enough {chosen.symbol}.</strong>}
             </Note>
+          )}
+          {chosen && erc.balance < total && value > 0n && chosen.address.toLowerCase() === (addresses.testStable ?? "").toLowerCase() && (
+            <div><FaucetButton onDone={() => erc.refetch()} /></div>
           )}
         </div>
       ),

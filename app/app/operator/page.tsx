@@ -4,7 +4,7 @@ import { useAccount, useReadContracts } from "wagmi"
 import { parseUnits, type Address } from "viem"
 import { ArrowDownToLine, Coins, Percent, Rocket, Receipt, Fuel, Layers } from "lucide-react"
 import { useTx } from "@/lib/bitregalo/hooks"
-import { abis, addresses, short, versions } from "@/lib/bitregalo/config"
+import { abis, addresses, short, versions, STABLES } from "@/lib/bitregalo/config"
 import { Card, Addr, Amount, Pill, PageHead } from "@/components/app/ui"
 import { Explainer } from "@/components/app/explain"
 import { input } from "@/components/app/wizard/fields"
@@ -43,7 +43,8 @@ export default function Platform() {
     query: { refetchInterval: 15_000 },
   })
   const r = (head.data ?? []).map((x) => x.result)
-  const [mOwner, mPending, tOwner, tPending, fOwner, fPending, tenantCount, feeBps, deployFee, , tokenFee, , tokenCount, gasDeposit, versionCount] = r as [Address?, Address?, Address?, Address?, Address?, Address?, bigint?, number?, bigint?, Address?, bigint?, Address?, bigint?, bigint?, bigint?]
+  const [mOwner, mPending, tOwner, tPending, fOwner, fPending, tenantCount, feeBps, deployFee, deployFeeToken, tokenFee, , tokenCount, gasDeposit, versionCount] = r as [Address?, Address?, Address?, Address?, Address?, Address?, bigint?, number?, bigint?, Address?, bigint?, Address?, bigint?, bigint?, bigint?]
+  const deployFeeSym = STABLES.find((x) => x.address.toLowerCase() === (deployFeeToken ?? "").toLowerCase())?.symbol ?? "tokens"
   const registered = Number(versionCount ?? 0n)
   const unregistered = versions.filter((v) => v.n >= registered)
   const me = address?.toLowerCase()
@@ -74,6 +75,7 @@ export default function Platform() {
 
   const [newFee, setNewFee] = useState("")
   const [newLaunch, setNewLaunch] = useState("")
+  const [launchToken, setLaunchToken] = useState<string>(STABLES[0]?.address ?? addresses.usdt)
   const [newTokenFee, setNewTokenFee] = useState("")
   const refresh = () => { head.refetch(); bal.refetch() }
 
@@ -139,9 +141,9 @@ export default function Platform() {
           </Card>
           <Card>
             <div className="flex items-start gap-3"><Rocket className="mt-0.5 size-5 shrink-0 text-primary" /><div>
-              <p className="text-sm font-medium">Workspace launch fee · now {deployFee !== undefined ? (deployFee > 0n ? <><Amount value={deployFee} /> USDT</> : "free") : "…"}</p>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Paid once by an organisation when it creates its workspace.</p>
-              {isOwner && <div className="mt-3 flex gap-2"><input className={`${input} bq-mono max-w-28`} type="number" min="0" placeholder="USDT" value={newLaunch} onChange={(e) => setNewLaunch(e.target.value)} /><Button variant="secondary" disabled={isPending || newLaunch === ""} onClick={() => send("Set launch fee", { address: addresses.mother, abi: abis.mother, functionName: "setDeployFee", args: [addresses.usdt, parseUnits(newLaunch || "0", 18)] }).then(refresh)}>Save</Button></div>}
+              <p className="text-sm font-medium">Workspace launch fee · now {deployFee !== undefined ? (deployFee > 0n ? <><Amount value={deployFee} /> {deployFeeSym}</> : "free") : "…"}</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Paid once by an organisation when it creates its workspace. On the practice network, charge it in tUSD so anyone can pay it from the faucet.</p>
+              {isOwner && <div className="mt-3 flex flex-wrap gap-2"><input className={`${input} bq-mono max-w-28`} type="number" min="0" placeholder="amount" value={newLaunch} onChange={(e) => setNewLaunch(e.target.value)} /><select className={`${input} max-w-32`} value={launchToken} onChange={(e) => setLaunchToken(e.target.value)}>{STABLES.map((x) => <option key={x.address} value={x.address}>{x.symbol}</option>)}</select><Button variant="secondary" disabled={isPending || newLaunch === ""} onClick={() => send("Set launch fee", { address: addresses.mother, abi: abis.mother, functionName: "setDeployFee", args: [launchToken, parseUnits(newLaunch || "0", 18)] }).then(refresh)}>Save</Button></div>}
             </div></div>
           </Card>
           <Card>

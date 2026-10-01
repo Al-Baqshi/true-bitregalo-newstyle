@@ -56,7 +56,7 @@ export default function Platform() {
     contracts: Array.from({ length: n }, (_, i) => ({ address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "allTokens", args: [BigInt(i)] })),
     query: { enabled: n > 0 },
   })
-  const tokenList = [addresses.usdt, ...((factoryTokens.data ?? []).map((x) => x.result as Address).filter(Boolean))]
+  const tokenList = Array.from(new Set([...STABLES.map((x) => x.address), ...((factoryTokens.data ?? []).map((x) => x.result as Address).filter(Boolean))]))
   const bal = useReadContracts({
     contracts: tokenList.flatMap((t) => [
       { address: t, abi: abis.utilityToken, functionName: "symbol" },

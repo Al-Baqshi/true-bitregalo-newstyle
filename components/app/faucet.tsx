@@ -27,7 +27,7 @@ export function FaucetButton({ size = "sm", variant = "secondary", onDone, label
   }
   return (
     <Button size={size} variant={variant} disabled={!isConnected || isPending || wait} onClick={claim} title={!isConnected ? "Connect a wallet first" : wait ? `Next claim in about ${hours} h` : "Practice money with no value"}>
-      <Droplets className="size-4" />{wait ? `Test money again in ${hours} h` : label ?? "Get 1,000 tUSD test money"}
+      <Droplets />{wait ? `More practice money in ${hours} h` : label ?? "Get 1,000 tUSD practice money"}
     </Button>
   )
 }

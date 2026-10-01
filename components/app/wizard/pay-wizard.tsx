@@ -3,7 +3,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useAccount } from "wagmi"
 import { formatUnits, isAddress, maxUint256, parseUnits, type Address } from "viem"
-import { abis, addresses } from "@/lib/bitregalo/config"
+import { abis, addresses, short } from "@/lib/bitregalo/config"
 import { useErc20 } from "@/lib/bitregalo/hooks"
 import { encodeLabel, eventArgs, labelBytes, useProjects, useSettlementTokens } from "@/lib/bitregalo/instances"
 import { useInstanceRules } from "@/lib/bitregalo/instance-rules"
@@ -41,29 +41,28 @@ export function PayWizard({ prefill = {} }: { prefill?: PayPrefill }) {
 
   const steps: WizardStep[] = [
     {
-      id: "who", title: "Recipient and amount",
-      valid: !rules.loaded ? "Loading workspace rules…" : !rules.direct ? "Direct payment is switched off in this workspace" : !chosen ? "This workspace accepts no currency yet" : !isAddress(to) ? "Enter the recipient's address" : self ? "You cannot pay yourself" : !(value > 0n) ? "Enter an amount" : true,
+      id: "who", title: "Who and how much",
+      caption: "The wallet that gets paid, and the amount they are owed.",
+      valid: !rules.loaded ? "Loading the workspace rules…" : !rules.direct ? "Direct payment is switched off in this workspace" : !chosen ? "This workspace accepts no currency yet" : !isAddress(to) ? "Enter the recipient's wallet address" : self ? "You cannot pay yourself" : !(value > 0n) ? "Enter an amount" : true,
       content: (
         <div className="grid gap-5">
           <Label title="Recipient" hint={locked ? "Set by the payment link." : "The wallet that receives the payment. Paste it, or open the link they sent you."}>
-            <input className={`${input} bq-mono`} value={to} readOnly={locked} onChange={(e) => setTo(e.target.value.trim())} placeholder="0x…" />
+            <input className={`${input} t-mono`} value={to} readOnly={locked} onChange={(e) => setTo(e.target.value.trim())} placeholder="0x…" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
           </Label>
-          <div className="grid gap-4 sm:grid-cols-[1fr_160px]">
-            <Label title="Amount" hint={fixed ? "Set by the payment link." : undefined}>
-              <input className={`${input} bq-mono`} type="number" min="0" step="any" value={amount} readOnly={fixed} onChange={(e) => setAmount(e.target.value)} placeholder="25" />
-            </Label>
-            <Label title="Currency">
-              <select className={input} value={chosen?.address ?? ""} disabled={locked && !!prefill.token} onChange={(e) => setToken(e.target.value)}>
-                {tokens.accepted.map((x) => <option key={x.address} value={x.address}>{x.symbol}</option>)}
-              </select>
-            </Label>
-          </div>
+          <Label title="Amount" hint={fixed ? "Set by the payment link." : "What they are owed. The platform fee comes out of this amount."}>
+            <input className={`${input} t-num`} type="number" inputMode="decimal" min="0" step="any" value={amount} readOnly={fixed} onChange={(e) => setAmount(e.target.value)} placeholder="25" />
+          </Label>
+          <Label title="Currency" hint={locked && !!prefill.token ? "Set by the payment link." : "What this workspace accepts."}>
+            <select className={input} value={chosen?.address ?? ""} disabled={locked && !!prefill.token} onChange={(e) => setToken(e.target.value)}>
+              {tokens.accepted.map((x) => <option key={x.address} value={x.address}>{x.symbol}</option>)}
+            </select>
+          </Label>
           {chosen && (
             <Note>
               You send <Amount value={total} decimals={chosen.decimals} symbol={chosen.symbol} /> in total
-              {chosen.serviceFee > 0n && <> (includes a <Amount value={chosen.serviceFee} decimals={chosen.decimals} symbol={chosen.symbol} /> service fee)</>}.
-              The recipient gets <Amount value={value - fee} decimals={chosen.decimals} symbol={chosen.symbol} /> after the {rules.feeBps / 100}% platform fee.
-              Your balance: <Amount value={erc.balance} decimals={erc.decimals} symbol={erc.symbol} />.
+              {chosen.serviceFee > 0n && <>, which includes a <Amount value={chosen.serviceFee} decimals={chosen.decimals} symbol={chosen.symbol} /> service fee</>}.
+              {" "}The recipient gets <Amount value={value - fee} decimals={chosen.decimals} symbol={chosen.symbol} /> after the {rules.feeBps / 100}% platform fee.
+              {" "}Your balance: <Amount value={erc.balance} decimals={erc.decimals} symbol={erc.symbol} />.
               {erc.balance < total && value > 0n && <strong className="text-destructive"> Not enough {chosen.symbol}.</strong>}
             </Note>
           )}
@@ -75,38 +74,38 @@ export function PayWizard({ prefill = {} }: { prefill?: PayPrefill }) {
     },
     {
       id: "ref", title: "Reference",
+      caption: "What this payment is for. Both of you see it on the receipt.",
       valid: true,
       content: (
         <div className="grid gap-5">
-          <Label title="Reference (optional)" hint={refLong ? "Longer than 31 characters, so only its fingerprint is stored. Keep the text yourself." : "An invoice number, order id or a short message. Shown on the receipt to anyone who looks."} counter={`${labelBytes(ref)}/31`}>
-            <input className={input} value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Invoice 1042 · Thanks, Ana" />
+          <Label title="Reference (optional)" hint={refLong ? "Longer than 31 characters, so only its fingerprint is stored. Keep the text yourself." : "An invoice number, an order id or a short message. Shown on the receipt to anyone who looks."} counter={`${labelBytes(ref)}/31`}>
+            <input className={input} value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Invoice 1042" />
           </Label>
-          <Label title="Project (optional)">
+          <Label title="Project (optional)" hint="Groups the payment with related work in this workspace.">
             <select className={input} value={project} onChange={(e) => setProject(e.target.value)}>
               <option value="0">No project</option>
-              {projects.list.filter((p) => p.active).map((p) => <option key={String(p.id)} value={String(p.id)}>#{String(p.id)} · {p.label ?? "private project"}</option>)}
+              {projects.list.filter((p) => p.active).map((p) => <option key={String(p.id)} value={String(p.id)}>#{String(p.id)} · {p.label ?? "Private project"}</option>)}
             </select>
           </Label>
-          <Note>A direct payment is final. It goes to the recipient in the same transaction; there is no escrow to release or cancel. For goods you have not received yet, ask the seller for an escrow listing instead.</Note>
+          <Note>A direct payment is final. It reaches the recipient in the same transaction; there is no escrow to release or cancel. For goods you have not received yet, ask the seller for an escrow listing instead.</Note>
         </div>
       ),
     },
   ]
   const needApprove = !!chosen && erc.allowance < total
   const approve: WizardAction[] = needApprove
-    ? [{ id: "approve", label: `Allow the vault to move your ${chosen!.symbol}`, detail: "One-time approval, reused for later payments", run: async ({ tx }) => { await tx("Approve", { address: chosen!.address, abi: abis.erc20, functionName: "approve", args: [t.vault, maxUint256] }) } }]
+    ? [{ id: "approve", label: `Allow the vault to move your ${chosen!.symbol}`, detail: "A one-time approval, reused for later payments", run: async ({ tx }) => { await tx("Approve", { address: chosen!.address, abi: abis.erc20, functionName: "approve", args: [t.vault, maxUint256] }) } }]
     : []
   return (
     <Wizard
-      eyebrow={`Workspace #${t.id} · payment`}
       title={locked ? "Confirm this payment" : "Pay someone"}
-      intro={locked ? "Someone sent you a payment link. Check the recipient and amount, then sign. The money goes straight to them." : "Send a stablecoin or a workspace token to any wallet. Fees are the same as any direct settlement here."}
+      intro={locked ? "Someone sent you a payment link. Check the recipient and the amount, then sign. The money goes straight to them." : "Send a stablecoin or a workspace token to any wallet. It arrives in one transaction, with a receipt you can both keep."}
       steps={steps}
       signLabel="Pay now"
       plan={[
         ...approve,
         {
-          id: "pay", label: chosen ? `Pay ${amount || "…"} ${chosen.symbol}` : "Pay", detail: `To ${to ? `${to.slice(0, 8)}…` : "…"}`,
+          id: "pay", label: chosen ? `Pay ${amount || "…"} ${chosen.symbol}` : "Pay", detail: `To ${to ? short(to) : "…"}`,
           run: async ({ tx, results }) => {
             const r = await tx("Pay", {
               address: t.instance, abi: abis.instance, functionName: "pay",
@@ -118,14 +117,26 @@ export function PayWizard({ prefill = {} }: { prefill?: PayPrefill }) {
         },
       ]}
       summary={[
-        { label: "To", value: to ? `${to.slice(0, 10)}…` : "…" },
+        { label: "To", value: to ? <span className="t-mono">{short(to)}</span> : "…" },
         { label: "Amount", value: chosen ? `${amount || "…"} ${chosen.symbol}` : "—" },
         { label: "They receive", value: chosen ? `${formatUnits(value - fee, chosen.decimals)} ${chosen.symbol}` : "—" },
-        { label: "Reference", value: ref || "—" },
+        { label: "Reference", value: ref || "None" },
       ]}
       done={(r) => (
-        <Done title="Paid" actions={<><Button asChild><Link href={`${base}/payments/${String(r.paymentId)}`}>Open receipt #{String(r.paymentId)}</Link></Button><Button asChild variant="secondary"><Link href={`${base}/pay`}>Pay someone else</Link></Button></>}>
-          <p>The recipient has the funds now. Send them the receipt link as proof; it shows the amount, the reference and both wallets.</p>
+        <Done
+          title="Payment sent"
+          actions={
+            <>
+              <Button asChild><Link href={`${base}/payments/${String(r.paymentId)}`}>Open receipt #{String(r.paymentId)}</Link></Button>
+              <Button asChild variant="secondary"><Link href={`${base}/pay`}>Pay someone else</Link></Button>
+              <Button asChild variant="ghost"><Link href={`${base}/payments`}>All payments</Link></Button>
+            </>
+          }
+        >
+          <p>
+            {chosen ? <><span className="t-num font-[560] text-foreground">{amount} {chosen.symbol}</span> went to <span className="t-mono text-foreground">{short(to)}</span>. </> : null}
+            They have the money now. The receipt shows the amount, the reference and both wallets; send them the link as proof.
+          </p>
         </Done>
       )}
     />

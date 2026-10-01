@@ -5,13 +5,17 @@ import type { Address } from "viem"
 import { abis, addresses } from "@/lib/bitregalo/config"
 import { useProjects } from "@/lib/bitregalo/instances"
 import { useTenant } from "@/lib/bitregalo/tenant"
-import { Card, Addr, Pill, Row } from "@/components/app/ui"
+import { Addr, Card, Empty, LedgerRow, PageHead, Pill, RowsSkeleton } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
 
 export default function ProjectsPage() {
   const t = useTenant()
   const base = `/app/t/${t.id}`
   const projects = useProjects(t.instance)
+  // Same read as inside useProjects (wagmi shares it), so the page can tell "still loading" from "none yet".
+  const count = useReadContract({ address: t.instance, abi: abis.instance, functionName: "projectCount", query: { enabled: !!t.instance, refetchInterval: 20_000 } })
+  const expected = count.data as bigint | undefined
+  const loading = expected === undefined || (expected > 0n && projects.list.length === 0)
   const tokens = useReadContract({ address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "tenantTokens", args: [t.id] })
   const list = (tokens.data as Address[] | undefined) ?? []
   const info = useReadContracts({
@@ -29,22 +33,55 @@ export default function ProjectsPage() {
     const key = String(ti[1])
     byProject.set(key, [...(byProject.get(key) ?? []), { address: a, symbol: sym }])
   })
+  const rows = projects.list.slice().reverse()
+  const start = <Button asChild><Link href={`${base}/projects/new`}>Start a project</Link></Button>
+
   return (
-    <Card title={`Projects (${projects.list.length})`} action={<Button asChild size="sm"><Link href={`${base}/projects/new`}>Start a project</Link></Button>}>
-      {projects.list.length === 0 && <p className="text-sm text-muted-foreground">No projects yet. A project groups requests, listings and tokens under one name.</p>}
-      {projects.list.slice().reverse().map((p) => (
-        <Row key={String(p.id)}>
-          <span className="bq-mono text-xs text-muted-foreground">#{String(p.id)}</span>
-          <span className="min-w-0 text-sm">
-            <span className="font-medium">{p.label ?? <span className="text-muted-foreground">Hidden name</span>}</span>
-            <span className="text-muted-foreground"> · owner <Addr a={p.owner} /></span>
-            {(byProject.get(String(p.id)) ?? []).map((tk) => (
-              <Link key={tk.address} href={`${base}/tokens/${tk.address}`} className="bq-mono ml-2 rounded-full border border-primary/40 px-2 py-0.5 text-[10px] text-primary">{tk.symbol}</Link>
-            ))}
-          </span>
-          <Pill tone={p.active ? "good" : "muted"}>{p.active ? "active" : "closed"}</Pill>
-        </Row>
-      ))}
-    </Card>
+    <div>
+      <PageHead
+        title="Projects"
+        intro="A project is a name that groups related requests, listings and tokens: a building site, a programme, a product line."
+        action={start}
+      />
+      <Card flush title={rows.length > 0 ? `All projects (${rows.length})` : "All projects"}>
+        {loading && rows.length === 0 && <RowsSkeleton rows={2} />}
+        {!loading && rows.length === 0 && (
+          <Empty
+            title="No projects yet"
+            body="Start one to keep related work together. Requests and tokens can then be linked to it by name."
+            action={<Button asChild size="sm"><Link href={`${base}/projects/new`}>Start a project</Link></Button>}
+          />
+        )}
+        {rows.map((p) => {
+          const linked = byProject.get(String(p.id)) ?? []
+          return (
+            <LedgerRow
+              key={String(p.id)}
+              lead={p.label ? `#${String(p.id)}` : undefined}
+              title={p.label ?? `Project #${String(p.id)}`}
+              meta={
+                <>
+                  <span>{p.label ? null : "Name kept private · "}Owned by <Addr a={p.owner} /></span>
+                  {linked.length > 0 && (
+                    <span className="block">
+                      {linked.length === 1 ? "Token: " : "Tokens: "}
+                      {linked.map((tk, i) => (
+                        <span key={tk.address}>
+                          {i > 0 && ", "}
+                          <Link href={`${base}/tokens/${tk.address}`} className="relative z-10 -my-1.5 inline-block rounded-sm py-1.5 text-foreground underline decoration-border-strong decoration-1 underline-offset-[3px] transition-colors hover:decoration-foreground">
+                            {tk.symbol}
+                          </Link>
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </>
+              }
+              status={<Pill tone={p.active ? "accent" : "muted"}>{p.active ? "Active" : "Closed"}</Pill>}
+            />
+          )
+        })}
+      </Card>
+    </div>
   )
 }

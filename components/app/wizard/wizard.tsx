@@ -2,10 +2,11 @@
 import { useEffect, useRef, useState } from "react"
 import { useAccount } from "wagmi"
 import type { TransactionReceipt } from "viem"
-import { Check, Loader2, AlertCircle, CircleDashed } from "lucide-react"
+import { Check, Loader2, AlertCircle, Circle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ConnectButton } from "@/components/app/connect-button"
 import { useTx } from "@/lib/bitregalo/hooks"
+import { cn } from "@/lib/utils"
 
 /**
  * A wizard is a list of steps (what the person decides) and a plan (the transactions that make it real).
@@ -31,7 +32,8 @@ export type SummaryRow = { label: string; value: React.ReactNode }
 type Status = "idle" | "running" | "done" | "error"
 
 export function Wizard(props: {
-  eyebrow: string
+  /** Kept so callers compile; the title says what the wizard is. */
+  eyebrow?: string
   title: string
   intro: string
   steps: WizardStep[]
@@ -44,7 +46,7 @@ export function Wizard(props: {
   const { send } = useTx()
   const steps: WizardStep[] = [
     ...props.steps,
-    { id: "__review", title: "Review & sign", caption: "Nothing happens until you sign.", content: null, valid: true },
+    { id: "__review", title: "Review and sign", caption: "Nothing happens until you sign.", content: null, valid: true },
   ]
   const [index, setIndex] = useState(0)
   const [maxSeen, setMaxSeen] = useState(0)
@@ -87,43 +89,52 @@ export function Wizard(props: {
     setFinished(true)
   }
 
-  if (finished) return <div className="bq-rise mx-auto max-w-3xl">{props.done(results.current)}</div>
+  if (finished) return <div className="rise mx-auto max-w-2xl">{props.done(results.current)}</div>
 
   const doneCount = props.plan.filter((a) => status[a.id] === "done").length
+  const summary = props.summary && props.summary.length > 0 ? props.summary : null
+  // Laid out by the space the wizard actually has (a container query), not the window:
+  // inside a workspace the sidebar takes part of the screen.
   return (
-    <div className="mx-auto max-w-6xl">
-      <header className="mb-8">
-        <p className="bq-label">{props.eyebrow}</p>
-        <h1 className="bq-display mt-2 text-3xl font-semibold text-balance sm:text-4xl">{props.title}</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[color:var(--bq-ivory-dim)]">{props.intro}</p>
+    <div className="@container">
+      <header className="mb-7 max-w-[62ch]">
+        <h1 className="t-title">{props.title}</h1>
+        <p className="mt-2.5 text-base text-muted-foreground">{props.intro}</p>
       </header>
 
-      {/* compact progress on small screens */}
-      <div className="mb-4 lg:hidden">
-        <div className="bq-label">Step {index + 1} of {steps.length} · {current.title}</div>
-        <div className="mt-2 h-1 rounded-full bg-secondary"><div className="h-1 rounded-full bg-primary transition-all" style={{ width: `${((index + 1) / steps.length) * 100}%` }} /></div>
+      {/* Phones and tablets: where you are, in one line. */}
+      <div className="mb-5 @3xl:hidden">
+        <p className="text-sm text-muted-foreground">
+          Step {index + 1} of {steps.length}
+        </p>
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary" role="progressbar" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={index + 1} aria-label="Progress">
+          <div className="h-full origin-left rounded-full bg-gold-line transition-transform duration-300 ease-out" style={{ transform: `scaleX(${(index + 1) / steps.length})` }} />
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_280px]">
-        <nav aria-label="Wizard steps" className="hidden lg:block">
-          <ol className="sticky top-24 space-y-1">
+      <div className={cn("grid gap-x-8 gap-y-6", summary ? "@3xl:grid-cols-[12rem_minmax(0,1fr)] @4xl:grid-cols-[12rem_minmax(0,1fr)_15rem]" : "@3xl:grid-cols-[12rem_minmax(0,1fr)]")}>
+        <nav aria-label="Steps" className="hidden @3xl:block">
+          <ol className="sticky top-[calc(var(--topbar-h)+1.5rem)] space-y-0.5">
             {steps.map((s, i) => {
               const complete = i < index && (s.valid === undefined || s.valid === true)
               const reachable = i <= maxSeen || i <= index + 1
+              const here = i === index
               return (
                 <li key={s.id}>
                   <button
                     disabled={!reachable || running}
                     onClick={() => go(i)}
-                    className={`flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition ${i === index ? "bg-card" : "hover:bg-card/60"} disabled:cursor-not-allowed disabled:opacity-40`}
+                    aria-current={here ? "step" : undefined}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed",
+                      here ? "bg-secondary font-[600] text-foreground" : reachable ? "text-muted-foreground hover:bg-secondary/60 hover:text-foreground" : "text-subtle"
+                    )}
                   >
-                    <span className={`bq-mono mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px] ${i === index ? "border-primary text-primary" : complete ? "border-accent/60 bg-accent/10 text-accent" : "border-border text-muted-foreground"}`}>
-                      {complete ? <Check className="size-3.5" /> : String(i + 1).padStart(2, "0")}
+                    <span className={cn("t-num flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-[600]",
+                      here ? "border-gold-line bg-gold-fill text-gold" : complete ? "border-success bg-success-fill text-success" : "border-border")}>
+                      {complete ? <Check className="size-3.5" /> : i + 1}
                     </span>
-                    <span>
-                      <span className={`block text-sm ${i === index ? "text-foreground" : "text-[color:var(--bq-ivory-dim)]"}`}>{s.title}</span>
-                      {s.caption && i === index && <span className="mt-0.5 block text-xs text-muted-foreground">{s.caption}</span>}
-                    </span>
+                    {s.title}
                   </button>
                 </li>
               )
@@ -131,9 +142,8 @@ export function Wizard(props: {
           </ol>
         </nav>
 
-        <section key={current.id} className="bq-rise min-w-0 rounded-2xl border border-border bg-card/80 p-6 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.8)] sm:p-8">
-          <p className="bq-label">{String(index + 1).padStart(2, "0")} / {String(steps.length).padStart(2, "0")}</p>
-          <h2 className="bq-display mt-2 text-2xl font-semibold">{current.title}</h2>
+        <section key={current.id} className="rise min-w-0 rounded-xl border border-border bg-card px-5 py-6 sm:px-7 sm:py-7">
+          <h2 className="t-heading">{current.title}</h2>
           {current.caption && <p className="mt-1 text-sm text-muted-foreground">{current.caption}</p>}
 
           <div className="mt-6">
@@ -141,25 +151,35 @@ export function Wizard(props: {
             {isReview && (
               <div className="space-y-5">
                 {firstInvalid >= 0 && (
-                  <button onClick={() => go(firstInvalid)} className="flex w-full items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-left text-sm">
+                  <button onClick={() => go(firstInvalid)} className="flex w-full items-center gap-3 rounded-lg bg-destructive-fill px-4 py-3 text-left text-sm text-foreground">
                     <AlertCircle className="size-4 shrink-0 text-destructive" />
                     <span>Step {firstInvalid + 1} needs attention: {String(props.steps[firstInvalid].valid)}</span>
                   </button>
                 )}
+                {summary && (
+                  <dl className="grid gap-x-8 gap-y-3 rounded-lg bg-secondary px-4 py-4 sm:grid-cols-2 @4xl:hidden">
+                    {summary.map((r) => (
+                      <div key={r.label} className="min-w-0">
+                        <dt className="text-xs text-muted-foreground">{r.label}</dt>
+                        <dd className="mt-0.5 break-words text-sm font-[520]">{r.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
                 <div>
-                  <p className="text-sm text-[color:var(--bq-ivory-dim)]">
+                  <p className="text-sm text-muted-foreground">
                     Your wallet will ask you to sign {props.plan.length === 1 ? "one transaction" : `${props.plan.length} transactions`}, in this order. Each one is public on the chain once confirmed.
                   </p>
-                  <ol className="mt-4 divide-y divide-border rounded-xl border border-border">
+                  <ol className="mt-4 divide-y divide-border rounded-lg border border-border">
                     {props.plan.map((a, i) => {
                       const st = status[a.id] ?? "idle"
                       return (
                         <li key={a.id} className="flex items-start gap-3 px-4 py-3">
                           <span className="mt-0.5">
-                            {st === "done" ? <Check className="size-4 text-accent" /> : st === "running" ? <Loader2 className="size-4 animate-spin text-primary" /> : st === "error" ? <AlertCircle className="size-4 text-destructive" /> : <CircleDashed className="size-4 text-muted-foreground" />}
+                            {st === "done" ? <Check className="size-4 text-success" /> : st === "running" ? <Loader2 className="size-4 animate-spin text-gold" /> : st === "error" ? <AlertCircle className="size-4 text-destructive" /> : <Circle className="size-4 text-subtle" />}
                           </span>
                           <span className="min-w-0">
-                            <span className="block text-sm"><span className="bq-mono mr-2 text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>{a.label}</span>
+                            <span className="block text-sm font-[520]"><span className="t-num mr-2 text-subtle">{i + 1}.</span>{a.label}</span>
                             {a.detail && <span className="mt-0.5 block text-xs text-muted-foreground">{a.detail}</span>}
                           </span>
                         </li>
@@ -167,35 +187,33 @@ export function Wizard(props: {
                     })}
                   </ol>
                 </div>
-                {error && <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm">That step did not go through: {error}. Everything before it is already done; signing again continues from here.</p>}
+                {error && <p className="rounded-lg bg-destructive-fill px-4 py-3 text-sm">That step did not go through: {error}. Everything before it is already done; signing again continues from here.</p>}
               </div>
             )}
           </div>
 
-          <div className="mt-8 flex items-center justify-between gap-3 border-t border-border pt-5">
+          {blocker && <p className="mt-6 text-sm text-muted-foreground" role="status">{blocker}</p>}
+          <div className={cn("flex items-center justify-between gap-3 border-t border-border pt-5", blocker ? "mt-3" : "mt-8")}>
             <Button variant="ghost" disabled={index === 0 || running} onClick={() => go(index - 1)}>Back</Button>
-            <div className="flex items-center gap-3">
-              {blocker && <span className="hidden text-xs text-muted-foreground sm:inline">{blocker}</span>}
-              {!isReview && <Button disabled={!!blocker} onClick={() => go(index + 1)}>Continue</Button>}
-              {isReview && !isConnected && <ConnectButton />}
-              {isReview && isConnected && (
-                <Button disabled={running || firstInvalid >= 0} onClick={run}>
-                  {running ? `Signing ${doneCount + 1} of ${props.plan.length}…` : error ? "Continue signing" : props.signLabel}
-                </Button>
-              )}
-            </div>
+            {!isReview && <Button disabled={!!blocker} onClick={() => go(index + 1)}>Continue</Button>}
+            {isReview && !isConnected && <ConnectButton />}
+            {isReview && isConnected && (
+              <Button disabled={running || firstInvalid >= 0} onClick={run}>
+                {running ? `Signing ${doneCount + 1} of ${props.plan.length}…` : error ? "Continue signing" : props.signLabel}
+              </Button>
+            )}
           </div>
         </section>
 
-        {props.summary && props.summary.length > 0 && (
-          <aside className="hidden lg:block">
-            <div className="sticky top-24 rounded-2xl border border-border bg-card/50 p-5">
-              <p className="bq-label">Summary</p>
-              <dl className="mt-4 space-y-3">
-                {props.summary.map((r) => (
+        {summary && (
+          <aside className="hidden @4xl:block">
+            <div className="sticky top-[calc(var(--topbar-h)+1.5rem)]">
+              <h2 className="text-sm font-[600]">Summary</h2>
+              <dl className="mt-3 space-y-3 border-t border-border pt-3">
+                {summary.map((r) => (
                   <div key={r.label}>
                     <dt className="text-xs text-muted-foreground">{r.label}</dt>
-                    <dd className="mt-0.5 break-words text-sm">{r.value}</dd>
+                    <dd className="mt-0.5 break-words text-sm font-[520]">{r.value}</dd>
                   </div>
                 ))}
               </dl>

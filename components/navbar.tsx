@@ -1,115 +1,68 @@
 "use client"
-
-import type React from "react"
-
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { Menu } from "lucide-react"
+import { Logo } from "@/components/brand/logo"
+import { ThemeChoice, ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
-import Image from "next/image"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 
-const navLinks = [
-  { label: "How it works", href: "#lifecycle" },
-  { label: "Why BitRegalo", href: "#assurance" },
-  { label: "Use cases", href: "#use-cases" },
-  { label: "Protocol", href: "#protocol" },
-  { label: "Docs", href: "/protocols/escrow" },
-  { label: "App", href: "/app" },
+const LINKS = [
+  { label: "How it works", href: "/#how" },
+  { label: "Use cases", href: "/#use-cases" },
+  { label: "Protocol", href: "/protocols/escrow" },
+  { label: "Whitepaper", href: "/whitepaper" },
+  { label: "Contact", href: "/contact" },
 ]
 
+/** The header of the public site: the landing page and every document page. */
 export function Navbar() {
-  const [isOpen, setIsOpen] = useState(false)
-
-  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (!href.startsWith("#")) return
-    e.preventDefault()
-    const element = document.getElementById(href.slice(1))
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "start" })
-    }
-    setIsOpen(false)
-  }
-
+  const path = usePathname()
+  const [open, setOpen] = useState(false)
+  useEffect(() => setOpen(false), [path])
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Image
-              src="/BrandLogo copy.svg"
-              alt="BitRegalo"
-              width={135}
-              height={40}
-              className="h-10 w-auto flex-shrink-0"
-              priority
-            />
-          </Link>
-          <nav className="hidden items-center gap-6 md:flex">
-            {navLinks.map((link) =>
-              link.href.startsWith("#") ? (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  onClick={(e) => handleSmoothScroll(e, link.href)}
-                  className="cursor-pointer text-sm text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  {link.label}
-                </a>
-              ) : (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  {link.label}
-                </Link>
-              ),
-            )}
-          </nav>
+    <header className="pt-safe sticky top-0 z-40 border-b border-border bg-background/92 backdrop-blur-md">
+      <div className="mx-auto flex h-[var(--topbar-h)] max-w-6xl items-center gap-6 px-5 sm:px-8">
+        <Link href="/" className="flex shrink-0 items-center rounded-md outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring" aria-label="BitRegalo home">
+          <Logo className="h-[1.45rem] w-auto" title="" aria-hidden />
+        </Link>
+        <nav aria-label="Site" className="hidden items-center gap-1 md:flex">
+          {LINKS.map((l) => {
+            const active = !l.href.startsWith("/#") && path.startsWith(l.href)
+            return (
+              <Link key={l.href} href={l.href} aria-current={active ? "page" : undefined}
+                className={`flex h-10 items-center rounded-lg px-3 text-sm outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${active ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                {l.label}
+              </Link>
+            )
+          })}
+        </nav>
+        <div className="ml-auto flex items-center gap-1.5">
+          <ThemeToggle className="hidden md:flex" />
+          <Button asChild size="sm"><Link href="/app">Open the app</Link></Button>
+          <Sheet open={open} onOpenChange={setOpen}>
+            <button onClick={() => setOpen(true)} aria-label="Menu" className="flex size-11 items-center justify-center rounded-lg outline-none transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:hidden">
+              <Menu className="size-5" />
+            </button>
+            <SheetContent title="Menu">
+              <ul className="-mx-2">
+                {LINKS.map((l) => (
+                  <li key={l.href}>
+                    <Link href={l.href} onClick={() => setOpen(false)} className="flex min-h-12 items-center rounded-xl px-3 text-base font-[520] transition-colors hover:bg-secondary active:bg-secondary-hover">
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 border-t border-border pt-4">
+                <p className="mb-2 text-sm font-[560]">Appearance</p>
+                <ThemeChoice />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
-        <div className="hidden items-center gap-4 md:flex">
-          <Button size="sm" asChild>
-            <Link href="/contact">Contact us</Link>
-          </Button>
-        </div>
-        <button className="md:hidden" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle menu">
-          {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
       </div>
-      {isOpen && (
-        <div className="border-t border-border/40 bg-background md:hidden">
-          <nav className="flex flex-col gap-4 px-4 py-6">
-            {navLinks.map((link) =>
-              link.href.startsWith("#") ? (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  onClick={(e) => handleSmoothScroll(e, link.href)}
-                  className="cursor-pointer text-sm text-muted-foreground"
-                >
-                  {link.label}
-                </a>
-              ) : (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className="text-sm text-muted-foreground"
-                >
-                  {link.label}
-                </Link>
-              ),
-            )}
-            <div className="flex flex-col gap-2 pt-4">
-              <Button size="sm" asChild className="w-full">
-                <Link href="/contact" onClick={() => setIsOpen(false)}>
-                  Contact us
-                </Link>
-              </Button>
-            </div>
-          </nav>
-        </div>
-      )}
     </header>
   )
 }

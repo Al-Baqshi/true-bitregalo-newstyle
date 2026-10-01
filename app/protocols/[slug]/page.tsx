@@ -1,27 +1,37 @@
 import type { Metadata } from "next"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { Reveal } from "@/components/reveal"
+import { Fragment, type ReactNode } from "react"
 import Link from "next/link"
-import Image from "next/image"
-import { ArrowLeft, ArrowRight, FileCheck, Lock, PackageCheck } from "lucide-react"
+import { notFound } from "next/navigation"
+import { DocPage, DocTable } from "@/components/site/doc-page"
 
-interface TxRow {
+/*
+ * The three protocol references. Each one is the same document shape: a summary,
+ * the lifecycle as a numbered sequence, who may call what, a worked example, the
+ * guarantees, and the links to the other two.
+ */
+
+interface Row {
   label: string
-  value: string
-  accent?: boolean
+  value: ReactNode
+}
+
+interface State {
+  from: string
+  who: string
+  call: ReactNode
+  to: string
 }
 
 interface ProtocolDef {
   title: string
   shortName: string
-  tag: string
-  icon: typeof Lock
+  /** One phrase that places the protocol among the three. */
+  descriptor: string
   intro: string
-  image: string
-  imageAlt: string
-  originRows: TxRow[] | null
-  escrowRows: TxRow[]
+  /** The record the escrow is opened from, where there is one. */
+  originRows: Row[] | null
+  escrowRows: Row[]
+  states: State[]
   flow: { title: string; text: string }[]
   facts: { title: string; text: string }[]
 }
@@ -30,33 +40,35 @@ const protocols: Record<string, ProtocolDef> = {
   escrow: {
     title: "Escrow Protocol",
     shortName: "Escrow",
-    tag: "01 / The core primitive",
-    icon: Lock,
+    descriptor: "the core primitive",
     intro:
-      "A term-bound, non-custodial escrow. The issuer can only release. The receiver can only cancel. When the term ends untouched, the escrow returns to the issuer — automatically.",
-    image: "/assets/protocols/escrow.webp",
-    imageAlt: "An escrow cube of golden light flanked by the issuer's gold key and the receiver's silver key",
+      "A term-bound, non-custodial escrow. The issuer (in the app, the buyer) can only release. The receiver (the supplier) can only cancel, which hands the money back. When the term ends untouched, the escrow can only return to the issuer.",
     originRows: null,
     escrowRows: [
-      { label: "ESCROW", value: "#4821 · locked", accent: true },
-      { label: "ISSUER", value: "0x3d9f…8a2c" },
-      { label: "RECEIVER", value: "0x7e4b…c3f1" },
-      { label: "OPENED", value: "2026-08-05 · 14:32 UTC" },
-      { label: "TERM ENDS", value: "2026-09-04 · 14:32 UTC" },
-      { label: "ISSUER CAN", value: "release() → settles to receiver" },
-      { label: "RECEIVER CAN", value: "cancel() → returns to issuer" },
-      { label: "ON EXPIRY", value: "returns to issuer, automatically" },
+      { label: "Escrow", value: "#4821 · locked" },
+      { label: "Issuer", value: <code>0x3d9f…8a2c</code> },
+      { label: "Receiver", value: <code>0x7e4b…c3f1</code> },
+      { label: "Opened", value: "2026-08-05 · 14:32 UTC" },
+      { label: "Term ends", value: "2026-09-04 · 14:32 UTC" },
+      { label: "Issuer can", value: <><code>release()</code> → settles to receiver</> },
+      { label: "Receiver can", value: <><code>cancel()</code> → returns to issuer</> },
+      { label: "On expiry", value: "returns to issuer; anyone can trigger it" },
+    ],
+    states: [
+      { from: "Locked, within the term", who: "The issuer (buyer)", call: <code>release(id)</code>, to: "Released: settled to the receiver" },
+      { from: "Locked, within the term", who: "The receiver (supplier)", call: <code>cancel(id)</code>, to: "Cancelled (handed back): returned to the issuer" },
+      { from: "Locked, term ended", who: "Anyone", call: <code>expire(id)</code>, to: "Expired: returned to the issuer, the only place it can go" },
     ],
     flow: [
       { title: "Open", text: "The issuer opens an escrow, names the receiver, and sets the term." },
-      { title: "Lock", text: "The escrow locks on-chain — visible to both parties, spendable by neither." },
+      { title: "Lock", text: "The escrow locks on-chain: visible to both parties, spendable by neither." },
       {
         title: "Two keys",
         text: "The issuer can only release it forward. The receiver can only cancel it back. Neither can pull it toward themselves.",
       },
       {
         title: "Settle",
-        text: "Released, cancelled, or expired — every path ends with the escrow settled to the receiver or returned to the issuer.",
+        text: "Released, cancelled, or expired: every path ends with the escrow settled to the receiver or returned to the issuer.",
       },
     ],
     facts: [
@@ -70,7 +82,7 @@ const protocols: Record<string, ProtocolDef> = {
       },
       {
         title: "Automatic expiry",
-        text: "If nothing happens by the end of the term, the escrow returns to the issuer. No claims process, no intervention.",
+        text: "If nothing happens by the end of the term, the escrow can only return to the issuer. Anyone can trigger the return; no claims process, no intervention.",
       },
       {
         title: "Non-custodial",
@@ -81,40 +93,42 @@ const protocols: Record<string, ProtocolDef> = {
   rfp: {
     title: "Request for Proposal",
     shortName: "RFP",
-    tag: "02 / Tendering, on-chain",
-    icon: FileCheck,
+    descriptor: "tendering, on-chain",
     intro:
-      "You publish what you need. Providers respond with a time frame and a proposal amount. The proposal you accept becomes the escrow — committed before any work begins.",
-    image: "/assets/protocols/rfp.webp",
-    imageAlt: "Proposal documents of golden light converging into an escrow cube",
+      "You publish what you need. Providers respond with a time frame and a proposal amount. The proposal you accept becomes the escrow, committed before any work begins.",
     originRows: [
-      { label: "REQUEST", value: "#310 · scope + deadline published" },
-      { label: "PROPOSAL", value: "6-week time frame · accepted 2026-08-05" },
+      { label: "Request", value: "#310 · scope + deadline published" },
+      { label: "Proposal", value: "6-week time frame · accepted 2026-08-05" },
     ],
     escrowRows: [
-      { label: "ESCROW", value: "#4822 · opened from accepted proposal", accent: true },
-      { label: "ISSUER", value: "you (the requester)" },
-      { label: "RECEIVER", value: "the accepted provider" },
-      { label: "TERM ENDS", value: "2026-09-16 · end of proposed time frame" },
-      { label: "DELIVERED", value: "you release() → settles to provider" },
-      { label: "NOT DELIVERED", value: "term expires → returns to you" },
+      { label: "Escrow", value: "#4822 · opened from accepted proposal" },
+      { label: "Issuer", value: "you (the requester)" },
+      { label: "Receiver", value: "the accepted provider" },
+      { label: "Term ends", value: "2026-09-16 · end of proposed time frame" },
+      { label: "Delivered", value: <>you <code>release()</code> → settles to provider</> },
+      { label: "Not delivered", value: "term expires → returns to you" },
+    ],
+    states: [
+      { from: "Locked, within the time frame", who: "You, the requester (buyer)", call: <code>release(id)</code>, to: "Released: settled to the provider" },
+      { from: "Locked, within the time frame", who: "The provider (supplier)", call: <code>cancel(id)</code>, to: "Cancelled (handed back): returned to you" },
+      { from: "Locked, time frame ended", who: "Anyone", call: <code>expire(id)</code>, to: "Expired: returned to you, the only place it can go" },
     ],
     flow: [
-      { title: "Request", text: "You publish what you need — scope and deadline. In construction terms: the tender goes out." },
+      { title: "Request", text: "You publish what you need: scope and deadline. In construction terms, the tender goes out." },
       { title: "Propose", text: "Providers respond with a time frame and a proposal amount, recorded on-chain." },
       {
         title: "Commit",
-        text: "You accept one proposal. Its amount and time frame lock into an escrow — the provider starts work knowing the commitment is real.",
+        text: "You accept one proposal. Its amount and time frame lock into an escrow, and the provider starts work knowing the commitment is real.",
       },
       {
         title: "Deliver & release",
-        text: "Delivered within the time frame and to your satisfaction — you release. Not delivered — you simply don't, and at expiry the escrow returns to you.",
+        text: "Delivered within the time frame and to your satisfaction: you release. Not delivered: you simply don't, and at expiry the escrow returns to you.",
       },
     ],
     facts: [
       {
         title: "Tendering, auditable",
-        text: "Requests, proposals, and acceptance are recorded on-chain — every bidder can verify the process was fair.",
+        text: "Requests, proposals, and acceptance are recorded on-chain, so every bidder can verify the process was fair.",
       },
       {
         title: "The proposal becomes the escrow",
@@ -122,7 +136,7 @@ const protocols: Record<string, ProtocolDef> = {
       },
       {
         title: "A deadline with teeth",
-        text: "Miss the time frame and there is nothing to chase — the escrow expires back to the requester on its own.",
+        text: "Miss the time frame and there is nothing to chase: the escrow can only expire back to the requester.",
       },
       {
         title: "Built on the same escrow",
@@ -133,34 +147,36 @@ const protocols: Record<string, ProtocolDef> = {
   rts: {
     title: "Request to Supply",
     shortName: "RTS",
-    tag: "03 / Supply, on-chain",
-    icon: PackageCheck,
+    descriptor: "supply, on-chain",
     intro:
-      "The supplier states the time frame and escrow amount up front. Your confirmation opens the escrow. Delivery earns the release — and an undelivered order simply expires back to you.",
-    image: "/assets/protocols/rts.webp",
-    imageAlt: "A parcel of golden light travelling along a stream toward an escrow cube",
+      "The supplier states the time frame and escrow amount up front. Your confirmation opens the escrow. Delivery earns the release, and an undelivered order simply expires back to you.",
     originRows: [
-      { label: "LISTING", value: "#77 · time frame + escrow amount stated up front" },
-      { label: "CONFIRMED", value: "2026-08-05 · by the buyer" },
+      { label: "Listing", value: "#77 · time frame + escrow amount stated up front" },
+      { label: "Confirmed", value: "2026-08-05 · by the buyer" },
     ],
     escrowRows: [
-      { label: "ESCROW", value: "#4823 · opened on confirmation", accent: true },
-      { label: "ISSUER", value: "you (the buyer)" },
-      { label: "RECEIVER", value: "the supplier" },
-      { label: "TERM ENDS", value: "2026-08-19 · end of listed time frame" },
-      { label: "ON DELIVERY", value: "you release() → settles to supplier" },
-      { label: "NOT DELIVERED", value: "term expires → returns to you" },
+      { label: "Escrow", value: "#4823 · opened on confirmation" },
+      { label: "Issuer", value: "you (the buyer)" },
+      { label: "Receiver", value: "the supplier" },
+      { label: "Term ends", value: "2026-08-19 · end of listed time frame" },
+      { label: "On delivery", value: <>you <code>release()</code> → settles to supplier</> },
+      { label: "Not delivered", value: "term expires → returns to you" },
+    ],
+    states: [
+      { from: "Locked, within the time frame", who: "You, the buyer", call: <code>release(id)</code>, to: "Released: settled to the supplier" },
+      { from: "Locked, within the time frame", who: "The supplier", call: <code>cancel(id)</code>, to: "Cancelled (handed back): returned to you" },
+      { from: "Locked, time frame ended", who: "Anyone", call: <code>expire(id)</code>, to: "Expired: returned to you, the only place it can go" },
     ],
     flow: [
-      { title: "List", text: "A supplier lists what they deliver — with the time frame and escrow amount stated up front." },
+      { title: "List", text: "A supplier lists what they deliver, with the time frame and escrow amount stated up front." },
       {
         title: "Confirm",
-        text: "You confirm the listing. The stated amount locks into escrow for the stated time frame — that confirmation is the order.",
+        text: "You confirm the listing. The stated amount locks into escrow for the stated time frame: that confirmation is the order.",
       },
       { title: "Deliver", text: "The supplier ships knowing the escrow is committed and cannot be pulled back mid-way." },
       {
         title: "Release or return",
-        text: "You release on delivery. If nothing arrives, the escrow expires and returns to you — no refund process, no dispute queue.",
+        text: "You release on delivery. If nothing arrives, the escrow expires and returns to you. No refund process, no dispute queue.",
       },
     ],
     facts: [
@@ -174,7 +190,7 @@ const protocols: Record<string, ProtocolDef> = {
       },
       {
         title: "Release on delivery",
-        text: "Refund policies become unnecessary — an undelivered order expires back to the buyer by itself.",
+        text: "Refund policies become unnecessary: an undelivered order can only expire back to the buyer.",
       },
       {
         title: "Built on the same escrow",
@@ -186,6 +202,10 @@ const protocols: Record<string, ProtocolDef> = {
 
 const protocolOrder = ["escrow", "rfp", "rts"]
 
+const SIGNATURES = `release(id)   // issuer only: settles the escrow to the receiver
+cancel(id)    // receiver only: returns the escrow to the issuer
+expire(id)    // anyone, once the term has ended: returns the escrow to the issuer`
+
 export async function generateStaticParams() {
   return protocolOrder.map((slug) => ({ slug }))
 }
@@ -193,203 +213,113 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const protocol = protocols[slug]
-  if (!protocol) {
-    return { title: "Protocol Not Found — BitRegalo" }
-  }
-  return {
-    title: `${protocol.title} — BitRegalo`,
-    description: protocol.intro,
-  }
+  if (!protocol) return { title: "Protocol not found" }
+  return { title: protocol.title, description: protocol.intro }
 }
 
-function TxCard({ protocol }: { protocol: ProtocolDef }) {
+function Rows({ rows }: { rows: Row[] }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/60">
-      <div className="flex items-center justify-between border-b border-border/60 px-5 py-3 sm:px-6">
-        <span className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          {protocol.shortName} · example transaction
-        </span>
-        <span className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-accent">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
-          </span>
-          Locked
-        </span>
-      </div>
-      {protocol.originRows && (
-        <div className="border-b border-border/40 bg-background/40 px-5 py-4 sm:px-6">
-          {protocol.originRows.map((row) => (
-            <div key={row.label} className="grid grid-cols-[110px_1fr] gap-3 py-1 font-mono text-xs sm:grid-cols-[140px_1fr] sm:text-sm">
-              <span className="uppercase tracking-wider text-muted-foreground">{row.label}</span>
-              <span className="text-foreground/90">{row.value}</span>
-            </div>
-          ))}
-          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
-            ↓ becomes the escrow
-          </p>
-        </div>
-      )}
-      <div className="px-5 py-4 sm:px-6">
-        {protocol.escrowRows.map((row) => (
-          <div key={row.label} className="grid grid-cols-[110px_1fr] gap-3 py-1 font-mono text-xs sm:grid-cols-[140px_1fr] sm:text-sm">
-            <span className="uppercase tracking-wider text-muted-foreground">{row.label}</span>
-            <span className={row.accent ? "text-accent" : "text-foreground/90"}>{row.value}</span>
-          </div>
-        ))}
-      </div>
-    </div>
+    <>
+      {rows.map((row) => (
+        <tr key={row.label}>
+          <th scope="row" className="whitespace-nowrap pr-6 font-[560] text-muted-foreground">
+            {row.label}
+          </th>
+          <td>{row.value}</td>
+        </tr>
+      ))}
+    </>
   )
 }
 
 export default async function ProtocolPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const protocol = protocols[slug]
-  if (!protocol) {
-    return (
-      <main className="min-h-screen bg-background">
-        <Navbar />
-        <div className="pt-24 pb-16">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            <h1 className="font-mono text-4xl font-bold">Protocol Not Found</h1>
-          </div>
-        </div>
-        <Footer />
-      </main>
-    )
-  }
+  if (!protocol) notFound()
 
-  const currentIndex = protocolOrder.indexOf(slug)
-  const nextSlug = protocolOrder[(currentIndex + 1) % protocolOrder.length]
-  const nextProtocol = protocols[nextSlug]
+  const noun = protocol.shortName === "Escrow" ? "escrow" : protocol.shortName
+  const others = protocolOrder.filter((s) => s !== slug)
 
   return (
-    <main className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-24 pb-16">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-8 flex items-center justify-between gap-4">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Home
-            </Link>
-            <nav className="flex gap-2" aria-label="Protocols">
-              {protocolOrder.map((s) => {
-                const p = protocols[s]
-                const active = s === slug
-                return (
-                  <Link
-                    key={s}
-                    href={`/protocols/${s}`}
-                    className={`rounded-full border px-4 py-1.5 font-mono text-xs uppercase tracking-wider transition-colors sm:text-sm ${
-                      active
-                        ? "border-accent/60 bg-accent/10 text-accent"
-                        : "border-border/60 text-muted-foreground hover:border-border hover:text-foreground"
-                    }`}
-                  >
-                    {p.shortName}
-                  </Link>
-                )
-              })}
-            </nav>
-          </div>
+    <DocPage title={protocol.title} summary={protocol.intro}>
+      <h2 id="how-it-flows">How it flows</h2>
+      <ol>
+        {protocol.flow.map((step) => (
+          <li key={step.title}>
+            <strong>{step.title}.</strong> {step.text}
+          </li>
+        ))}
+      </ol>
 
-          <Reveal>
-            <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent sm:text-sm">{protocol.tag}</p>
-            <h1 className="mt-4 text-4xl font-bold tracking-tight text-balance sm:text-6xl">{protocol.title}</h1>
-            <p className="mt-6 max-w-2xl text-lg text-muted-foreground">{protocol.intro}</p>
-          </Reveal>
+      <h2 id="who-can-do-what">Who can do what</h2>
+      <p>
+        One escrow, two keys. Each key moves the escrow in one direction only, and the clock settles anything left
+        untouched.
+      </p>
+      <DocTable minWidth="40rem">
+        <thead>
+          <tr>
+            <th scope="col">State</th>
+            <th scope="col">Who may act</th>
+            <th scope="col">Call</th>
+            <th scope="col">What happens next</th>
+          </tr>
+        </thead>
+        <tbody>
+          {protocol.states.map((s, i) => (
+            <tr key={i}>
+              <td>{s.from}</td>
+              <td>{s.who}</td>
+              <td className="whitespace-nowrap">{s.call}</td>
+              <td>{s.to}</td>
+            </tr>
+          ))}
+        </tbody>
+      </DocTable>
+      <pre>
+        <code>{SIGNATURES}</code>
+      </pre>
 
-          <Reveal delay={150}>
-            <div className="relative mt-10 overflow-hidden rounded-3xl border border-border/60">
-              <Image
-                src={protocol.image}
-                alt={protocol.imageAlt}
-                width={2688}
-                height={1520}
-                priority
-                className="h-[260px] w-full object-cover sm:h-[380px]"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-            </div>
-          </Reveal>
+      <h2 id="the-transaction">The transaction</h2>
+      <p>
+        Every {noun} resolves to the same on-chain object: a term-bound escrow with one key on each side. This is
+        what both parties see for the entire term. The figures below are an example.
+      </p>
+      <DocTable>
+        {protocol.originRows && (
+          <tbody>
+            <Rows rows={protocol.originRows} />
+            <tr>
+              <th scope="colgroup" colSpan={2} className="pt-5 text-foreground">
+                Becomes the escrow
+              </th>
+            </tr>
+          </tbody>
+        )}
+        <tbody>
+          <Rows rows={protocol.escrowRows} />
+        </tbody>
+      </DocTable>
 
-          <section className="mt-16">
-            <Reveal>
-              <h2 className="font-mono text-sm uppercase tracking-[0.25em] text-accent">How it flows</h2>
-            </Reveal>
-            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {protocol.flow.map((step, i) => (
-                <Reveal key={step.title} delay={i * 100}>
-                  <div className="h-full rounded-2xl border border-border/60 bg-card/40 p-6">
-                    <p className="font-mono text-xs text-muted-foreground">STEP 0{i + 1}</p>
-                    <h3 className="mt-3 text-lg font-semibold">{step.title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">{step.text}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </section>
+      <h2 id="what-makes-it-hold">What makes it hold</h2>
+      {protocol.facts.map((fact) => (
+        <Fragment key={fact.title}>
+          <h3>{fact.title}</h3>
+          <p>{fact.text}</p>
+        </Fragment>
+      ))}
 
-          <section className="mt-16 grid items-start gap-10 lg:grid-cols-2">
-            <div>
-              <Reveal>
-                <h2 className="font-mono text-sm uppercase tracking-[0.25em] text-accent">The transaction</h2>
-                <p className="mt-4 max-w-md text-muted-foreground">
-                  Every {protocol.shortName === "Escrow" ? "escrow" : protocol.shortName} resolves to the same on-chain
-                  object: a term-bound escrow with one key on each side. This is what both parties see for the entire
-                  term.
-                </p>
-              </Reveal>
-            </div>
-            <Reveal delay={150}>
-              <TxCard protocol={protocol} />
-            </Reveal>
-          </section>
-
-          <section className="mt-16">
-            <Reveal>
-              <h2 className="font-mono text-sm uppercase tracking-[0.25em] text-accent">What makes it hold</h2>
-            </Reveal>
-            <div className="mt-8 grid gap-6 sm:grid-cols-2">
-              {protocol.facts.map((fact, i) => (
-                <Reveal key={fact.title} delay={i * 100}>
-                  <div className="h-full rounded-2xl border border-border/60 bg-card/40 p-6">
-                    <h3 className="text-lg font-semibold">{fact.title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">{fact.text}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </section>
-
-          <div className="mt-16 flex flex-col items-center justify-between gap-6 rounded-2xl border border-border/60 bg-card/40 p-8 sm:flex-row">
-            <div>
-              <p className="font-mono text-xs uppercase tracking-[0.25em] text-muted-foreground">Next protocol</p>
-              <p className="mt-1 text-lg font-semibold">{nextProtocol.title}</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link
-                href="/contact"
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Contact us
-              </Link>
-              <Link
-                href={`/protocols/${nextSlug}`}
-                className="inline-flex items-center gap-2 rounded-full border border-accent/60 bg-accent/10 px-5 py-2 font-mono text-sm uppercase tracking-wider text-accent transition-colors hover:bg-accent/20"
-              >
-                {nextProtocol.shortName}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-      <Footer />
-    </main>
+      <h2 id="other-protocols">Other protocols</h2>
+      <ul>
+        {others.map((s) => (
+          <li key={s}>
+            <Link href={`/protocols/${s}`}>{protocols[s].title}</Link>: {protocols[s].descriptor}.
+          </li>
+        ))}
+      </ul>
+      <p>
+        Questions about any of them? <Link href="/contact">Contact us</Link>.
+      </p>
+    </DocPage>
   )
 }

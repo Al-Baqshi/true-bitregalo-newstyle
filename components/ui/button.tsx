@@ -4,31 +4,33 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+/*
+ * Buttons give feedback on press (a 2% squeeze), keep a visible focus ring, and grow
+ * to a 44px touch target on phones and tablets. A disabled button is drawn with its
+ * own colours rather than faded, so its label stays readable.
+ */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg font-[560] outline-none transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:border-transparent disabled:bg-secondary disabled:text-subtle aria-disabled:pointer-events-none aria-disabled:border-transparent aria-disabled:bg-secondary aria-disabled:text-subtle [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[1.15em]",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
-        outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "bg-primary text-primary-foreground hover:bg-primary-hover",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary-hover",
+        outline: "border border-border-strong bg-transparent text-foreground hover:bg-secondary",
+        ghost: "text-foreground hover:bg-secondary",
+        destructive: "bg-destructive text-destructive-foreground hover:opacity-90",
+        link: "rounded-sm text-gold underline decoration-1 underline-offset-4 hover:decoration-2 active:scale-100",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        default: "h-10 px-4 text-sm pointer-coarse:h-11",
+        sm: "h-9 px-3 text-sm pointer-coarse:h-11 pointer-coarse:px-4",
+        lg: "h-12 px-6 text-base",
+        icon: "size-10 pointer-coarse:size-11",
+        "icon-sm": "size-9 pointer-coarse:size-11",
+        "icon-lg": "size-12",
       },
     },
+    compoundVariants: [{ variant: "link", class: "h-auto px-0 pointer-coarse:h-auto pointer-coarse:px-0" }],
     defaultVariants: {
       variant: "default",
       size: "default",

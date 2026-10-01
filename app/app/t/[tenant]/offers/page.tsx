@@ -1,11 +1,22 @@
 "use client"
+import Link from "next/link"
 import { Explainer } from "@/components/app/explain"
 import { useTenant } from "@/lib/bitregalo/tenant"
-import Link from "next/link"
 import { useOverview, useOffers } from "@/lib/bitregalo/hooks"
-import { Card, Addr, Pill, Row, Amount } from "@/components/app/ui"
-import { OFFER_STATE, SETTLEMENT } from "@/lib/bitregalo/config"
+import { useSettlementTokens } from "@/lib/bitregalo/instances"
+import { Addr, Amount, Card, Empty, LedgerRow, PageHead, Pill, RowsSkeleton } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
+
+/** The state of a listing, in a word. The contract says listed / confirmed; people say open / taken. */
+const STATE = ["—", "Open", "Taken", "Withdrawn"] as const
+const HOW = ["record only", "settles by direct payment", "settles by escrow"] as const
+
+function days(s: bigint) {
+  const n = Number(s)
+  if (n < 86400) return `${Math.max(1, Math.round(n / 3600))} h`
+  const d = Math.round((n / 86400) * 10) / 10
+  return `${d} ${d === 1 ? "day" : "days"}`
+}
 
 export default function OffersPage() {
   const t = useTenant()
@@ -13,19 +24,51 @@ export default function OffersPage() {
   const ov = useOverview()
   const count = ov.data?.[1]?.result as bigint | undefined
   const offers = useOffers(count)
+  const tokens = useSettlementTokens(t.instance, t.id)
+  const loading = ov.isLoading || offers.isLoading
+  const rows = offers.data.map((o, i) => (o ? { o, id: offers.ids[i] } : null)).filter((x) => x !== null)
+
   return (
     <div>
-      <Explainer id="listings" title="What is a listing?"><p>The other direction from a request: a supplier advertises what they sell, at a fixed price and delivery time, and a buyer takes it. A listing can be open to anyone or meant for one named buyer.</p><p>When someone takes it, the payment settles the way the supplier chose — recorded only, paid straight away, or held in escrow.</p></Explainer>
-    <Card title={`Listings (${count ?? "…"})`} action={<Button asChild size="sm"><Link href={`${base}/offers/new`}>Create a listing</Link></Button>}>
-      {offers.data.map((o, i) => o && (
-        <Row key={String(offers.ids[i])} href={`${base}/offers/${offers.ids[i]}`}>
-          <span className="font-mono text-xs text-muted-foreground">#{String(offers.ids[i])}</span>
-          <span className="text-sm">by <Addr a={o.supplier} /> · {o.settlement ? <Amount value={o.amount} /> : "no payment"} · {SETTLEMENT[o.settlement]} · {Number(o.timeframe) / 86400} d</span>
-          <Pill tone={o.state === 1 ? "accent" : o.state === 2 ? "good" : "muted"}>{OFFER_STATE[o.state]}</Pill>
-        </Row>
-      ))}
-      {offers.data.length === 0 && <p className="text-sm text-muted-foreground">No offers listed yet.</p>}
-    </Card>
+      <PageHead
+        title="Listings"
+        intro="Things suppliers in this workspace offer at a fixed price and delivery time. Take one, and the payment settles the way the supplier chose."
+        action={<Button asChild><Link href={`${base}/offers/new`}>Create a listing</Link></Button>}
+      />
+      <Explainer id="listings" title="What is a listing?">
+        <p>The other direction from a request: a supplier advertises what they sell, at a fixed price and delivery time, and a buyer takes it. A listing can be open to anyone or meant for one named buyer.</p>
+        <p>When someone takes it, the payment settles the way the supplier chose: <b>recorded only</b>, <b>paid straight away</b>, or <b>held in escrow</b>.</p>
+      </Explainer>
+
+      <Card flush title={count !== undefined ? `All listings (${String(count)})` : "All listings"}>
+        {loading && rows.length === 0 && <RowsSkeleton rows={3} />}
+        {!loading && rows.length === 0 && (
+          <Empty
+            title="No listings yet"
+            body="Create the first one: name your price and delivery time, and anyone with a wallet can take it."
+            action={<Button asChild size="sm"><Link href={`${base}/offers/new`}>Create a listing</Link></Button>}
+          />
+        )}
+        {rows.map(({ o, id }) => {
+          const token = tokens.all.find((x) => x.address.toLowerCase() === o.token.toLowerCase())
+          const forOne = !/^0x0{40}$/.test(o.designatedBuyer)
+          return (
+            <LedgerRow
+              key={String(id)}
+              href={`${base}/offers/${String(id)}`}
+              title={`Listing #${String(id)}`}
+              meta={
+                <>
+                  From <Addr a={o.supplier} /> · delivered within {days(o.timeframe)} · {HOW[o.settlement]}
+                  {forOne ? <> · for <Addr a={o.designatedBuyer} /></> : " · open to anyone"}
+                </>
+              }
+              amount={o.settlement ? <Amount value={o.amount} decimals={token?.decimals} symbol={token && token.symbol !== "…" ? token.symbol : undefined} /> : undefined}
+              status={<Pill tone={o.state === 1 ? "accent" : o.state === 2 ? "good" : "muted"}>{STATE[o.state] ?? "—"}</Pill>}
+            />
+          )
+        })}
+      </Card>
     </div>
   )
 }

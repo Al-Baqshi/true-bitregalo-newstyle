@@ -3,12 +3,14 @@ import { useState } from "react"
 import Link from "next/link"
 import { useAccount, useReadContracts } from "wagmi"
 import { formatUnits, isAddress, maxUint256, parseUnits, zeroAddress, type Address } from "viem"
-import { abis, addresses, short, STABLES } from "@/lib/bitregalo/config"
+import { abis, addresses, STABLES } from "@/lib/bitregalo/config"
 import { FaucetButton } from "@/components/app/faucet"
 import { encodeLabel, eventArgs, labelBytes, rememberInstanceName } from "@/lib/bitregalo/instances"
 import { Wizard, type WizardAction, type WizardStep } from "@/components/app/wizard/wizard"
 import { AddOn, Choice, Done, Label, Note, input } from "@/components/app/wizard/fields"
+import { Addr } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 type Purpose = "shop" | "procurement" | "marketplace" | "grants" | "records"
 type Pay = "0" | "1" | "2"
@@ -19,6 +21,13 @@ const PRESETS: Record<Purpose, { direct: boolean; escrow: boolean }> = {
   marketplace: { direct: true, escrow: true },
   grants: { direct: false, escrow: true },
   records: { direct: false, escrow: false },
+}
+const PURPOSE_NAME: Record<Purpose, string> = {
+  shop: "Sell and take payments",
+  procurement: "Tendering and procurement",
+  marketplace: "Marketplace and supply",
+  grants: "Grants and community funds",
+  records: "Records only",
 }
 
 export default function LaunchWizard() {
@@ -65,6 +74,7 @@ export default function LaunchWizard() {
   const baseTokens = [...stables, ...extraTokens] as Address[]
   const sym = tokenSymbol.trim().toUpperCase()
   const requestNeedsProject = withRequest && withProject
+  const launchFeeText = fee > 0n && feeStable ? `${formatUnits(fee, 18)} ${feeStable.symbol}` : null
 
   function choosePurpose(p: Purpose) {
     setPurpose(p)
@@ -75,62 +85,98 @@ export default function LaunchWizard() {
 
   const steps: WizardStep[] = [
     {
-      id: "basics", title: "Your workspace", caption: "Who it is for and what it will do.",
+      id: "basics", title: "Your workspace", caption: "What to call it and what it is for.",
       valid: !name.trim() ? "Give your workspace a name" : true,
       content: (
         <div className="grid gap-6">
-          <Label title="Name" hint="Shown to you in this app. The chain itself records addresses, not names.">
+          <Label title="Workspace name" hint="Shown in this app, in this browser. The public record holds addresses, not names.">
             <input className={input} value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Construction" autoFocus />
           </Label>
-          <div>
-            <p className="mb-3 text-sm">What will it be used for?</p>
+          <fieldset>
+            <legend className="t-label">What will it be used for?</legend>
+            <p className="mb-3 mt-0.5 text-sm text-muted-foreground">This sets sensible defaults for the next step. You can change them there.</p>
             <Choice<Purpose>
               value={purpose} onChange={choosePurpose} columns={2}
               options={[
-                { value: "shop", title: "Sell utilities & take payments", description: "Sell your own vouchers, credits or memberships for stablecoins into your treasury; take payments by link or QR." },
-                { value: "procurement", title: "Tendering & procurement", description: "Post requests, suppliers bid, the winner is paid through escrow." },
-                { value: "marketplace", title: "Marketplace & supply", description: "Suppliers list what they sell, buyers take it and pay and pay directly or by escrow." },
-                { value: "grants", title: "Grants & community funds", description: "Every payment tied to a request, visible to donors and members." },
-                { value: "records", title: "Records only", description: "Prove who asked, who won and when — no money on-chain." },
+                { value: "shop", title: PURPOSE_NAME.shop, description: "Sell your own vouchers, credits or memberships for stablecoins into your treasury, and take payments by link or QR code." },
+                { value: "procurement", title: PURPOSE_NAME.procurement, description: "Post requests, suppliers make offers, and the one you choose is paid through escrow." },
+                { value: "marketplace", title: PURPOSE_NAME.marketplace, description: "Suppliers list what they sell. Buyers take a listing and pay straight away or by escrow." },
+                { value: "grants", title: PURPOSE_NAME.grants, description: "Every payment is tied to a request that donors and members can see." },
+                { value: "records", title: PURPOSE_NAME.records, description: "Prove who asked, who was chosen and when. No money moves." },
               ]}
             />
-          </div>
+          </fieldset>
         </div>
       ),
     },
     {
-      id: "payments", title: "How people pay", caption: "Record-only is always on. Pick the paid options.",
-      valid: paid && baseTokens.length === 0 ? "Choose at least one currency" : paid && !(Number(serviceFee) >= 0) ? "Enter a service fee (0 is fine)" : true,
+      id: "payments", title: "How people pay", caption: "“Just record it” always works. Switch on the ways that move money.",
+      valid: paid && baseTokens.length === 0 ? "Choose at least one token people can pay in" : paid && !(Number(serviceFee) >= 0) ? "Enter a service fee (0 is fine)" : true,
       content: (
         <div className="grid gap-4">
-          <AddOn checked={escrow} onChange={setEscrow} title="Escrow" description="The payer's funds lock in your vault. Only the payer can release them to the payee; only the payee can cancel back; when the term ends they return to the payer." />
-          <AddOn checked={direct} onChange={setDirect} title="Direct payment" description="The payee is paid the moment a request is awarded or a listing is taken." />
+          <AddOn checked={escrow} onChange={setEscrow} title="Hold it safely (escrow)" description="The buyer's money is locked in your workspace's vault. Only the buyer can release it to the supplier, only the supplier can hand it back, and at the deadline it returns to the buyer by itself." />
+          <AddOn checked={direct} onChange={setDirect} title="Pay straight away (direct payment)" description="The supplier is paid from the buyer's wallet the moment an offer is chosen on a request or a listing is taken." />
+
           {paid && (
-            <div className="mt-2 grid gap-4 rounded-xl border border-border p-4">
-              <p className="bq-label">Currencies you accept</p>
+            <div className="mt-4 grid gap-4 border-t border-border pt-6">
+              <div>
+                <h3 className="t-subheading">Tokens you accept</h3>
+                <p className="mt-1 text-sm text-muted-foreground">The money people can pay in here. Switch each one on or off; you can add more later in Settings.</p>
+              </div>
               {STABLES.map((st) => (
-                <AddOn key={st.address} checked={stables.includes(st.address)} onChange={(v) => setStables(v ? [...stables, st.address] : stables.filter((x) => x !== st.address))} title={st.symbol} tag={st.faucet ? "free test money" : undefined} description={`${st.name} · ${short(st.address)}`} />
+                <AddOn key={st.address} checked={stables.includes(st.address)} onChange={(v) => setStables(v ? [...stables, st.address] : stables.filter((x) => x !== st.address))} title={st.symbol} tag={st.faucet ? "Free practice money" : undefined} description={st.name} />
               ))}
               {extraTokens.map((t) => (
-                <div key={t} className="flex items-center justify-between rounded-lg border border-border px-4 py-2.5 text-sm">
-                  <span className="bq-mono text-xs">{t}</span>
-                  <Button variant="ghost" size="sm" onClick={() => setExtraTokens(extraTokens.filter((x) => x !== t))}>Remove</Button>
+                <div key={t} className="flex items-center justify-between gap-3 rounded-xl border border-border-strong/60 px-4 py-2.5">
+                  <span className="min-w-0">
+                    <span className="block text-sm font-[560]">Added by address</span>
+                    <span className="t-mono block break-all text-sm text-muted-foreground">{t}</span>
+                  </span>
+                  <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setExtraTokens(extraTokens.filter((x) => x !== t))}>Remove</Button>
                 </div>
               ))}
-              <div className="flex gap-2">
-                <input className={`${input} bq-mono`} value={newToken} onChange={(e) => setNewToken(e.target.value)} placeholder="Add another token address (0x…)" />
-                <Button variant="secondary" disabled={!isAddress(newToken) || baseTokens.includes(newToken as Address)} onClick={() => { setExtraTokens([...extraTokens, newToken]); setNewToken("") }}>Add</Button>
+              <div>
+                <label htmlFor="launch-add-token" className="t-label mb-1.5 block">Add another token</label>
+                <div className="flex gap-2">
+                  <input id="launch-add-token" className={cn(input, "t-mono min-w-0 flex-1")} value={newToken} onChange={(e) => setNewToken(e.target.value)} placeholder="0x…" autoComplete="off" spellCheck={false} />
+                  <Button variant="secondary" className="shrink-0" disabled={!isAddress(newToken) || baseTokens.includes(newToken as Address)} onClick={() => { setExtraTokens([...extraTokens, newToken]); setNewToken("") }}>Add</Button>
+                </div>
+                <p className="mt-1.5 text-sm text-muted-foreground">Paste the address of any standard token (ERC-20).</p>
               </div>
-              <Label title="Service fee per payment" hint="In token units, charged to the payer on top of each payment and paid to the platform. It covers the gas BitRegalo sponsors.">
-                <input className={`${input} bq-mono max-w-40`} type="number" min="0" step="any" value={serviceFee} onChange={(e) => setServiceFee(e.target.value)} />
+              <Label title="Service fee per payment" hint="A flat amount added to each payment and paid by the buyer, in units of the token being paid. It goes to BitRegalo and covers the network costs it pays on users' behalf. The same figure applies to every token above.">
+                <input className={cn(input, "t-num max-w-40")} type="number" inputMode="decimal" min="0" step="any" value={serviceFee} onChange={(e) => setServiceFee(e.target.value)} />
               </Label>
             </div>
           )}
-          {!paid && <Note>No paid options: your workspace records requests, bids and awards without moving money. You can switch payments on later in Settings.</Note>}
-          {fee > 0n && feeStable && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border px-4 py-3 text-sm">
-              <span>Creating a workspace costs <b>{formatUnits(fee, 18)} {feeStable.symbol}</b>, paid to the platform when you sign.</span>
-              {feeStable.faucet && <FaucetButton />}
+
+          {!paid && <Note>With both switched off, your workspace records requests, offers and choices without moving money. You can switch payments on later in Settings.</Note>}
+
+          {(launchFeeText || (paid && feeBps !== undefined)) && (
+            <div className="mt-2 rounded-lg bg-secondary px-4 py-4">
+              <h3 className="t-subheading">What it costs</h3>
+              <dl className="mt-2 grid gap-2.5 text-sm">
+                {launchFeeText && (
+                  <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                    <div className="max-w-[48ch]">
+                      <dt className="font-[560]">To create the workspace</dt>
+                      <dd className="text-muted-foreground"><span className="t-num text-foreground">{launchFeeText}</span>, paid once to BitRegalo when you sign.</dd>
+                    </div>
+                    {feeStable?.faucet && <FaucetButton />}
+                  </div>
+                )}
+                {paid && feeBps !== undefined && (
+                  <div className="max-w-[48ch]">
+                    <dt className="font-[560]">On each payment, taken from the supplier</dt>
+                    <dd className="text-muted-foreground"><span className="t-num text-foreground">{Number(feeBps) / 100}%</span> platform fee, fixed for this workspace when it is created.</dd>
+                  </div>
+                )}
+                {paid && (
+                  <div className="max-w-[48ch]">
+                    <dt className="font-[560]">On each payment, paid by the buyer</dt>
+                    <dd className="text-muted-foreground">The service fee you set above, <span className="t-num text-foreground">{serviceFee || "0"}</span> per payment.</dd>
+                  </div>
+                )}
+              </dl>
             </div>
           )}
         </div>
@@ -140,15 +186,15 @@ export default function LaunchWizard() {
 
   if (escrow) {
     steps.push({
-      id: "rules", title: "Escrow rules", caption: "How long funds may stay locked.",
+      id: "rules", title: "Escrow rules", caption: "How long money may stay held in the vault.",
       valid: !(Number(minDays) > 0) || !(Number(maxDays) >= Number(minDays)) ? "The longest term must be at least the shortest" : Number(minDays) * 24 < 1 ? "The shortest term is at least one hour" : true,
       content: (
         <div className="grid gap-5 sm:grid-cols-2">
-          <Label title="Shortest term (days)" hint="How quickly a job can be due. Minimum one hour (0.05 days).">
-            <input className={`${input} bq-mono`} type="number" min="0.05" step="any" value={minDays} onChange={(e) => setMinDays(e.target.value)} />
+          <Label title="Shortest term (days)" hint="The soonest an escrow can be due. At least one hour, which is about 0.05 days.">
+            <input className={cn(input, "t-num")} type="number" inputMode="decimal" min="0.05" step="any" value={minDays} onChange={(e) => setMinDays(e.target.value)} />
           </Label>
-          <Label title="Longest term (days)" hint="After this, unreleased funds go back to the payer automatically.">
-            <input className={`${input} bq-mono`} type="number" min="1" value={maxDays} onChange={(e) => setMaxDays(e.target.value)} />
+          <Label title="Longest term (days)" hint="The longest an escrow can run. Money not released by then goes back to the buyer by itself.">
+            <input className={cn(input, "t-num")} type="number" inputMode="numeric" min="1" value={maxDays} onChange={(e) => setMaxDays(e.target.value)} />
           </Label>
         </div>
       ),
@@ -160,19 +206,19 @@ export default function LaunchWizard() {
     valid: true,
     content: (
       <div className="grid gap-3">
-        <AddOn checked={withProject} onChange={setWithProject} title="Start a project" description="A named project inside your workspace — a site, a programme, a product line. Requests and tokens can be linked to it." />
-        <AddOn checked={withToken} onChange={setWithToken} title="Launch your own token" description="Credits, vouchers or memberships for your workspace. It will be accepted as payment right away." />
-        <AddOn checked={withRequest} onChange={setWithRequest} title="Post your first request" description="Open a request for proposals so suppliers can start bidding the moment you are live." />
+        <AddOn checked={withProject} onChange={setWithProject} title="Start a project" description="A name that groups related work inside your workspace: a site, a programme, a product line. Requests and tokens can be linked to it." />
+        <AddOn checked={withToken} onChange={setWithToken} title="Create your own token" description={paid ? "Credits, vouchers or memberships for your workspace. It is accepted as payment straight away." : "Credits, vouchers or memberships for your workspace. With payments off, it is created but not accepted as payment yet."} />
+        <AddOn checked={withRequest} onChange={setWithRequest} title="Post your first request" description="Open a request so suppliers can start making offers as soon as your workspace is live." />
       </div>
     ),
   })
 
   if (withProject) {
     steps.push({
-      id: "project", title: "Your first project", caption: "Stored on-chain as readable text.",
+      id: "project", title: "Your first project", caption: "The name goes on the public record as readable text.",
       valid: !projectName.trim() ? "Name the project" : labelBytes(projectName) > 31 ? "At most 31 characters" : true,
       content: (
-        <Label title="Project name" counter={`${labelBytes(projectName)}/31`} hint="Everyone can read it, so keep it to what you'd put on a sign.">
+        <Label title="Project name" counter={`${labelBytes(projectName)}/31`} hint="Anyone can read it, so keep it to what you would put on a sign.">
           <input className={input} value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder="Riverside Stage 1" />
         </Label>
       ),
@@ -180,42 +226,54 @@ export default function LaunchWizard() {
   }
   if (withToken) {
     steps.push({
-      id: "token", title: "Your token", caption: "Minted to you; you can mint more later.",
+      id: "token", title: "Your token", caption: "The whole supply goes to your wallet. You can create more later.",
       valid: !tokenName.trim() ? "Name the token" : !sym ? "Add a symbol" : !(Number(tokenSupply) > 0) ? "Enter a supply" : true,
       content: (
         <div className="grid gap-5 sm:grid-cols-[1fr_160px]">
-          <Label title="Token name"><input className={input} value={tokenName} onChange={(e) => setTokenName(e.target.value)} placeholder={name ? `${name} Credits` : "Acme Credits"} /></Label>
-          <Label title="Symbol" counter={`${sym.length}/11`}><input className={`${input} bq-mono uppercase`} maxLength={11} value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value.replace(/[^a-zA-Z0-9]/g, ""))} placeholder="ACME" /></Label>
-          <div className="sm:col-span-2"><Label title="Initial supply" hint="Standard ERC-20, 18 decimals. You stay the minter; the full token wizard offers fixed and capped supplies too."><input className={`${input} bq-mono`} type="number" min="1" value={tokenSupply} onChange={(e) => setTokenSupply(e.target.value)} /></Label></div>
+          <Label title="Token name" hint="The full name, as people will see it."><input className={input} value={tokenName} onChange={(e) => setTokenName(e.target.value)} placeholder={name ? `${name} Credits` : "Acme Credits"} /></Label>
+          <Label title="Symbol" counter={`${sym.length}/11`} hint="Letters and numbers only."><input className={input} maxLength={11} value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())} placeholder="ACME" autoCapitalize="characters" autoComplete="off" spellCheck={false} /></Label>
+          <div className="sm:col-span-2">
+            <Label title="Initial supply" hint="How many exist to begin with. This is a standard token (ERC-20, 18 decimals) and you stay able to create more. For a fixed or capped supply, use “Create a token” after launch instead.">
+              <input className={cn(input, "t-num")} type="number" inputMode="numeric" min="1" value={tokenSupply} onChange={(e) => setTokenSupply(e.target.value)} />
+            </Label>
+          </div>
         </div>
       ),
     })
   }
   if (withRequest) {
     const settleOpts = [
-      { value: "2" as Pay, title: "Escrow", description: "Winner's pay locks until you release it.", disabled: escrow ? undefined : "Escrow is off for this workspace" },
-      { value: "1" as Pay, title: "Direct", description: "Winner is paid when you award.", disabled: direct ? undefined : "Direct payment is off" },
-      { value: "0" as Pay, title: "Record only", description: "No payment on-chain." },
+      { value: "2" as Pay, title: "Hold it safely", description: "The money is locked when you choose an offer and released when you say so.", disabled: escrow ? undefined : "Escrow is switched off for this workspace" },
+      { value: "1" as Pay, title: "Pay straight away", description: "The supplier is paid the moment you choose their offer.", disabled: direct ? undefined : "Direct payment is switched off for this workspace" },
+      { value: "0" as Pay, title: "Just record it", description: "No money moves." },
     ]
     steps.push({
-      id: "request", title: "Your first request", caption: "Suppliers bid on it; you award the best one.",
-      valid: !reqTitle.trim() ? "Say what you need" : labelBytes(reqTitle) > 31 ? "Keep the public title to 31 characters" : !(Number(reqDays) >= 1) ? "Bidding needs at least a day" : reqSettle !== "0" && reqCurrency === "usdt" && !useUsdt ? "USDT is not one of your currencies" : true,
+      id: "request", title: "Your first request", caption: "Suppliers answer with offers. You choose one.",
+      valid: !reqTitle.trim() ? "Say what you need" : labelBytes(reqTitle) > 31 ? "Keep the public title to 31 characters" : !(Number(reqDays) >= 1) ? "Offers need to stay open for at least a day" : reqSettle !== "0" && reqCurrency === "usdt" && !useUsdt ? "USDT is not one of the tokens you accept" : true,
       content: (
-        <div className="grid gap-5">
-          <Label title="What do you need?" counter={`${labelBytes(reqTitle)}/31`} hint="A short public title. Details can be shared with bidders off-chain.">
+        <div className="grid gap-6">
+          <Label title="What do you need?" counter={`${labelBytes(reqTitle)}/31`} hint="A short public title. Share the details with suppliers yourself.">
             <input className={input} value={reqTitle} onChange={(e) => setReqTitle(e.target.value)} placeholder="Scaffolding for 12 weeks" />
           </Label>
-          <Choice<Pay> value={reqSettle} onChange={setReqSettle} columns={3} options={settleOpts} />
+          <fieldset>
+            <legend className="t-label mb-2">How will the chosen supplier be paid?</legend>
+            <Choice<Pay> value={reqSettle} onChange={setReqSettle} options={settleOpts} />
+          </fieldset>
           {reqSettle !== "0" && (
-            <Choice<"usdt" | "own">
-              value={reqCurrency} onChange={setReqCurrency} columns={2}
-              options={[
-                { value: "usdt", title: "Pay in USDT", disabled: useUsdt ? undefined : "Not accepted by this workspace" },
-                { value: "own", title: `Pay in ${sym || "your token"}`, disabled: withToken ? undefined : "Switch on “Launch your own token”" },
-              ]}
-            />
+            <fieldset>
+              <legend className="t-label mb-2">In which token?</legend>
+              <Choice<"usdt" | "own">
+                value={reqCurrency} onChange={setReqCurrency} columns={2}
+                options={[
+                  { value: "usdt", title: "Pay in USDT", disabled: useUsdt ? undefined : "Not one of the tokens you accept" },
+                  { value: "own", title: `Pay in ${sym || "your token"}`, disabled: withToken ? undefined : "Switch on “Create your own token” first" },
+                ]}
+              />
+            </fieldset>
           )}
-          <Label title="Bidding stays open for (days)"><input className={`${input} bq-mono max-w-40`} type="number" min="1" value={reqDays} onChange={(e) => setReqDays(e.target.value)} /></Label>
+          <Label title="Offers stay open for (days)" hint="After this, no new offers can be made.">
+            <input className={cn(input, "t-num max-w-40")} type="number" inputMode="numeric" min="1" value={reqDays} onChange={(e) => setReqDays(e.target.value)} />
+          </Label>
         </div>
       ),
     })
@@ -224,10 +282,10 @@ export default function LaunchWizard() {
   // ── plan ────────────────────────────────────────────────────────────────
   const plan: WizardAction[] = []
   if (fee > 0n && deployFeeToken) {
-    plan.push({ id: "fee", label: `Approve the launch fee (${formatUnits(fee, 18)} ${feeStable?.symbol ?? "tokens"})`, run: async ({ tx }) => { await tx("Approve launch fee", { address: deployFeeToken, abi: abis.erc20, functionName: "approve", args: [addresses.mother, maxUint256] }) } })
+    plan.push({ id: "fee", label: `Approve the launch fee (${formatUnits(fee, 18)} ${feeStable?.symbol ?? "tokens"})`, detail: "Gives BitRegalo's platform contract permission to collect the fee from your wallet.", run: async ({ tx }) => { await tx("Approve launch fee", { address: deployFeeToken, abi: abis.erc20, functionName: "approve", args: [addresses.mother, maxUint256] }) } })
   }
   plan.push({
-    id: "launch", label: `Launch “${name.trim() || "your workspace"}”`, detail: "The mother contract deploys your marketplace and your vault, with you as admin.",
+    id: "launch", label: `Create “${name.trim() || "your workspace"}”`, detail: `BitRegalo's platform contract creates your workspace's own contracts, with you as admin.${launchFeeText ? ` The ${launchFeeText} fee is paid here.` : ""}`,
     run: async ({ tx, results }) => {
       const version = ((versionCount as bigint | undefined) ?? 1n) - 1n
       const r = await tx("Launch workspace", {
@@ -246,7 +304,7 @@ export default function LaunchWizard() {
   })
   if (withProject) {
     plan.push({
-      id: "project", label: `Create project “${projectName.trim()}”`,
+      id: "project", label: `Create the project “${projectName.trim()}”`, detail: "Its name goes on the public record.",
       run: async ({ tx, results }) => {
         const r = await tx("Create project", { address: results.instance as Address, abi: abis.instance, functionName: "createProject", args: [encodeLabel(projectName)] })
         results.projectId = eventArgs<{ projectId: bigint }>(r, abis.instance, "ProjectCreated").projectId
@@ -255,7 +313,7 @@ export default function LaunchWizard() {
   }
   if (withToken) {
     plan.push({
-      id: "token", label: `Create ${sym || "token"} — ${tokenName.trim() || "…"}`, detail: `${Number(tokenSupply || 0).toLocaleString()} minted to you${withProject ? ", linked to the project" : ""}`,
+      id: "token", label: `Create the token ${sym || "…"} (${tokenName.trim() || "…"})`, detail: `${Number(tokenSupply || 0).toLocaleString()} ${sym || "tokens"} go to your wallet${withProject ? ", linked to the project" : ""}.`,
       run: async ({ tx, results }) => {
         const r = await tx("Create token", {
           address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "createToken",
@@ -266,14 +324,14 @@ export default function LaunchWizard() {
     })
     if (paid) {
       plan.push({
-        id: "accept", label: `Accept ${sym || "your token"} as payment`,
+        id: "accept", label: `Accept ${sym || "your token"} as payment`, detail: `Requests and listings in your workspace can then be paid in ${sym || "it"}, with the same service fee.`,
         run: async ({ tx, results }) => { await tx("Accept as payment", { address: results.instance as Address, abi: abis.instance, functionName: "setToken", args: [results.token, true, 18, parseUnits(serviceFee || "0", 18)] }) },
       })
     }
   }
   if (withRequest) {
     plan.push({
-      id: "request", label: `Post request “${reqTitle.trim()}”`, detail: `${reqSettle === "2" ? "Escrow" : reqSettle === "1" ? "Direct payment" : "Record only"} · bidding open ${reqDays} days`,
+      id: "request", label: `Post the request “${reqTitle.trim()}”`, detail: `${reqSettle === "2" ? "Hold it safely (escrow)" : reqSettle === "1" ? "Pay straight away (direct payment)" : "Just record it"} · open for offers for ${reqDays} ${Number(reqDays) === 1 ? "day" : "days"}.`,
       run: async ({ tx, results }) => {
         const token = reqSettle === "0" ? zeroAddress : reqCurrency === "own" ? (results.token as Address) : addresses.usdt
         const deadline = BigInt(Math.floor(Date.now() / 1000) + Math.round(Number(reqDays) * 86400))
@@ -286,37 +344,49 @@ export default function LaunchWizard() {
     })
   }
 
+  const acceptedWords = paid
+    ? [
+        ...STABLES.filter((x) => stables.includes(x.address)).map((x) => x.symbol),
+        ...(extraTokens.length > 0 ? [`${extraTokens.length} added by address`] : []),
+        ...(withToken ? [sym || "your token"] : []),
+      ].join(", ") || "none yet"
+    : "None: nothing is paid here"
+  const origin = typeof window !== "undefined" ? window.location.origin : ""
+
   return (
     <Wizard
-      eyebrow="Create · workspace"
-      title="Create your own workspace"
-      intro="Your organisation's own shop, treasury, payments, requests, escrows and tokens — launched from the BitRegalo mother contract with the same audited rules as everyone else. You stay the admin, and the treasury is yours alone."
+      title="Create a workspace"
+      intro="Your organisation's own space for selling, taking payments, posting requests and holding money in escrow. It runs on its own contracts, under the same rules as every other workspace. You are the admin, and its treasury belongs to you alone."
       steps={steps}
       plan={plan}
       signLabel="Create workspace"
       summary={[
-        { label: "Instance", value: name.trim() || "—" },
-        { label: "Purpose", value: { shop: "Sell utilities & take payments", procurement: "Tendering & procurement", marketplace: "Marketplace & supply", grants: "Grants & community funds", records: "Records only" }[purpose] },
-        { label: "Payments", value: [escrow && "escrow", direct && "direct"].filter(Boolean).join(" + ") || "records only" },
-        { label: "Currencies", value: paid ? `${baseTokens.length}${withToken ? ` + ${sym || "own token"}` : ""}` : "—" },
-        { label: "Platform fee", value: feeBps !== undefined ? `${Number(feeBps) / 100}% per payment${paid ? ` + ${serviceFee} service` : ""}` : "…" },
-        { label: "Add-ons", value: [withProject && "project", withToken && "token", withRequest && "first request"].filter(Boolean).join(", ") || "none" },
-        { label: "Signatures", value: String(plan.length) },
+        { label: "Workspace", value: name.trim() || "—" },
+        { label: "Used for", value: PURPOSE_NAME[purpose] },
+        { label: "Ways to settle", value: ["Just record it", escrow && "hold it safely (escrow)", direct && "pay straight away"].filter(Boolean).join(", ") },
+        { label: "Accepted tokens", value: acceptedWords },
+        ...(escrow ? [{ label: "Escrow term", value: `${minDays || "…"} to ${maxDays || "…"} days` }] : []),
+        { label: "Platform fee", value: feeBps !== undefined ? `${Number(feeBps) / 100}% of each payment, from the supplier` : "…" },
+        ...(paid ? [{ label: "Service fee", value: `${serviceFee || "0"} per payment, from the buyer` }] : []),
+        ...(launchFeeText ? [{ label: "One-off cost", value: `${launchFeeText} to create it` }] : []),
+        { label: "Extras", value: [withProject && "a project", withToken && "a token", withRequest && "a first request"].filter(Boolean).join(", ") || "none" },
+        { label: "Transactions to sign", value: String(plan.length) },
       ]}
       done={(r) => (
         <Done
           title={`${name.trim()} is live`}
           actions={
             <>
-              <Button asChild><Link href={`/app/t/${String(r.tenantId)}`}>Open my workspace</Link></Button>
-              <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/sales/new`}>Sell a utility</Link></Button>
-              {r.rfpId !== undefined && <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/rfps/${String(r.rfpId)}`}>View my request</Link></Button>}
+              <Button asChild><Link href={`/app/t/${String(r.tenantId)}`}>Open your workspace</Link></Button>
+              <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/sales/new`}>Sell in the shop</Link></Button>
+              {r.rfpId !== undefined && <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/rfps/${String(r.rfpId)}`}>View your request</Link></Button>}
               {r.token !== undefined && <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/tokens/${String(r.token)}`}>View {sym}</Link></Button>}
             </>
           }
         >
-          <p>Workspace <b className="text-foreground">#{String(r.tenantId)}</b> has its own marketplace contract (<span className="bq-mono">{short(String(r.instance))}</span>), vault (<span className="bq-mono">{short(String(r.vault))}</span>) and treasury. You are its admin and the treasury&apos;s owner.</p>
-          <p>Share <span className="bq-mono text-foreground">/app/t/{String(r.tenantId)}</span> with your suppliers and customers — anyone with a wallet can bid, list offers and get paid through it.</p>
+          <p>Workspace #{String(r.tenantId)} has its own records contract (<Addr a={String(r.instance)} />), vault (<Addr a={String(r.vault)} />) and treasury. You are its admin and the treasury&apos;s owner.</p>
+          <p>Next, open your workspace: everything you set up is there. Share its link with suppliers and customers; anyone with a wallet can make offers, create listings and get paid through it.</p>
+          <p className="t-mono break-all text-sm text-foreground">{origin}/app/t/{String(r.tenantId)}</p>
         </Done>
       )}
     />

@@ -14,6 +14,7 @@ type ProjectMode = "none" | "existing" | "new"
 type Recipient = { to: string; amount: string }
 
 const isNum = (s: string) => s.trim() !== "" && Number(s) >= 0 && Number.isFinite(Number(s))
+const addressAttrs = { autoCapitalize: "none", autoCorrect: "off", spellCheck: false } as const
 
 export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigint; initialTenant?: string }) {
   const { address } = useAccount()
@@ -41,22 +42,23 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
   const myProjects = projects.list.filter((p) => p.active && !!address && p.owner.toLowerCase() === address.toLowerCase())
   const distributed = distribute ? recipients.filter((r) => r.to || r.amount) : []
   const distributedTotal = distributed.reduce((a, r) => a + (isNum(r.amount) ? Number(r.amount) : 0), 0)
+  const modeWord = mode === "fixed" ? "fixed supply" : mode === "capped" ? "capped supply" : "open supply"
 
   const steps: WizardStep[] = [
     {
       id: "identity",
       title: "Name your token",
       caption: "What people will see in their wallets.",
-      valid: !name.trim() ? "Give it a name" : !sym ? "Add a symbol" : sym.length > 11 ? "Symbol is at most 11 characters" : true,
+      valid: !name.trim() ? "Give it a name" : !sym ? "Add a symbol" : sym.length > 11 ? "The symbol is at most 11 characters" : true,
       content: (
         <div className="grid gap-5">
-          <Label title="Token name" hint="e.g. Acme Site Credits, Riverside Garden Vouchers, Guild Membership.">
+          <Label title="Token name" hint="For example Acme Site Credits, Riverside Garden Vouchers or Guild Membership.">
             <input className={input} value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Site Credits" autoFocus />
           </Label>
-          <Label title="Symbol" hint={suggested && !symbol ? <>Suggestion: <button type="button" className="text-primary underline-offset-2 hover:underline" onClick={() => setSymbol(suggested)}>{suggested}</button></> : "Short ticker, letters and numbers."} counter={`${sym.length}/11`}>
-            <input className={`${input} bq-mono uppercase`} value={symbol} maxLength={11} onChange={(e) => setSymbol(e.target.value.replace(/[^a-zA-Z0-9]/g, ""))} placeholder="ACME" />
+          <Label title="Symbol" hint={suggested && !symbol ? <>A short ticker in letters and numbers. Suggestion: <button type="button" className="rounded-sm text-gold underline decoration-1 underline-offset-[3px] hover:decoration-2" onClick={() => setSymbol(suggested)}>{suggested}</button></> : "A short ticker in letters and numbers, shown in capitals."} counter={`${sym.length}/11`}>
+            <input className={`${input} t-mono uppercase`} value={symbol} maxLength={11} onChange={(e) => setSymbol(e.target.value.replace(/[^a-zA-Z0-9]/g, ""))} placeholder="ACME" {...addressAttrs} />
           </Label>
-          <Note>Every token is a clone of one audited contract: standard ERC-20, 18 decimals, no transfer fees and no hidden behaviour — which is also what lets an escrow vault accept it.</Note>
+          <Note>Every token is a copy of the same standard contract: ERC-20, 18 decimals, no transfer fees and no hidden behaviour. That is also what lets an escrow vault hold it.</Note>
         </div>
       ),
     },
@@ -64,24 +66,24 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
       id: "supply",
       title: "Supply",
       caption: "How many exist, and whether more can be made.",
-      valid: !isNum(supply) ? "Enter an initial supply" : mode === "capped" && (!isNum(cap) || Number(cap) < Number(supply)) ? "The cap must be at least the initial supply" : mode === "fixed" && Number(supply) <= 0 ? "A fixed supply must be above zero" : true,
+      valid: !isNum(supply) ? "Enter an initial supply" : mode === "capped" && (!isNum(cap) || Number(cap) < Number(supply)) ? "The maximum must be at least the initial supply" : mode === "fixed" && Number(supply) <= 0 ? "A fixed supply must be above zero" : true,
       content: (
         <div className="grid gap-5">
-          <Label title="Initial supply" hint="Minted to your wallet when the token is created.">
-            <input className={`${input} bq-mono`} type="number" min="0" value={supply} onChange={(e) => setSupply(e.target.value)} />
+          <Label title="Initial supply" hint="Created in your wallet the moment the token exists.">
+            <input className={`${input} t-num`} type="number" inputMode="decimal" min="0" value={supply} onChange={(e) => setSupply(e.target.value)} />
           </Label>
           <Choice<Supply>
             value={mode}
             onChange={setMode}
             options={[
-              { value: "fixed", title: "Fixed supply", description: "Mint once, then minting is switched off forever. Nobody — including you — can create more." },
-              { value: "capped", title: "Capped", description: "You can mint more later, up to a hard limit written into the contract." },
-              { value: "open", title: "Open", description: "You can mint more whenever you need to, e.g. credits you top up." },
+              { value: "fixed", title: "Fixed supply", description: "Created once, then minting is switched off for good. Nobody, including you, can create more." },
+              { value: "capped", title: "Capped supply", description: "You can create more later, up to a maximum written into the contract." },
+              { value: "open", title: "Open supply", description: "You can create more whenever you need to, for example credits you top up." },
             ]}
           />
           {mode === "capped" && (
-            <Label title="Maximum supply">
-              <input className={`${input} bq-mono`} type="number" min="0" value={cap} onChange={(e) => setCap(e.target.value)} />
+            <Label title="Maximum supply" hint="The most that can ever exist. It cannot be raised later.">
+              <input className={`${input} t-num`} type="number" inputMode="decimal" min="0" value={cap} onChange={(e) => setCap(e.target.value)} />
             </Label>
           )}
         </div>
@@ -89,23 +91,23 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
     },
     {
       id: "link",
-      title: "Link it",
-      caption: "Tokens belong to a workspace, and optionally to one of its projects.",
+      title: "Where it belongs",
+      caption: "A token belongs to a workspace and, if you like, to one of its projects.",
       valid: !inst ? "Choose a workspace" : projectMode === "existing" && !projectId ? "Pick a project" : projectMode === "new" && !projectName.trim() ? "Name the new project" : projectMode === "new" && labelBytes(projectName) > 31 ? "Project names are at most 31 characters" : true,
       content: (
         <div className="grid gap-5">
           {fixedTenant === undefined ? (
-            <Label title="Instance" hint="The company or community this token serves.">
+            <Label title="Workspace" hint="The organisation or community this token serves.">
               <select className={input} value={tenant} onChange={(e) => { setTenant(e.target.value); setProjectId("") }}>
                 {instances.list.map((i) => (
                   <option key={String(i.id)} value={String(i.id)}>
-                    #{String(i.id)} · {instanceName(i.id) ?? (i.id === 0n ? "BitRegalo public template" : "Instance")}{address && i.admin.toLowerCase() === address.toLowerCase() ? " · you are admin" : ""}
+                    #{String(i.id)} · {instanceName(i.id) ?? (i.id === 0n ? "Public workspace" : "Workspace")}{address && i.admin.toLowerCase() === address.toLowerCase() ? " · you are the admin" : ""}
                   </option>
                 ))}
               </select>
             </Label>
           ) : (
-            <Note>This token will belong to instance #{String(fixedTenant)}.</Note>
+            <Note>This token will belong to workspace #{String(fixedTenant)}.</Note>
           )}
           <Choice<ProjectMode>
             value={projectMode}
@@ -113,20 +115,20 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
             columns={3}
             options={[
               { value: "none", title: "No project", description: "The token serves the whole workspace." },
-              { value: "existing", title: "Existing project", description: "One of your projects.", disabled: myProjects.length === 0 ? "You have no projects here yet" : undefined },
-              { value: "new", title: "New project", description: "Create one now and link it." },
+              { value: "existing", title: "An existing project", description: "One of your projects here.", disabled: myProjects.length === 0 ? "You have no projects here yet" : undefined },
+              { value: "new", title: "A new project", description: "Create one now and link the token to it." },
             ]}
           />
           {projectMode === "existing" && (
-            <Label title="Project">
+            <Label title="Project" hint="Only projects you own are listed.">
               <select className={input} value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-                <option value="">Choose…</option>
-                {myProjects.map((p) => <option key={String(p.id)} value={String(p.id)}>#{String(p.id)} · {p.label ?? "private project"}</option>)}
+                <option value="">Choose a project</option>
+                {myProjects.map((p) => <option key={String(p.id)} value={String(p.id)}>#{String(p.id)} · {p.label ?? "Private project"}</option>)}
               </select>
             </Label>
           )}
           {projectMode === "new" && (
-            <Label title="Project name" hint="Stored on-chain as readable text, so everyone sees what the token is for." counter={`${labelBytes(projectName)}/31`}>
+            <Label title="Project name" hint="Stored on the chain as readable text, so everyone sees what the token is for." counter={`${labelBytes(projectName)}/31`}>
               <input className={input} value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder="Riverside community garden" />
             </Label>
           )}
@@ -144,27 +146,32 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
             checked={accept && isAdmin}
             onChange={(v) => setAccept(v)}
             title="Accept it as payment in this workspace"
-            tag={isAdmin ? undefined : "admin only"}
-            description={isAdmin ? "Requests, offers and escrows in your workspace can then be paid in this token." : "Only the workspace admin can do this. Ask them after the token is created."}
+            tag={isAdmin ? undefined : "Admin only"}
+            description={isAdmin ? "Requests, listings and escrows in your workspace can then be paid in this token." : "Only the workspace admin can do this. Ask them once the token exists."}
           />
           {accept && isAdmin && (
             <div className="pl-2 sm:pl-14">
-              <Label title={`Service fee per settlement (${sym || "tokens"})`} hint="Charged to the payer on top of each payment, paid into the platform treasury.">
-                <input className={`${input} bq-mono`} type="number" min="0" step="any" value={fee} onChange={(e) => setFee(e.target.value)} />
+              <Label title={`Service fee per payment (${sym || "tokens"})`} hint="Added to each payment, paid by the payer, and goes to the platform. 0 is fine.">
+                <input className={`${input} t-num`} type="number" inputMode="decimal" min="0" step="any" value={fee} onChange={(e) => setFee(e.target.value)} />
               </Label>
             </div>
           )}
-          <AddOn checked={distribute} onChange={setDistribute} title="Send tokens to people" description="Hand out part of the supply right away — to a team, suppliers, or members." />
+          <AddOn checked={distribute} onChange={setDistribute} title="Send tokens to people" description="Hand out part of the initial supply straight away: to a team, suppliers or members." />
           {distribute && (
-            <div className="space-y-2 pl-2 sm:pl-14">
+            <div className="space-y-4 pl-2 sm:pl-14">
               {recipients.map((r, i) => (
-                <div key={i} className="grid grid-cols-[1fr_120px_auto] gap-2">
-                  <input className={`${input} bq-mono`} placeholder="0x… address" value={r.to} onChange={(e) => setRecipients(recipients.map((x, j) => (j === i ? { ...x, to: e.target.value } : x)))} />
-                  <input className={`${input} bq-mono`} placeholder="amount" type="number" min="0" value={r.amount} onChange={(e) => setRecipients(recipients.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))} />
+                <div key={i} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_auto] sm:items-end">
+                  <Label title={`Recipient ${i + 1}`}>
+                    <input className={`${input} t-mono`} placeholder="0x…" value={r.to} onChange={(e) => setRecipients(recipients.map((x, j) => (j === i ? { ...x, to: e.target.value } : x)))} {...addressAttrs} />
+                  </Label>
+                  <Label title="Amount">
+                    <input className={`${input} t-num`} placeholder="0" type="number" inputMode="decimal" min="0" value={r.amount} onChange={(e) => setRecipients(recipients.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))} />
+                  </Label>
                   <Button variant="ghost" type="button" onClick={() => setRecipients(recipients.length > 1 ? recipients.filter((_, j) => j !== i) : [{ to: "", amount: "" }])}>Remove</Button>
                 </div>
               ))}
-              <Button variant="secondary" size="sm" type="button" onClick={() => setRecipients([...recipients, { to: "", amount: "" }])}>Add recipient</Button>
+              <p className="text-sm text-muted-foreground">Each wallet receives its amount out of the initial supply{sym ? ` of ${sym}` : ""}.</p>
+              <Button variant="secondary" size="sm" type="button" onClick={() => setRecipients([...recipients, { to: "", amount: "" }])}>Add another recipient</Button>
             </div>
           )}
         </div>
@@ -175,7 +182,7 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
   const plan: WizardAction[] = []
   if (projectMode === "new") {
     plan.push({
-      id: "project", label: `Create project “${projectName.trim()}”`, detail: `On workspace #${tenant}`,
+      id: "project", label: `Create the project “${projectName.trim()}”`, detail: `In workspace #${tenant}`,
       run: async ({ tx, results }) => {
         const r = await tx("Create project", { address: inst!.instance, abi: abis.instance, functionName: "createProject", args: [encodeLabel(projectName)] })
         results.projectId = eventArgs<{ projectId: bigint }>(r, abis.instance, "ProjectCreated").projectId
@@ -183,7 +190,7 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
     })
   }
   plan.push({
-    id: "token", label: `Create ${sym || "token"} — ${name.trim() || "…"}`, detail: `${Number(supply || 0).toLocaleString()} minted to you · ${mode === "fixed" ? "fixed supply" : mode === "capped" ? `cap ${Number(cap || 0).toLocaleString()}` : "open supply"}`,
+    id: "token", label: `Create ${sym || "the token"}: ${name.trim() || "…"}`, detail: `${Number(supply || 0).toLocaleString()} created in your wallet · ${mode === "capped" ? `maximum ${Number(cap || 0).toLocaleString()}` : modeWord}`,
     run: async ({ tx, results }) => {
       const pid = projectMode === "new" ? (results.projectId as bigint) : projectMode === "existing" ? BigInt(projectId) : 0n
       const r = await tx("Create token", {
@@ -195,7 +202,7 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
   })
   if (accept && isAdmin) {
     plan.push({
-      id: "accept", label: `Accept ${sym || "the token"} as payment`, detail: `Service fee ${fee || 0} ${sym} per settlement`,
+      id: "accept", label: `Accept ${sym || "the token"} as payment`, detail: `Service fee ${fee || 0} ${sym} per payment`,
       run: async ({ tx, results }) => {
         await tx("Accept as payment", { address: inst!.instance, abi: abis.instance, functionName: "setToken", args: [results.token, true, 18, parseUnits(fee || "0", 18)] })
       },
@@ -211,7 +218,7 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
   })
   if (mode === "fixed") {
     plan.push({
-      id: "fix", label: "Switch minting off forever", detail: "Gives up the minter role, so the supply can never change.",
+      id: "fix", label: "Switch minting off for good", detail: "Gives up the right to create more, so the supply can never change.",
       run: async ({ tx, results }) => {
         await tx("Fix supply", { address: results.token as Address, abi: abis.utilityToken, functionName: "renounceOwnership", args: [] })
       },
@@ -220,32 +227,31 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
 
   return (
     <Wizard
-      eyebrow="Create · token"
-      title="Create a token for your project"
-      intro="Launch a named ERC-20 — credits, vouchers, memberships, loyalty points — tied to your workspace and, if you like, one project. It takes a few minutes and a few signatures."
+      title="Create a token"
+      intro="A token is a credit your workspace issues: vouchers, site credits, memberships, loyalty points. It belongs to a workspace and, if you like, to one project. A few questions and a few signatures."
       steps={steps}
       plan={plan}
       signLabel="Create token"
       summary={[
         { label: "Token", value: name.trim() ? `${name.trim()} (${sym || "…"})` : "—" },
-        { label: "Supply", value: `${Number(supply || 0).toLocaleString()} · ${mode}` },
-        { label: "Instance", value: `#${tenant}${inst && isAdmin ? " · you are admin" : ""}` },
-        { label: "Project", value: projectMode === "none" ? "none" : projectMode === "new" ? projectName || "new" : `#${projectId || "…"}` },
-        { label: "Accepted as payment", value: accept && isAdmin ? "yes" : "no" },
+        { label: "Supply", value: `${Number(supply || 0).toLocaleString()} · ${modeWord}` },
+        { label: "Workspace", value: `#${tenant}${inst && isAdmin ? " · you are the admin" : ""}` },
+        { label: "Project", value: projectMode === "none" ? "None" : projectMode === "new" ? projectName || "New project" : `#${projectId || "…"}` },
+        { label: "Accepted as payment", value: accept && isAdmin ? "Yes" : "No" },
         { label: "Signatures", value: String(plan.length) },
       ]}
       done={(results) => (
         <Done
-          title={`${sym} is live`}
+          title={`${sym} exists`}
           actions={
             <>
-              <Button asChild><Link href={`/app/t/${tenant}/tokens/${results.token as string}`}>Open token</Link></Button>
+              <Button asChild><Link href={`/app/t/${tenant}/tokens/${results.token as string}`}>Open the token</Link></Button>
               <Button asChild variant="secondary"><Link href={`/app/t/${tenant}/rfps/new`}>Post a request paid in {sym}</Link></Button>
             </>
           }
         >
-          <p><b className="text-foreground">{name.trim()}</b> exists at <span className="bq-mono">{short(results.token as string)}</span> on instance #{tenant}{results.projectId ? `, linked to project #${String(results.projectId)}` : projectMode === "existing" ? `, linked to project #${projectId}` : ""}.</p>
-          <p>{Number(supply).toLocaleString()} {sym} were minted to your wallet{distributed.length ? ` and ${distributedTotal.toLocaleString()} were sent out` : ""}.{mode === "fixed" ? " Minting is now off for good." : ""}</p>
+          <p><b className="font-[620] text-foreground">{name.trim()}</b> is live at <span className="t-mono">{short(results.token as string)}</span> in workspace #{tenant}{results.projectId ? `, linked to project #${String(results.projectId)}` : projectMode === "existing" ? `, linked to project #${projectId}` : ""}.</p>
+          <p>{Number(supply).toLocaleString()} {sym} were created in your wallet{distributed.length ? ` and ${distributedTotal.toLocaleString()} were sent out` : ""}.{mode === "fixed" ? " Minting is now off for good." : ""}{accept && isAdmin ? ` People can pay in ${sym} in this workspace.` : ""}</p>
         </Done>
       )}
     />

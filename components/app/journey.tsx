@@ -1,22 +1,27 @@
 "use client"
 import { Check } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export type JourneyStep = { title: string; note?: string; state: "done" | "current" | "next" | "skipped" }
 
 /** Where something is in its life, and what comes next — with real dates in the notes. */
 export function Journey({ steps }: { steps: JourneyStep[] }) {
   return (
-    <ol className="grid gap-4 sm:grid-flow-col sm:auto-cols-fr sm:gap-0">
+    <ol className="grid gap-5 sm:grid-flow-col sm:auto-cols-fr sm:gap-0">
       {steps.map((s, i) => (
-        <li key={s.title} className="relative flex gap-3 sm:block sm:pr-4">
-          {i < steps.length - 1 && <span className={`absolute left-[13px] top-7 h-[calc(100%)] w-px sm:left-7 sm:top-[13px] sm:h-px sm:w-[calc(100%-1.75rem)] ${s.state === "done" ? "bg-accent/60" : "bg-border"}`} />}
-          <span className={`relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] ${
-            s.state === "done" ? "border-accent/70 bg-accent/15 text-accent" : s.state === "current" ? "border-primary bg-primary/15 text-primary" : "border-border bg-card text-muted-foreground"}`}>
-            {s.state === "done" ? <Check className="size-3.5" /> : <span className="bq-mono">{i + 1}</span>}
+        <li key={s.title} className="relative flex gap-3.5 sm:block sm:pr-5" aria-current={s.state === "current" ? "step" : undefined}>
+          {i < steps.length - 1 && (
+            <span className={cn("absolute left-[15px] top-8 h-full w-px sm:left-8 sm:top-[15px] sm:h-px sm:w-[calc(100%-2rem)]", s.state === "done" ? "bg-success" : "bg-border")} aria-hidden />
+          )}
+          <span className={cn("t-num relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border text-sm font-[600]",
+            s.state === "done" ? "border-success bg-success-fill text-success"
+              : s.state === "current" ? "border-gold-line bg-gold-fill text-gold"
+              : "border-border bg-card text-subtle")}>
+            {s.state === "done" ? <Check className="size-4" /> : i + 1}
           </span>
           <span className="sm:mt-3 sm:block">
-            <span className={`block text-sm ${s.state === "current" ? "font-medium text-foreground" : s.state === "skipped" ? "text-muted-foreground line-through" : s.state === "done" ? "text-foreground" : "text-muted-foreground"}`}>{s.title}</span>
-            {s.note && <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">{s.note}</span>}
+            <span className={cn("block text-sm", s.state === "current" ? "font-[620] text-foreground" : s.state === "skipped" ? "text-subtle line-through" : s.state === "done" ? "font-[520] text-foreground" : "text-muted-foreground")}>{s.title}</span>
+            {s.note && <span className="mt-0.5 block text-xs text-muted-foreground">{s.note}</span>}
           </span>
         </li>
       ))}

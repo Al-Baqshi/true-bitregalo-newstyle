@@ -3,7 +3,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useAccount, useReadContract, useReadContracts } from "wagmi"
 import { formatUnits, isAddress, parseUnits, zeroAddress, type Address } from "viem"
-import { abis, addresses } from "@/lib/bitregalo/config"
+import { abis, addresses, short } from "@/lib/bitregalo/config"
 import { encodeLabel, eventArgs, labelBytes, useProjects, useSettlementTokens } from "@/lib/bitregalo/instances"
 import { useInstanceRules } from "@/lib/bitregalo/instance-rules"
 import { useTenant } from "@/lib/bitregalo/tenant"
@@ -29,6 +29,11 @@ export function SaleWizard({ initialToken }: { initialToken?: string }) {
   const projects = useProjects(t.instance)
   const factoryTokens = useReadContract({ address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "tenantTokens", args: [t.id] })
   const candidates = ((factoryTokens.data as Address[] | undefined) ?? [])
+  // Symbols for the token picker, so people choose by name rather than by address.
+  const candidateSymbols = useReadContracts({
+    contracts: candidates.map((a) => ({ address: a, abi: abis.utilityToken, functionName: "symbol" })),
+    query: { enabled: candidates.length > 0 },
+  })
   const isAdmin = !!address && t.admin.toLowerCase() === address.toLowerCase()
 
   const [token, setToken] = useState(initialToken ?? "")
@@ -68,26 +73,38 @@ export function SaleWizard({ initialToken }: { initialToken?: string }) {
   const enoughMine = (myBal ?? 0n) >= qtyUnits
   const startTs = toUnix(start)
   const endTs = toUnix(end)
+  const minter = treasuryOwns ? "the treasury" : iOwn ? "you" : owner && /^0x0{40}$/.test(owner) ? "nobody (the supply is fixed)" : "someone else"
 
   const steps: WizardStep[] = [
     {
-      id: "what", title: "What you are selling",
-      valid: !isAdmin ? "Only the workspace admin can open a sale" : !chosenToken ? "Choose a token" : labelBytes(label) > 31 ? "Keep the label to 31 characters" : true,
+      id: "what", title: "What you are selling", caption: "A token this workspace issues, such as a voucher, a credit or a membership.",
+      valid: !isAdmin ? "Only the workspace admin can open a sale" : !chosenToken ? "Choose a token" : labelBytes(label) > 31 ? "Keep the description to 31 characters" : true,
       content: (
         <div className="grid gap-5">
-          <Label title="Token" hint="A token of this workspace, or any standard ERC-20 you hold.">
+          <Label title="Token" hint="One of this workspace's tokens, or another token you hold.">
             <select className={input} value={token} onChange={(e) => setToken(e.target.value)}>
               <option value="">Choose…</option>
-              {candidates.map((a) => <option key={a} value={a}>{a}</option>)}
+              {candidates.map((a, i) => {
+                const s = candidateSymbols.data?.[i]?.result as string | undefined
+                return <option key={a} value={a}>{s ? `${s} · ${short(a)}` : a}</option>
+              })}
               <option value="custom">Another token address…</option>
             </select>
           </Label>
-          {token === "custom" && <Label title="Token address"><input className={`${input} bq-mono`} value={custom} onChange={(e) => setCustom(e.target.value.trim())} placeholder="0x…" /></Label>}
-          {chosenToken && symbol && <Note>{sym} · {decimals} decimals · you hold <Amount value={myBal ?? 0n} decimals={decimals} /> · the treasury holds <Amount value={held} decimals={decimals} /> · minter: {treasuryOwns ? "the treasury" : iOwn ? "you" : owner && /^0x0{40}$/.test(owner) ? "nobody (fixed supply)" : "someone else"}</Note>}
-          <Label title="What it is (optional)" counter={`${labelBytes(label)}/31`} hint="Shown on the shop page. What one token entitles the holder to.">
+          {token === "custom" && (
+            <Label title="Token address" hint="Starts with 0x.">
+              <input className={`${input} t-mono`} value={custom} onChange={(e) => setCustom(e.target.value.trim())} placeholder="0x…" autoComplete="off" spellCheck={false} />
+            </Label>
+          )}
+          {chosenToken && symbol && (
+            <Note>
+              {sym}: you hold <Amount value={myBal ?? 0n} decimals={decimals} /> and the treasury holds <Amount value={held} decimals={decimals} />. New {sym} can be created by {minter}.
+            </Note>
+          )}
+          <Label title="What it is (optional)" counter={`${labelBytes(label)}/31`} hint="Shown in the shop. Say what one token gives the holder.">
             <input className={input} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="One coffee at any branch" />
           </Label>
-          <Label title="Project (optional)">
+          <Label title="Project (optional)" hint="Groups this sale with related work.">
             <select className={input} value={project} onChange={(e) => setProject(e.target.value)}>
               <option value="0">No project</option>
               {projects.list.filter((p) => p.active).map((p) => <option key={String(p.id)} value={String(p.id)}>#{String(p.id)} · {p.label ?? "private project"}</option>)}
@@ -98,22 +115,28 @@ export function SaleWizard({ initialToken }: { initialToken?: string }) {
     },
     {
       id: "price", title: "Price",
-      valid: pricing === "paid" && !rules.direct ? "Direct payment is off in this workspace; turn it on under Settings" : pricing === "paid" && !pay ? "This workspace accepts no currency yet" : pricing === "paid" && !(priceUnits > 0n) ? "Set a price" : true,
+      valid: pricing === "paid" && !rules.direct ? "Direct payment is off in this workspace. Turn it on under Settings to sell for money" : pricing === "paid" && !pay ? "This workspace accepts no currency yet" : pricing === "paid" && !(priceUnits > 0n) ? "Set a price" : true,
       content: (
         <div className="grid gap-5">
-          <Choice<Pricing> value={pricing} onChange={setPricing} columns={2} options={[
-            { value: "paid", title: "Sold for a stablecoin", description: "Buyers pay per token; the money lands in your treasury minus the platform fee." },
-            { value: "free", title: "Free to claim", description: "Buyers receive tokens for nothing. Vouchers, invitations, memberships." },
+          <Choice<Pricing> value={pricing} onChange={setPricing} options={[
+            { value: "paid", title: "Sold for a stablecoin", description: "Buyers pay per token. The money goes to your treasury, less the platform fee." },
+            { value: "free", title: "Free to claim", description: "Buyers receive the tokens without paying. Good for vouchers, invitations and memberships." },
           ]} />
           {pricing === "paid" && pay && (
-            <div className="grid gap-4 sm:grid-cols-[1fr_160px]">
-              <Label title={`Price per ${sym}`}><input className={`${input} bq-mono`} type="number" min="0" step="any" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="10" /></Label>
+            <div className="grid gap-4">
+              <Label title={`Price per ${sym}`} hint="What a buyer pays for one token.">
+                <input className={input} type="number" inputMode="decimal" min="0" step="any" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="10" />
+              </Label>
               <Label title="Paid in">
                 <select className={input} value={pay.address} onChange={(e) => setPayToken(e.target.value)}>
                   {payTokens.accepted.map((x) => <option key={x.address} value={x.address}>{x.symbol}</option>)}
                 </select>
               </Label>
-              <div className="sm:col-span-2"><Note>Buyers also pay the {rules.feeBps / 100}% platform fee{pay.serviceFee > 0n ? <> and a <Amount value={pay.serviceFee} decimals={pay.decimals} symbol={pay.symbol} /> service fee</> : ""}. You receive {price || "…"} {pay.symbol} minus {rules.feeBps / 100}% per {sym}.</Note></div>
+              <div>
+                <Note>
+                  Buyers pay the price{pay.serviceFee > 0n ? <> plus a service fee of <Amount value={pay.serviceFee} decimals={pay.decimals} symbol={pay.symbol} /></> : ""}. The platform fee of {rules.feeBps / 100}% is taken from what you receive: {price || "…"} {pay.symbol} less {rules.feeBps / 100}% for each {sym} sold.
+                </Note>
+              </div>
             </div>
           )}
         </div>
@@ -121,20 +144,28 @@ export function SaleWizard({ initialToken }: { initialToken?: string }) {
     },
     {
       id: "supply", title: "Supply and limits",
-      valid: !(qtyUnits > 0n) ? "How many are for sale?" : Number(limit) < 0 ? "Limit cannot be negative" : end && endTs <= (startTs > BigInt(Math.floor(Date.now() / 1000)) ? startTs : BigInt(Math.floor(Date.now() / 1000))) ? "The end must be after the start" : inventory === "deposit" && !enoughMine ? `You hold fewer than ${qty} ${sym}` : inventory === "mint" && !iOwn && !treasuryOwns ? "Only the token's minter can hand minting to the treasury" : inventory === "held" && !enoughHeld ? "The treasury does not hold that many yet" : true,
+      valid: !(qtyUnits > 0n) ? "Say how many are for sale" : Number(limit) < 0 ? "The limit cannot be negative" : end && endTs <= (startTs > BigInt(Math.floor(Date.now() / 1000)) ? startTs : BigInt(Math.floor(Date.now() / 1000))) ? "The closing time must be in the future and after the opening time" : inventory === "deposit" && !enoughMine ? `You hold fewer than ${qty} ${sym}` : inventory === "mint" && !iOwn && !treasuryOwns ? `Only whoever can create new ${sym} can hand that right to the treasury` : inventory === "held" && !enoughHeld ? "The treasury does not hold that many yet" : true,
       content: (
         <div className="grid gap-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Label title={`Quantity for sale (${sym})`}><input className={`${input} bq-mono`} type="number" min="0" step="any" value={qty} onChange={(e) => setQty(e.target.value)} placeholder="500" /></Label>
-            <Label title="Limit per buyer (optional)" hint="Empty means no limit."><input className={`${input} bq-mono`} type="number" min="0" step="any" value={limit} onChange={(e) => setLimit(e.target.value)} /></Label>
-            <Label title="Opens (optional)"><input className={input} type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} /></Label>
-            <Label title="Closes (optional)"><input className={input} type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} /></Label>
+          <div className="grid gap-4">
+            <Label title={`How many to sell (${sym})`}>
+              <input className={input} type="number" inputMode="decimal" min="0" step="any" value={qty} onChange={(e) => setQty(e.target.value)} placeholder="500" />
+            </Label>
+            <Label title="Limit per buyer (optional)" hint="Leave empty for no limit.">
+              <input className={input} type="number" inputMode="decimal" min="0" step="any" value={limit} onChange={(e) => setLimit(e.target.value)} />
+            </Label>
+            <Label title="Opens (optional)" hint="Leave empty to open straight away.">
+              <input className={input} type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} />
+            </Label>
+            <Label title="Closes (optional)" hint="Leave empty to stay open until sold out or closed.">
+              <input className={input} type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} />
+            </Label>
           </div>
           <div>
-            <p className="mb-3 text-sm">Where do the tokens come from?</p>
+            <p className="t-label mb-3">Where do the tokens come from?</p>
             <Choice<Inventory> value={inventory} onChange={setInventory} options={[
-              { value: "deposit", title: "Move them from my wallet into the treasury now", description: `Transfers ${qty || "the quantity"} ${sym} to your workspace treasury. You hold ${formatUnits(myBal ?? 0n, decimals)}.` },
-              { value: "mint", title: "Let the treasury create them as they sell", description: treasuryOwns ? "The treasury already controls minting for this token." : iOwn ? "Hands minting of this token to your treasury. You can take it back later from the Treasury page." : "You are not this token's minter.", disabled: !iOwn && !treasuryOwns ? "Not the minter" : undefined },
+              { value: "deposit", title: "Move them from my wallet into the treasury now", description: `Moves ${qty || "the quantity"} ${sym} to your workspace treasury. You hold ${formatUnits(myBal ?? 0n, decimals)}.` },
+              { value: "mint", title: "Let the treasury create them as they sell", description: treasuryOwns ? `The treasury can already create new ${sym}.` : iOwn ? `Gives your treasury the right to create new ${sym}. You can take it back later from the Treasury page.` : `Only whoever can create new ${sym} can choose this.`, disabled: !iOwn && !treasuryOwns ? `You cannot create new ${sym}` : undefined },
               { value: "held", title: "The treasury already holds them", description: `It holds ${formatUnits(held, decimals)} ${sym} now.`, disabled: held === 0n ? "Nothing there yet" : undefined },
             ]} />
           </div>
@@ -147,10 +178,10 @@ export function SaleWizard({ initialToken }: { initialToken?: string }) {
   if (inventory === "deposit") {
     plan.push({ id: "deposit", label: `Move ${qty || "…"} ${sym} into the treasury`, run: async ({ tx }) => { await tx("Deposit inventory", { address: chosenToken as Address, abi: abis.utilityToken, functionName: "transfer", args: [t.treasury!, qtyUnits] }) } })
   } else if (inventory === "mint" && !treasuryOwns) {
-    plan.push({ id: "mint", label: `Hand minting of ${sym} to the treasury`, detail: "Reversible from the Treasury page", run: async ({ tx }) => { await tx("Hand over minting", { address: chosenToken as Address, abi: abis.utilityToken, functionName: "transferOwnership", args: [t.treasury!] }) } })
+    plan.push({ id: "mint", label: `Let the treasury create new ${sym}`, detail: "You can take this back from the Treasury page", run: async ({ tx }) => { await tx("Hand over minting", { address: chosenToken as Address, abi: abis.utilityToken, functionName: "transferOwnership", args: [t.treasury!] }) } })
   }
   plan.push({
-    id: "sale", label: pricing === "paid" && pay ? `Open the sale · ${price || "…"} ${pay.symbol} per ${sym}` : `Open the free claim`, detail: `${qty || "…"} ${sym}${limit ? ` · max ${limit} each` : ""}`,
+    id: "sale", label: pricing === "paid" && pay ? `Open the sale at ${price || "…"} ${pay.symbol} per ${sym}` : `Open the free claim`, detail: `${qty || "…"} ${sym} for sale${limit ? `, up to ${limit} per buyer` : ""}`,
     run: async ({ tx, results }) => {
       const r = await tx("Open sale", {
         address: t.instance, abi: abis.instance, functionName: "createSale",
@@ -166,23 +197,31 @@ export function SaleWizard({ initialToken }: { initialToken?: string }) {
 
   return (
     <Wizard
-      eyebrow={`Workspace #${t.id} · shop`}
-      title="Sell a utility"
+      title="Sell in the shop"
       intro="Put one of your tokens on sale at a price in a stablecoin. Buyers pay into your treasury and get the tokens in the same transaction. Holders can later redeem them with you."
       steps={steps}
       plan={plan}
       signLabel="Open the sale"
       summary={[
         { label: "Token", value: chosenToken ? sym : "—" },
-        { label: "Price", value: pricing === "free" ? "free" : pay ? `${price || "…"} ${pay.symbol}` : "—" },
+        { label: "Price", value: pricing === "free" ? "Free" : pay ? `${price || "…"} ${pay.symbol}` : "—" },
         { label: "Quantity", value: qty || "—" },
-        { label: "Per buyer", value: limit || "no limit" },
-        { label: "Inventory", value: inventory === "deposit" ? "deposit now" : inventory === "mint" ? "mint on demand" : "already held" },
-        { label: "Signatures", value: String(plan.length) },
+        { label: "Limit per buyer", value: limit || "No limit" },
+        { label: "Tokens come from", value: inventory === "deposit" ? "Your wallet, moved now" : inventory === "mint" ? "Created as they sell" : "Already in the treasury" },
+        { label: "Transactions to sign", value: String(plan.length) },
       ]}
       done={(r) => (
-        <Done title="Your sale is open" actions={<><Button asChild><Link href={`${base}/sales/${String(r.saleId)}`}>Open the sale page</Link></Button><Button asChild variant="secondary"><Link href={`${base}/sales`}>Shop</Link></Button></>}>
-          <p>Share the sale page. Anyone with a wallet can buy; the money arrives in your treasury and you can withdraw it any time.</p>
+        <Done
+          title="Your sale is open"
+          actions={
+            <>
+              <Button asChild><Link href={`${base}/sales/${String(r.saleId)}`}>Open the sale page</Link></Button>
+              <Button asChild variant="secondary"><Link href={`${base}/sales`}>Back to the shop</Link></Button>
+            </>
+          }
+        >
+          <p>Sale #{String(r.saleId)} is in the shop: {qty} {sym}{pricing === "paid" && pay ? ` at ${price} ${pay.symbol} each` : ", free to claim"}.</p>
+          <p>Share the sale page. Anyone with a wallet can {pricing === "paid" ? "buy" : "claim"}.{pricing === "paid" ? " The money arrives in your treasury, and you can withdraw it at any time." : ""}</p>
         </Done>
       )}
     />

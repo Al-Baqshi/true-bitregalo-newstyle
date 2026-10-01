@@ -3,80 +3,146 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   BitRegalo design tokens
+
+   One palette, two themes: Paper (light) and Obsidian (dark).
+   Ink or ivory carries the text. Gold is the only accent: the primary action,
+   and the mark of "held", "open" and "selected", in both themes. Emerald means money
+   that settled. Red is reserved for things that failed or that destroy.
+
+   Every text pair below is checked at WCAG AA or better; control borders
+   (--border-strong) hold 3:1 against the surfaces they sit on.
+   ───────────────────────────────────────────────────────────────────────────── */
 :root {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.17 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.17 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.145 0 0);
-  --secondary: oklch(0.22 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.22 0 0);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.75 0.14 70);
-  --accent-foreground: oklch(0.145 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.26 0 0);
-  --input: oklch(0.22 0 0);
-  --ring: oklch(0.55 0 0);
-  --chart-1: oklch(0.75 0.14 70);
-  --chart-2: oklch(0.65 0.15 160);
-  --chart-3: oklch(0.55 0.12 240);
-  --chart-4: oklch(0.8 0.16 85);
-  --chart-5: oklch(0.7 0.18 50);
+  color-scheme: light;
+
+  --background: #fbfaf7;
+  --foreground: #15181d;
+  --card: #ffffff;
+  --card-foreground: #15181d;
+  --popover: #ffffff;
+  --popover-foreground: #15181d;
+
+  --primary: #c9a253;
+  --primary-hover: #b58a38;
+  --primary-foreground: #17130a;
+  --secondary: #f3f0ea;
+  --secondary-hover: #eae6dd;
+  --secondary-foreground: #15181d;
+  --muted: #f3f0ea;
+  --muted-foreground: #54514a;
+  --subtle-foreground: #6b675f;
+  --accent: #eae6dd;
+  --accent-foreground: #15181d;
+
+  --border: #e4e0d7;
+  --border-strong: #8f897d;
+  --input: #8f897d;
+  --ring: #9a7214;
+
+  --gold: #7d5b10;
+  --gold-fill: #f6edd8;
+  --gold-line: #c9a253;
+  --success: #17694d;
+  --success-fill: #e4f2ec;
+  --destructive: #b0271f;
+  --destructive-foreground: #ffffff;
+  --destructive-fill: #fbe9e7;
+
+  --chart-1: #b98a2e;
+  --chart-2: #17694d;
+  --chart-3: #3c5a78;
+  --chart-4: #8f897d;
+  --chart-5: #b0271f;
+
+  --sidebar: #fbfaf7;
+  --sidebar-foreground: #15181d;
+  --sidebar-primary: #c9a253;
+  --sidebar-primary-foreground: #17130a;
+  --sidebar-accent: #f3f0ea;
+  --sidebar-accent-foreground: #15181d;
+  --sidebar-border: #e4e0d7;
+  --sidebar-ring: #9a7214;
+
   --radius: 0.625rem;
-  --sidebar: oklch(0.17 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.985 0 0);
-  --sidebar-primary-foreground: oklch(0.145 0 0);
-  --sidebar-accent: oklch(0.22 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.26 0 0);
-  --sidebar-ring: oklch(0.55 0 0);
+  --shadow-raised: 0 1px 2px rgb(21 24 29 / 0.06), 0 10px 28px -10px rgb(21 24 29 / 0.18);
+  --shadow-overlay: 0 2px 6px rgb(21 24 29 / 0.08), 0 24px 56px -16px rgb(21 24 29 / 0.28);
+
+  /* Dark ink on paper is set at the regular weight; ivory on obsidian needs a touch more. */
+  --body-weight: 400;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2354514a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+  /* Heights of the fixed app chrome, so sticky and anchored content can clear it. */
+  --topbar-h: 3.75rem;
+  --tabbar-h: 4rem;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.17 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.17 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.145 0 0);
-  --secondary: oklch(0.22 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.22 0 0);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.75 0.14 70);
-  --accent-foreground: oklch(0.145 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.26 0 0);
-  --input: oklch(0.22 0 0);
-  --ring: oklch(0.55 0 0);
-  --chart-1: oklch(0.75 0.14 70);
-  --chart-2: oklch(0.65 0.15 160);
-  --chart-3: oklch(0.55 0.12 240);
-  --chart-4: oklch(0.8 0.16 85);
-  --chart-5: oklch(0.7 0.18 50);
-  --sidebar: oklch(0.17 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.75 0.14 70);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.22 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.26 0 0);
-  --sidebar-ring: oklch(0.55 0 0);
+  color-scheme: dark;
+
+  --background: #0b0d10;
+  --foreground: #f3eee3;
+  --card: #13161b;
+  --card-foreground: #f3eee3;
+  --popover: #1a1e24;
+  --popover-foreground: #f3eee3;
+
+  --primary: #d8b46a;
+  --primary-hover: #e4c684;
+  --primary-foreground: #17130a;
+  --secondary: #1c2027;
+  --secondary-hover: #262c34;
+  --secondary-foreground: #f3eee3;
+  --muted: #1c2027;
+  --muted-foreground: #bcb5a7;
+  --subtle-foreground: #9c968a;
+  --accent: #262c34;
+  --accent-foreground: #f3eee3;
+
+  --border: #272b32;
+  --border-strong: #726e65;
+  --input: #726e65;
+  --ring: #e3c27c;
+
+  --gold: #dfbd76;
+  --gold-fill: #2f2c26;
+  --gold-line: #d8b46a;
+  --success: #5cc49d;
+  --success-fill: #1d2e2d;
+  --destructive: #f47b72;
+  --destructive-foreground: #1d0c0a;
+  --destructive-fill: #332427;
+
+  --chart-1: #d8b46a;
+  --chart-2: #5cc49d;
+  --chart-3: #8fb0d1;
+  --chart-4: #9c968a;
+  --chart-5: #f47b72;
+
+  --sidebar: #0b0d10;
+  --sidebar-foreground: #f3eee3;
+  --sidebar-primary: #d8b46a;
+  --sidebar-primary-foreground: #17130a;
+  --sidebar-accent: #1c2027;
+  --sidebar-accent-foreground: #f3eee3;
+  --sidebar-border: #272b32;
+  --sidebar-ring: #e3c27c;
+
+  --shadow-raised: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 12px 32px -14px rgb(0 0 0 / 0.7);
+  --shadow-overlay: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 28px 64px -20px rgb(0 0 0 / 0.85);
+
+  --body-weight: 430;
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23bcb5a7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
 
 @theme inline {
-  --font-sans: "Geist", "Geist Fallback", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "Geist Mono", ui-monospace, monospace;
+  --font-sans: var(--font-commissioner), var(--font-commissioner-ext), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), var(--font-geist-mono-ext), ui-monospace, "SF Mono", Menlo, monospace;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -84,27 +150,33 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-gold: var(--gold);
+  --color-gold-fill: var(--gold-fill);
+  --color-gold-line: var(--gold-line);
+  --color-success: var(--success);
+  --color-success-fill: var(--success-fill);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-fill: var(--destructive-fill);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -113,126 +185,416 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --shadow-raised: var(--shadow-raised);
+  --shadow-overlay: var(--shadow-overlay);
+
+  --ease-out: var(--ease-out);
+  --ease-in-out: var(--ease-in-out);
+
+  /* Type scale. Reading text is 16px; nothing a person needs is smaller than 13px. */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.45;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1rem;
+  --text-base--line-height: 1.6;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.55;
+  --text-xl: 1.3125rem;
+  --text-xl--line-height: 1.35;
+  --text-2xl: 1.625rem;
+  --text-2xl--line-height: 1.22;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 1.15;
+  --text-4xl: 2.5rem;
+  --text-4xl--line-height: 1.1;
+  --text-5xl: 3.25rem;
+  --text-5xl--line-height: 1.05;
+  --text-6xl: 4rem;
+  --text-6xl--line-height: 1.02;
+  --text-7xl: 5rem;
+  --text-7xl--line-height: 1;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scrollbar-color: var(--border-strong) transparent;
+    scroll-padding-top: calc(var(--topbar-h) + 1rem);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    font-weight: var(--body-weight);
+    font-variation-settings: "FLAR" 0, "VOLM" 0;
+    font-variant-numeric: lining-nums;
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    accent-color: var(--primary);
+    caret-color: var(--gold-line);
   }
-  html {
-    scroll-behavior: smooth;
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
   }
-}
-
-@keyframes blink {
-  0%,
-  50% {
+  p,
+  li,
+  dd {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--gold-line) 34%, transparent);
+    color: var(--foreground);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  /* Controls: no double-tap zoom delay, no accidental text selection on long press. */
+  button,
+  a,
+  [role="button"],
+  summary {
+    touch-action: manipulation;
+  }
+  button,
+  [role="button"],
+  [role="tab"],
+  summary {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  /* iOS zooms the page into any field set under 16px; keep fields at 16px on touch screens. */
+  @media (pointer: coarse) {
+    input,
+    select,
+    textarea {
+      font-size: 1rem;
+    }
+  }
+  ::placeholder {
+    color: var(--subtle-foreground);
     opacity: 1;
   }
-  51%,
-  100% {
-    opacity: 0;
+  hr {
+    border-color: var(--border);
+  }
+  /* Selects draw their own chevron in the palette instead of the operating system's. */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: var(--chevron);
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    background-size: 1rem;
+    padding-right: 2.5rem;
+  }
+  select::-ms-expand {
+    display: none;
   }
 }
 
-.animate-blink {
-  animation: blink 1s step-end infinite;
-}
+/* ─────────────────────────────────────────────────────────────────────────────
+   Type roles
 
-@keyframes moveFloor {
-  0% {
-    background-position: 0 0;
+   One family does everything. Commissioner's flare axis is opened for headings,
+   which picks up the flared strokes of the BitRegalo wordmark; text and data stay
+   plain. Mono is for machine strings only: addresses, hashes, code.
+
+   These sit in the components layer so a utility class on the same element wins.
+   ───────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .t-display {
+    font-size: clamp(2.5rem, 1.35rem + 5.1vw, 5.25rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-weight: 600;
+    font-variation-settings: "FLAR" 100, "VOLM" 100;
+    text-wrap: balance;
   }
-  100% {
-    background-position: 0 4rem;
+  .t-headline {
+    font-size: clamp(1.875rem, 1.3rem + 2.4vw, 3.125rem);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    font-weight: 600;
+    font-variation-settings: "FLAR" 100, "VOLM" 100;
+    text-wrap: balance;
+  }
+  .t-title {
+    font-size: 1.75rem;
+    line-height: 1.16;
+    letter-spacing: -0.02em;
+    font-weight: 620;
+    font-variation-settings: "FLAR" 100, "VOLM" 60;
+    text-wrap: balance;
+  }
+  @media (min-width: 40rem) {
+    .t-title {
+      font-size: 2rem;
+    }
+  }
+  .t-heading {
+    font-size: 1.3125rem;
+    line-height: 1.3;
+    letter-spacing: -0.012em;
+    font-weight: 620;
+    font-variation-settings: "FLAR" 100, "VOLM" 0;
+  }
+  .t-subheading {
+    font-size: 1.0625rem;
+    line-height: 1.4;
+    letter-spacing: -0.004em;
+    font-weight: 600;
+  }
+  .t-lede {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    color: var(--muted-foreground);
+    max-width: 62ch;
+  }
+  @media (min-width: 40rem) {
+    .t-lede {
+      font-size: 1.1875rem;
+    }
+  }
+  .t-label {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    font-weight: 560;
+  }
+  .t-meta {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--muted-foreground);
+  }
+  .t-caption {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--subtle-foreground);
+  }
+  /* Amounts and counts: figures line up in columns and never read as letters. */
+  .t-num {
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+  .t-figure {
+    font-size: 1.75rem;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-weight: 620;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .t-mono {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    letter-spacing: 0;
+    font-variation-settings: normal;
+  }
+  /* Opt in to the flared heading voice at any size. */
+  .flare {
+    font-variation-settings: "FLAR" 100, "VOLM" 60;
+  }
+
+  /* Long-form reading: legal pages, the whitepaper, protocol notes. */
+  .prose-doc {
+    max-width: 68ch;
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    color: var(--foreground);
+  }
+  .prose-doc > * + * {
+    margin-top: 1.1em;
+  }
+  .prose-doc h2 {
+    margin-top: 2.4em;
+    font-size: 1.5rem;
+    line-height: 1.25;
+    letter-spacing: -0.016em;
+    font-weight: 620;
+    font-variation-settings: "FLAR" 100, "VOLM" 40;
+    scroll-margin-top: calc(var(--topbar-h) + 1.5rem);
+  }
+  .prose-doc h3 {
+    margin-top: 1.9em;
+    font-size: 1.1875rem;
+    line-height: 1.35;
+    font-weight: 620;
+    scroll-margin-top: calc(var(--topbar-h) + 1.5rem);
+  }
+  .prose-doc h4 {
+    margin-top: 1.6em;
+    font-size: 1.0625rem;
+    font-weight: 620;
+  }
+  .prose-doc h2 + *,
+  .prose-doc h3 + *,
+  .prose-doc h4 + * {
+    margin-top: 0.6em;
+  }
+  .prose-doc p,
+  .prose-doc li {
+    color: color-mix(in srgb, var(--foreground) 88%, var(--background));
+  }
+  .prose-doc strong {
+    font-weight: 620;
+    color: var(--foreground);
+  }
+  .prose-doc a {
+    color: var(--gold);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+  .prose-doc a:hover {
+    text-decoration-thickness: 2px;
+  }
+  .prose-doc ul,
+  .prose-doc ol {
+    padding-left: 1.35em;
+  }
+  .prose-doc ul {
+    list-style: disc;
+  }
+  .prose-doc ol {
+    list-style: decimal;
+  }
+  .prose-doc li + li {
+    margin-top: 0.45em;
+  }
+  .prose-doc li::marker {
+    color: var(--subtle-foreground);
+  }
+  .prose-doc blockquote {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 1em 0;
+    font-size: 1.125rem;
+    color: var(--foreground);
+  }
+  .prose-doc code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background: var(--secondary);
+    border-radius: 0.3em;
+    padding: 0.12em 0.36em;
+  }
+  .prose-doc pre {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+    padding: 1rem 1.15rem;
+    font-size: 0.875rem;
+    line-height: 1.65;
+  }
+  .prose-doc pre code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+  }
+  .prose-doc table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+  .prose-doc th {
+    text-align: left;
+    font-weight: 620;
+    border-bottom: 1px solid var(--border-strong);
+    padding: 0.6em 0.9em 0.6em 0;
+  }
+  .prose-doc td {
+    vertical-align: top;
+    border-bottom: 1px solid var(--border);
+    padding: 0.7em 0.9em 0.7em 0;
+  }
+  .prose-doc hr {
+    margin: 2.2em 0;
+  }
+
+  /* A quiet entrance for content that arrives after a decision (a wizard step, a result). */
+  .rise {
+    animation: rise 0.36s var(--ease-out) both;
+  }
+
+  /* ── Names kept from the first version of the app, so pages keep working while
+        they are moved onto the roles above. Prefer the t-* roles in new code. ── */
+  .bq-display {
+    font-variation-settings: "FLAR" 100, "VOLM" 60;
+    letter-spacing: -0.02em;
+  }
+  .bq-label {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    font-weight: 560;
+    color: var(--muted-foreground);
+  }
+  .bq-mono {
+    font-family: var(--font-mono);
+    font-variation-settings: normal;
+  }
+  .bq-rise {
+    animation: rise 0.36s var(--ease-out) both;
   }
 }
 
-.animate-floor {
-  animation: moveFloor 0.5s linear infinite;
-}
-
-@keyframes fade-in-up {
+@keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
-.animate-fade-in-up {
-  animation: fade-in-up 0.6s ease-out forwards;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .bq-rise {
+    animation: none;
   }
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+/* Bottom-fixed app chrome clears the phone's home indicator. */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
-
-/* ── BitRegalo app: baqshi design language (obsidian, ivory, gold, emerald) ───────────── */
-.bq-app {
-  --background: #090b0e;
-  --foreground: #f4efe4;
-  --card: #111419;
-  --card-foreground: #f4efe4;
-  --popover: #171b22;
-  --popover-foreground: #f4efe4;
-  --primary: #d8b46a;
-  --primary-foreground: #0b0c0e;
-  --secondary: #1f242c;
-  --secondary-foreground: #f4efe4;
-  --muted: #171b22;
-  --muted-foreground: #a39d90;
-  --accent: #51bb94;
-  --accent-foreground: #05100c;
-  --destructive: #e5484d;
-  --destructive-foreground: #f4efe4;
-  --border: rgba(233, 224, 205, 0.11);
-  --input: #0c0f13;
-  --ring: #d8b46a;
-  --radius: 0.75rem;
-  --bq-gold: #d8b46a;
-  --bq-gold-bright: #f0d79a;
-  --bq-emerald: #2f9e79;
-  --bq-ivory-dim: #cfc8ba;
-  --bq-graphite-2: #171b22;
-  --bq-line-strong: rgba(233, 224, 205, 0.18);
-  color-scheme: dark;
-  background:
-    radial-gradient(1200px 500px at 85% -10%, rgba(216, 180, 106, 0.07), transparent 60%),
-    radial-gradient(900px 400px at -10% 10%, rgba(47, 158, 121, 0.05), transparent 60%),
-    var(--background);
-  color: var(--foreground);
-  font-family: var(--font-app-sans), "Geist", system-ui, sans-serif;
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
 }
-.bq-app .font-mono,
-.bq-mono { font-family: var(--font-app-mono), "Geist Mono", ui-monospace, monospace; }
-.bq-display { font-family: var(--font-app-display), "Playfair Display", Georgia, serif; letter-spacing: -0.02em; }
-.bq-label {
-  font-family: var(--font-app-mono), "Geist Mono", ui-monospace, monospace;
-  font-size: 10.5px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--muted-foreground);
+/* A horizontal scroller that shows no scrollbar but still scrolls and snaps. */
+@utility scroll-row {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
-.bq-app [data-variant="ghost"]:hover { background: var(--secondary); color: var(--foreground); }
-.bq-app input, .bq-app select, .bq-app textarea { color-scheme: dark; }
-.bq-app ::selection { background: rgba(216, 180, 106, 0.3); }
-@media (prefers-reduced-motion: no-preference) {
-  .bq-rise { animation: bq-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
-}
-@keyframes bq-rise { from { opacity: 0.001; transform: translateY(6px); } to { opacity: 1; transform: none; } }

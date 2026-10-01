@@ -54,9 +54,10 @@ export const wagmiConfig = createConfig({
 })
 
 export const SETTLEMENT = ["Record only", "Direct payment", "Escrow"] as const
-export const RFP_STATE = ["—", "Open", "Awarded", "Cancelled"] as const
-export const OFFER_STATE = ["—", "Listed", "Confirmed", "Withdrawn"] as const
-export const ESCROW_STATE = ["—", "Active", "Released", "Cancelled", "Expired"] as const
+/** What each on-chain state is called in the app. The index is the contract's state number. */
+export const RFP_STATE = ["—", "Open", "Awarded", "Withdrawn"] as const
+export const OFFER_STATE = ["—", "Open", "Taken", "Withdrawn"] as const
+export const ESCROW_STATE = ["—", "Held", "Released", "Handed back", "Returned"] as const
 
 export function short(a: string) {
   return a ? `${a.slice(0, 6)}…${a.slice(-4)}` : ""

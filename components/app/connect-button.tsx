@@ -1,13 +1,13 @@
 "use client"
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi"
+import { useAccount, useConnect, useDisconnect, useReadContract, useSwitchChain } from "wagmi"
 import { toast } from "sonner"
 import { ChevronDown, Copy, ExternalLink, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { chain, explorerAddress, short } from "@/lib/bitregalo/config"
+import { abis, addresses, chain, explorerAddress, short } from "@/lib/bitregalo/config"
 
 /**
  * Wallet picker. wagmi discovers every installed wallet through EIP-6963 (MetaMask,
@@ -23,6 +23,8 @@ export function ConnectButton({ size = "default", variant = "default" }: { size?
   const { switchChainAsync } = useSwitchChain()
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const platformOwner = useReadContract({ address: addresses.mother, abi: abis.mother, functionName: "owner", query: { enabled: isConnected } })
+  const isPlatformOwner = !!address && String(platformOwner.data ?? "").toLowerCase() === address.toLowerCase()
   useEffect(() => setMounted(true), [])
   if (!mounted) return <Button size={size} variant={variant} disabled>Connect wallet</Button>
 
@@ -74,7 +76,7 @@ export function ConnectButton({ size = "default", variant = "default" }: { size?
             </ul>
           )}
           <p className="mt-4 border-t border-border pt-4 text-sm text-muted-foreground">
-            This is a practice network. Once connected you can take free practice money and try every step.
+            This is a practice network. Once connected you can take free practice tokens and try every step.
           </p>
         </SheetContent>
       </Sheet>
@@ -108,6 +110,11 @@ export function ConnectButton({ size = "default", variant = "default" }: { size?
         <DropdownMenuItem asChild>
           <Link href="/app/operator">Platform and earnings</Link>
         </DropdownMenuItem>
+        {isPlatformOwner && (
+          <DropdownMenuItem asChild>
+            <Link href="/app/admin">Super admin</Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => disconnect()}>
           <LogOut />Disconnect

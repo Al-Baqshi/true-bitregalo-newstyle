@@ -49,7 +49,7 @@ export function Footer() {
               <Logo className="h-[1.3rem] w-auto" title="" aria-hidden />
             </Link>
             <p className="mt-4 max-w-[34ch] text-sm text-muted-foreground">
-              Decentralised infrastructure for work and money: escrow, requests, listings and workspaces on public contracts. Nobody else can move held money, including BitRegalo.
+              Decentralised infrastructure for work and payments: escrow, requests, listings and workspaces on public contracts. Nobody else can move a held payment, including BitRegalo.
             </p>
           </div>
           {COLUMNS.map((c) => (

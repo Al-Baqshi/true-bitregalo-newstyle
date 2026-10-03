@@ -84,7 +84,7 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
     { title: "Taking offers", note: open ? (closedForOffers ? `Closed ${inWords(rfp.deadline)}. An offer can still be chosen` : `Until ${when(rfp.deadline)} (${inWords(rfp.deadline)})`) : `Closed`, state: open && !closedForOffers ? "current" : "done" },
     { title: "Offer chosen", note: awarded ? `Offer #${String(rfp.acceptedBid)}` : rfp.state === 3 ? "Request withdrawn" : "The buyer picks one", state: awarded ? "done" : rfp.state === 3 ? "skipped" : open && closedForOffers ? "current" : "next" },
     {
-      title: rfp.settlement === 2 ? "Money held in escrow" : rfp.settlement === 1 ? "Supplier paid" : "Recorded",
+      title: rfp.settlement === 2 ? "Payment held in escrow" : rfp.settlement === 1 ? "Supplier paid" : "Recorded",
       note: awarded ? (rfp.settlement === 2 ? `Escrow #${String(rfp.settlementId)}, released when the work is done` : rfp.settlement === 1 ? "Paid in full on choosing" : "No payment on-chain") : mode.after,
       state: awarded ? "done" : rfp.state === 3 ? "skipped" : "next",
     },
@@ -147,9 +147,9 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
           {canChoose && (
             <Notice tone="accent" title="This is your request">
               <p>
-                {rfp.settlement === 2 && <>Choosing an offer moves its price{fee && <> plus a {fee} service fee</>} from your wallet into the vault. It stays there until you release it. If you never do, it comes back to you once the supplier&apos;s delivery time is over.</>}
+                {rfp.settlement === 2 && <>Choosing an offer moves its price{fee && <> plus a {fee} service fee</>} from your wallet into the vault. It stays there until you release it. If you never do, once the supplier&apos;s delivery time is over it can only go back to you.</>}
                 {rfp.settlement === 1 && <>Choosing an offer pays the supplier straight away from your wallet{fee && <>, plus a {fee} service fee</>}.</>}
-                {rfp.settlement === 0 && <>Choosing an offer only records your decision. No money moves.</>}
+                {rfp.settlement === 0 && <>Choosing an offer only records your decision. Nothing is paid.</>}
                 {paid && <> Your balance: <Amount value={erc.balance} decimals={erc.decimals} symbol={erc.symbol} />.</>}
               </p>
             </Notice>
@@ -237,7 +237,7 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
                 )}
                 <Label
                   title="You can deliver in (days)"
-                  hint={rfp.settlement === 2 ? "If chosen, the money is held for this long. If it is not released by then, it goes back to the buyer." : "How long you need once your offer is chosen."}
+                  hint={rfp.settlement === 2 ? "If chosen, the payment is held for this long. If it is not released by then, it can only go back to the buyer." : "How long you need once your offer is chosen."}
                 >
                   <input className={input} type="number" inputMode="decimal" min="0.05" step="any" value={days} onChange={(e) => setDays(e.target.value)} />
                 </Label>
@@ -255,13 +255,13 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
       )}
 
       {awarded && rfp.settlement === 2 && (
-        <Notice tone="good" title={`The money is held in escrow #${String(rfp.settlementId)}`} action={<Button asChild size="sm"><Link href={`${base}/escrows/${rfp.settlementId}`}>Open the escrow</Link></Button>}>
+        <Notice tone="good" title={`The payment is held in escrow #${String(rfp.settlementId)}`} action={<Button asChild size="sm"><Link href={`${base}/escrows/${rfp.settlementId}`}>Open the escrow</Link></Button>}>
           <p>The chosen offer&apos;s price sits in the workspace vault until the buyer releases it.</p>
         </Notice>
       )}
       {awarded && rfp.settlement !== 2 && (
         <Notice tone="good" title="This request is complete">
-          <p>{rfp.settlement === 1 ? "The supplier has been paid." : "The decision is recorded. No money moved."}</p>
+          <p>{rfp.settlement === 1 ? "The supplier has been paid." : "The decision is recorded. Nothing was paid."}</p>
         </Notice>
       )}
       {rfp.state === 3 && (

@@ -94,7 +94,7 @@ export default function SalePage({ params }: { params: Promise<{ id: string }> }
         intro={
           <>
             {label ? <>{name ? `${name} (${sym})` : sym}. </> : null}
-            {free ? "Free to claim: you only sign the transaction." : <>Sold for {money(s.price)} each. The money goes to the workspace treasury and the {sym} come to your wallet in the same transaction.</>}
+            {free ? "Free to claim: you only sign the transaction." : <>Sold for {money(s.price)} each. The payment goes to the workspace treasury and the {sym} come to your wallet in the same transaction.</>}
           </>
         }
       />
@@ -169,7 +169,7 @@ export default function SalePage({ params }: { params: Promise<{ id: string }> }
             <Detail label="Closes">{s.end === 0n ? "When sold out or closed" : when(s.end)}</Detail>
             <Detail label="Token"><Addr a={s.token} /></Detail>
             {s.projectId > 0n && <Detail label="Project">#{String(s.projectId)}{proj?.label ? ` · ${proj.label}` : ""}</Detail>}
-            <Detail label="Money goes to">
+            <Detail label="Payment goes to">
               {t.treasury ? <Link className="underline decoration-1 underline-offset-[3px] hover:text-foreground" href={`${base}/treasury`}>The workspace treasury</Link> : "The workspace treasury"}
             </Detail>
           </dl>

@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button"
  * illustrations of what could be built; they name no one.
  */
 const NETWORK = [
-  { title: "Send money", text: "Pay someone or send a gift, with a reference and a receipt." },
-  { title: "Hold money for someone", text: "Lock a payment in escrow until the work is done." },
+  { title: "Send a payment", text: "Pay someone or send a gift in USDT, with a reference and a receipt." },
+  { title: "Hold a payment for someone", text: "Lock it in escrow until the work is done." },
   { title: "Ask for something", text: "Post a request. Suppliers send a price and you choose one." },
   { title: "Offer something", text: "List what you do or sell at a fixed price." },
 ]

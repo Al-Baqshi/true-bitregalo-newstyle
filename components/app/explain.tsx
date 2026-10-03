@@ -11,7 +11,7 @@ export function TwoWays() {
     {
       name: "The BitRegalo network",
       tag: "For anyone, anywhere",
-      body: "Send money or a gift, hold money in escrow for someone, ask for things and offer them in a marketplace browsed by country. People pay each other in USDT (tUSD on the practice network). It runs on BitRegalo's own public contracts, and it is where the app opens.",
+      body: "Send a payment or a gift, hold a payment in escrow for someone, ask for things and offer them in a marketplace browsed by country. People pay each other in USDT (tUSD on the practice network). It runs on BitRegalo's own public contracts, and it is where the app opens.",
     },
     {
       name: "A workspace",
@@ -35,11 +35,11 @@ export function TwoWays() {
 /** What a person can do, on the network or in a workspace, each in a few sentences. */
 export function BuildingBlocks() {
   const blocks = [
-    { name: "Send money", body: "Pay someone straight away, with a reference and a receipt, or send a gift. To be paid, make a payment link or QR code under Get paid." },
-    { name: "Escrow", body: "Money held by a contract until the work is done. The buyer can only release it, the supplier can only hand it back, and after the deadline it can only return to the buyer. Start one with Hold money for someone." },
+    { name: "Send a payment", body: "Pay someone straight away, with a reference and a receipt, or send a gift. To be paid, make a payment link or QR code under Get paid." },
+    { name: "Escrow", body: "A payment held by a contract until the work is done. The buyer can only release it, the supplier can only hand it back, and after the deadline it can only return to the buyer. Start one with Hold a payment for someone." },
     { name: "Requests", body: "“I need this.” Post what you need; suppliers answer with offers (a price and a time). You choose one and settle by escrow, by direct payment, or just record the choice." },
     { name: "Listings", body: "“I offer this.” A fixed price and delivery time, open to anyone or to one named buyer. When a buyer takes it, it settles the way you chose." },
-    { name: "Marketplace by country", body: "Requests and listings with a title, description, category and country, so people can find work and suppliers near them. The words are signed by the poster's wallet; money and state stay on the public record." },
+    { name: "Marketplace by country", body: "Requests and listings with a title, description, category and country, so people can find work and suppliers near them. The words are signed by the poster's wallet; amounts and state stay on the public record." },
   ]
   return (
     <dl className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
@@ -59,7 +59,7 @@ export function HowItWorks() {
     { title: "Ask", body: "Post what you need: a job, supplies, a service. It gets a public record with a date." },
     { title: "Get offers", body: "Suppliers answer with their price and how long they need. Every offer is on the record too." },
     { title: "Choose", body: "You pick the offer you want. Nobody can change it afterwards, not even BitRegalo." },
-    { title: "Pay your way", body: "Just record it, pay straight away, or hold the money safely until the work is done." },
+    { title: "Pay your way", body: "Just record it, pay straight away, or hold the payment safely until the work is done." },
   ]
   return (
     <ol className="grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
@@ -77,12 +77,12 @@ export function HowItWorks() {
   )
 }
 
-/** The three settlement options, explained with what actually happens to the money. */
+/** The three settlement options, explained with what actually happens to the payment. */
 export function SettleModes({ compact = false }: { compact?: boolean }) {
   const modes = [
-    { name: "Just record it", tag: "No money moves", body: "The request, the offers and your choice are written down for good. Useful when payment happens elsewhere, or when the proof is what matters: tenders, grants, approvals." },
+    { name: "Just record it", tag: "No payment", body: "The request, the offers and your choice are written down for good. Useful when payment happens elsewhere, or when the proof is what matters: tenders, grants, approvals." },
     { name: "Pay straight away", tag: "Direct payment", body: "The moment you choose an offer, the supplier is paid from your wallet. Simple, for work you trust or goods already delivered." },
-    { name: "Hold it safely", tag: "Escrow", body: "When you choose, the money leaves your wallet and is locked in a vault contract. You release it when the work is done. The supplier can hand it back if they can't deliver. After the deadline it can only go back to you, and anyone can trigger that." },
+    { name: "Hold it safely", tag: "Escrow", body: "When you choose, the payment leaves your wallet and is locked in a vault contract. You release it when the work is done. The supplier can hand it back if they can't deliver. After the deadline it can only go back to you, and anyone can trigger that." },
   ]
   return (
     <div className={cn("grid gap-px overflow-hidden rounded-xl border border-border bg-border", !compact && "md:grid-cols-3")}>
@@ -99,33 +99,33 @@ export function SettleModes({ compact = false }: { compact?: boolean }) {
 
 /** The model first, then the building blocks, then the rest of the words. */
 const GLOSSARY: [string, string][] = [
-  ["BitRegalo network", "BitRegalo's own public workspace, open to everyone. Send money, hold it in escrow, ask for things and offer them in a marketplace by country, paying each other in USDT (tUSD on the practice network). It is where the app opens."],
-  ["Workspace", "An organisation's own BitRegalo: its own contracts (one for the records, a vault for money held in escrow, and a treasury), its rules and fees, the currencies it accepts, its tokens and shop, run by an admin. Everything done inside it is recorded under it."],
+  ["BitRegalo network", "BitRegalo's own public workspace, open to everyone. Send payments and gifts, hold a payment in escrow, ask for things and offer them in a marketplace by country, paying each other in USDT (tUSD on the practice network). It is where the app opens."],
+  ["Workspace", "An organisation's own BitRegalo: its own contracts (one for the records, a vault for payments held in escrow, and a treasury), its rules and fees, the currencies it accepts, its tokens and shop, run by an admin. Everything done inside it is recorded under it."],
   ["Organisation", "Whoever runs a workspace: a company, a charity, a marketplace, a cooperative. Its admin sets the rules; the contracts enforce them."],
-  ["Marketplace", "Requests and listings people can browse by country and category. The title, description, country and city are signed by the poster's wallet. Money and state always come from the public record."],
+  ["Marketplace", "Requests and listings people can browse by country and category. The title, description, country and city are signed by the poster's wallet. Amounts and state always come from the public record."],
   ["Country", "Where a request or listing belongs in the marketplace, chosen by the person who posts it."],
-  ["Send money", "Pay someone straight away, with a reference and a receipt. It is also how you send a gift."],
+  ["Send a payment", "Pay someone straight away, with a reference and a receipt. It is also how you send a gift."],
   ["Get paid", "Make a payment link or QR code. Whoever opens it pays you, with one signature."],
-  ["Hold money for someone", "Start an escrow yourself. You send the supplier a link; they accept with one signature, which lists the job for you only; you fund it, and the money is held until you release it."],
+  ["Hold a payment for someone", "Start an escrow yourself. You send the supplier a link; they accept with one signature, which lists the job for you only; you fund it, and the payment is held until you release it."],
   ["Request", "“I need this.” You say what you need, how it will be paid and how long offers stay open, and suppliers answer with offers. (In procurement: an RFP, a request for proposals.)"],
   ["Offer", "A supplier's answer to a request: their price and how many days they need. The buyer chooses one."],
   ["Listing", "“I offer this.” A supplier's fixed price and delivery time, open to anyone or to one named buyer. A buyer takes it, and it settles the way the supplier chose. (In the protocol: an RTS.)"],
-  ["Escrow", "Money held by a vault contract while work is done. It ends in one of three ways: released, handed back or returned. No person holds it: not BitRegalo, not a workspace admin."],
+  ["Escrow", "A payment held by a vault contract while work is done. It ends in one of three ways: released, handed back or returned. No person holds it: not BitRegalo, not a workspace admin."],
   ["Buyer", "The one who pays: who posted the request, took the listing or funded the escrow."],
   ["Supplier", "The one who does the work or delivers the goods, and is paid for it."],
-  ["Release", "The buyer sends held money to the supplier, usually once the work is done. Only the buyer can."],
-  ["Hand back", "The supplier sends held money back to the buyer, for example when they cannot deliver. Only the supplier can."],
-  ["Returned", "After the deadline, held money that was not released can only go back to the buyer. Anyone can trigger that."],
+  ["Release", "The buyer sends a held payment to the supplier, usually once the work is done. Only the buyer can."],
+  ["Hand back", "The supplier sends a held payment back to the buyer, for example when they cannot deliver. Only the supplier can."],
+  ["Returned", "After the deadline, a held payment that was not released can only go back to the buyer. Anyone can trigger that."],
   ["Private wording", "Only a fingerprint of the text is stored, so the words are not readable on the chain. Everything else (who posted, the offers, amounts and payments) is still public, as on any blockchain."],
   ["Project", "A name that groups related requests, listings and tokens in a workspace: a site, a programme, a product line."],
   ["Token", "A currency or credit a workspace issues for itself: vouchers, credits, memberships. It can be used to pay inside that workspace once its admin switches it on."],
-  ["Treasury", "A workspace's own money box on the chain, created with the workspace and owned by its admin. Shop sales, redemptions and payment links can land there. BitRegalo has no function on it at all."],
+  ["Treasury", "A contract that holds a workspace's own funds, created with the workspace and owned by its admin. Shop sales, redemptions and payment links can land there. BitRegalo has no function on it at all."],
   ["Shop", "Where a workspace sells its tokens (vouchers, credits, memberships) for a stablecoin. Buyers pay into the treasury and receive the tokens in the same transaction."],
   ["Redeem", "A holder hands tokens back to the workspace with a reference: an order number, a seat, a coffee. That is how a voucher or credit is spent. No fee is charged."],
   ["Payment link", "A link or QR code that says who gets paid, in what, how much and why. Nothing is written to the chain until someone opens it and signs."],
   ["Platform fee", "A small percentage BitRegalo takes from what the supplier receives on each payment or release. Fixed per workspace when it is created."],
   ["Service fee", "A flat amount added to each payment, paid by the buyer. It covers the network costs BitRegalo pays on people's behalf."],
-  ["Practice network", "A practice copy of the blockchain (BNB Smart Chain Testnet). The money here has no value, so you can try everything freely; the faucet gives 1,000 tUSD a day."],
+  ["Practice network", "A practice copy of the blockchain (BNB Smart Chain Testnet). The tokens here have no value, so you can try everything freely; the faucet gives 1,000 tUSD a day."],
 ]
 
 /** Every word the app uses, with a filter. Each term opens in place. */

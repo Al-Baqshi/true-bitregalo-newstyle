@@ -43,7 +43,7 @@ export function recordTitle(kind: EntryKind, id: bigint | number, entry: Entry |
 
 /**
  * One request or listing in a list. The marketplace entry (if any) gives the title, the first
- * line of the description, the category and the place; the chain gives the money and the state.
+ * line of the description, the category and the place; the chain gives the amount and the state.
  * `who` adds the poster's address and, for a listing, who may take it. `mixed` is for lists that hold
  * both kinds: each row then says which it is, instead of showing its number.
  */

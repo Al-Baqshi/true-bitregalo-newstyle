@@ -6,7 +6,7 @@ import type { Offer, Rfp } from "@/lib/bitregalo/hooks"
 import type { EntryKind } from "@/lib/bitregalo/market"
 
 /*
- * The chain is the truth for money and state. A marketplace entry says what a record is
+ * The chain is the truth for amounts and state. A marketplace entry says what a record is
  * about; these hooks read what the record itself says right now.
  */
 

@@ -53,11 +53,11 @@ const monoExt = localFont({
 // Icons come from the files beside this one (favicon.ico, icon.svg, apple-icon.png).
 export const metadata: Metadata = {
   title: {
-    default: "BitRegalo — Decentralised infrastructure for work and money",
+    default: "BitRegalo — Decentralised infrastructure for work and payments",
     template: "%s · BitRegalo",
   },
   description:
-    "Decentralised infrastructure for work and money. Escrow, requests, listings and workspaces on public contracts: people and organisations agree on work and payment, and a contract enforces the deal. Nobody in the middle holds the money.",
+    "Decentralised infrastructure for work and payments. Escrow, requests, listings and workspaces on public contracts: people and organisations agree on work and a price, and a contract enforces the deal. Nobody in the middle holds the payment.",
 }
 
 export const viewport: Viewport = {

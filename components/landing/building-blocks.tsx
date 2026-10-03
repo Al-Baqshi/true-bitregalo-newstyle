@@ -5,7 +5,7 @@ import { ArrowDown, ArrowRight } from "lucide-react"
 /*
  * The four building blocks, drawn the way they fit together rather than as four
  * equal tiles: a request or a listing decides who does the work and for how much,
- * an escrow holds the money until it is done, and a workspace (the dashed boundary)
+ * an escrow holds the payment until it is done, and a workspace (the dashed boundary)
  * holds all of it for one organisation. The BitRegalo network is BitRegalo's own
  * workspace, open to everyone.
  */
@@ -53,7 +53,7 @@ export function BuildingBlocks() {
         <div className="max-w-3xl">
           <h2 className="t-headline">Four building blocks, one set of public contracts</h2>
           <p className="t-lede mt-5">
-            Each does one job, and they fit together. A request or a listing settles who does the work and for how much. An escrow holds the money until it is done. A workspace holds all of it for one organisation.
+            Each does one job, and they fit together. A request or a listing settles who does the work and for how much. An escrow holds the payment until it is done. A workspace holds all of it for one organisation.
           </p>
         </div>
 
@@ -84,8 +84,8 @@ export function BuildingBlocks() {
               <ArrowDown className="size-4 text-subtle" />Either can settle through
             </div>
 
-            <Block name="Escrow" used="anyone paying for work before it is delivered, including one person holding money for another." className="lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:flex lg:flex-col">
-              <p>Holds the money until the work is done. Then only three things can happen to it:</p>
+            <Block name="Escrow" used="anyone paying for work before it is delivered, including one person holding a payment for another." className="lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:flex lg:flex-col">
+              <p>Holds the payment until the work is done. Then only three things can happen to it:</p>
               <dl className="mt-3 space-y-1.5">
                 {OUTCOMES.map((o) => (
                   <div key={o.name} className="text-base">
@@ -94,7 +94,7 @@ export function BuildingBlocks() {
                   </div>
                 ))}
               </dl>
-              <p className="mt-4 text-sm">A request or a listing can also be paid straight away, or just recorded with no money moving.</p>
+              <p className="mt-4 text-sm">A request or a listing can also be paid straight away, or just recorded, with no payment at all.</p>
             </Block>
           </div>
 

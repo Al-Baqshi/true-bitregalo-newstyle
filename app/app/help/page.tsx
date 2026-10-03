@@ -40,11 +40,11 @@ export default function Help() {
         <dl className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
           <div>
             <dt className="t-subheading">You need a wallet</dt>
-            <dd className="mt-1 text-sm text-muted-foreground">A wallet such as MetaMask is how you sign in and approve each step. BitRegalo never holds your keys or your money.</dd>
+            <dd className="mt-1 text-sm text-muted-foreground">A wallet such as MetaMask is how you sign in and approve each step. BitRegalo never holds your keys or your funds.</dd>
           </div>
           <div>
             <dt className="t-subheading">This is a practice network</dt>
-            <dd className="mt-1 text-sm text-muted-foreground">Everything runs on BNB Smart Chain Testnet. The money has no value, and the faucet gives 1,000 tUSD a day so you can try every step.</dd>
+            <dd className="mt-1 text-sm text-muted-foreground">Everything runs on BNB Smart Chain Testnet. Its tokens have no value, and the faucet gives 1,000 tUSD a day so you can try every step.</dd>
           </div>
           <div>
             <dt className="t-subheading">Nothing happens until you sign</dt>

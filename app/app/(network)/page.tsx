@@ -19,7 +19,7 @@ import { ActivityRow, useMyActivity } from "./activity/activity"
 const LINE: Record<string, string> = {
   pay: "Pay someone or send a gift. It reaches them straight away, with a receipt.",
   "get-paid": "Make a payment link or QR code that anyone can pay.",
-  escrow: "Agree a job and a price. The money is held until you say the work is done.",
+  escrow: "Agree a job and a price. The payment is held until you say the work is done.",
   request: "Post a request. Suppliers send their prices and you choose one.",
   listing: "List what you sell at a fixed price, for anyone to take.",
 }
@@ -34,7 +34,7 @@ export default function NetworkHome() {
   const funded = ((balance.data as bigint | undefined) ?? 0n) > 0n
   const activity = useMyActivity()
   const settingUp = !isConnected || (!!addresses.testStable && !funded)
-  // A connected wallet with no practice money and nothing done yet only needs the setup.
+  // A connected wallet with no practice tokens and nothing done yet only needs the setup.
   const showActivity = isConnected && (!settingUp || activity.items.length > 0)
   const ready = (a: (typeof NEW_ACTIONS)[number]) => !a.minVersion || t.version >= BigInt(a.minVersion)
   // What works today comes first; what is still coming to the network goes last.
@@ -85,14 +85,14 @@ export default function NetworkHome() {
       </Section>
 
       {settingUp && (
-        <Section title="First time here? Three steps" description="This is a practice network. The money is free and has no value, so you can try everything.">
+        <Section title="First time here? Three steps" description="This is a practice network. Its tokens are free and have no value, so you can try everything.">
           <ol className="overflow-hidden rounded-xl border border-border bg-card">
             <SetupStep n={1} done={isConnected} title="Connect a wallet" body="A wallet such as MetaMask is how you sign in and approve each step. BitRegalo never holds your keys." action={!isConnected && <ConnectButton />} />
-            <SetupStep n={2} done={funded} title="Take some practice money" body="1,000 tUSD a day from the faucet. It has no value; it is there to try things with." action={isConnected && !funded && <FaucetButton size="default" variant="default" label="Get 1,000 tUSD" onDone={() => balance.refetch()} />} />
+            <SetupStep n={2} done={funded} title="Take some practice tokens" body="1,000 tUSD a day from the faucet. It has no value; it is there to try things with." action={isConnected && !funded && <FaucetButton size="default" variant="default" label="Get 1,000 tUSD" onDone={() => balance.refetch()} />} />
             <SetupStep
               n={3} done={false} title="Try it"
               body="Hold 10 tUSD for a friend, or post a small request. Nothing happens until you sign."
-              action={<Button asChild variant="secondary"><Link href={`${t.base}/escrows/new`}>Hold money for someone<ArrowRight /></Link></Button>}
+              action={<Button asChild variant="secondary"><Link href={`${t.base}/escrows/new`}>Hold a payment for someone<ArrowRight /></Link></Button>}
             />
           </ol>
         </Section>

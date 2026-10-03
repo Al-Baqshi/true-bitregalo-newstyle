@@ -80,7 +80,7 @@ export default function Receipt({ params }: { params: Promise<{ id: string }> })
           {ref ? <> for <span className="font-[560] text-foreground">{ref}</span></> : null}.
         </p>
 
-        {/* The money, line by line, as on a till receipt. */}
+        {/* The payment, line by line, as on a till receipt. */}
         <dl className="mt-7 border-t border-border">
           <Line label="Amount paid"><Amount value={p.amount} decimals={dec} symbol={sym} /></Line>
           <Line label={`Platform fee (${rules.feeBps / 100}%), taken from the amount`}>−<Amount value={fee} decimals={dec} symbol={sym} /></Line>

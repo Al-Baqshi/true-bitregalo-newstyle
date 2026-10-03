@@ -35,6 +35,12 @@ function AppToaster() {
   )
 }
 
+// React's development tooling turns props into JSON to label renders, and chain reads are full of
+// bigints, which JSON cannot represent. Teach bigints to serialise in development only.
+if (process.env.NODE_ENV !== "production" && !("toJSON" in BigInt.prototype)) {
+  Object.defineProperty(BigInt.prototype, "toJSON", { value: function (this: bigint) { return this.toString() }, configurable: true })
+}
+
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [client] = useState(() => new QueryClient())
   return (

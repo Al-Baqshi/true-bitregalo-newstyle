@@ -42,7 +42,7 @@ const protocols: Record<string, ProtocolDef> = {
     shortName: "Escrow",
     descriptor: "the core primitive",
     intro:
-      "A term-bound, non-custodial escrow. The issuer (in the app, the buyer) can only release. The receiver (the supplier) can only cancel, which hands the money back. When the term ends untouched, the escrow can only return to the issuer.",
+      "A term-bound, non-custodial escrow. The issuer (in the app, the buyer) can only release. The receiver (the supplier) can only cancel, which hands the payment back. When the term ends untouched, the escrow can only return to the issuer.",
     originRows: null,
     escrowRows: [
       { label: "Escrow", value: "#4821 · locked" },
@@ -86,7 +86,7 @@ const protocols: Record<string, ProtocolDef> = {
       },
       {
         title: "Non-custodial",
-        text: "The escrow lives in the smart contract. BitRegalo never takes custody, and no admin can move held money: the platform can pause new escrows, but release, hand back and expiry always work.",
+        text: "The escrow lives in the smart contract. BitRegalo never takes custody, and no admin can move held funds: the platform can pause new escrows, but release, hand back and expiry always work.",
       },
     ],
   },
@@ -106,7 +106,7 @@ const protocols: Record<string, ProtocolDef> = {
       { label: "Receiver", value: "the accepted provider" },
       { label: "Term ends", value: "2026-09-16 · end of proposed time frame" },
       { label: "Delivered", value: <>you <code>release()</code> → settles to provider</> },
-      { label: "Not delivered", value: "term expires → returns to you" },
+      { label: "Not delivered", value: "term expires → can only return to you" },
     ],
     states: [
       { from: "Locked, within the time frame", who: "You, the requester (buyer)", call: <code>release(id)</code>, to: "Released: settled to the provider" },
@@ -122,7 +122,7 @@ const protocols: Record<string, ProtocolDef> = {
       },
       {
         title: "Deliver & release",
-        text: "Delivered within the time frame and to your satisfaction: you release. Not delivered: you simply don't, and at expiry the escrow returns to you.",
+        text: "Delivered within the time frame and to your satisfaction: you release. Not delivered: you simply don't, and after expiry the escrow can only return to you.",
       },
     ],
     facts: [
@@ -160,7 +160,7 @@ const protocols: Record<string, ProtocolDef> = {
       { label: "Receiver", value: "the supplier" },
       { label: "Term ends", value: "2026-08-19 · end of listed time frame" },
       { label: "On delivery", value: <>you <code>release()</code> → settles to supplier</> },
-      { label: "Not delivered", value: "term expires → returns to you" },
+      { label: "Not delivered", value: "term expires → can only return to you" },
     ],
     states: [
       { from: "Locked, within the time frame", who: "You, the buyer", call: <code>release(id)</code>, to: "Released: settled to the supplier" },
@@ -176,7 +176,7 @@ const protocols: Record<string, ProtocolDef> = {
       { title: "Deliver", text: "The supplier ships knowing the escrow is committed and cannot be pulled back mid-way." },
       {
         title: "Release or return",
-        text: "You release on delivery. If nothing arrives, the escrow expires and returns to you. No refund process, no dispute queue.",
+        text: "You release on delivery. If nothing arrives, the escrow expires and can only return to you. No refund process, no dispute queue.",
       },
     ],
     facts: [

@@ -26,8 +26,8 @@ export function FaucetButton({ size = "sm", variant = "secondary", onDone, label
     next.refetch(); bal.refetch(); onDone?.()
   }
   return (
-    <Button size={size} variant={variant} disabled={!isConnected || isPending || wait} onClick={claim} title={!isConnected ? "Connect a wallet first" : wait ? `Next claim in about ${hours} h` : "Practice money with no value"}>
-      <Droplets />{wait ? `More practice money in ${hours} h` : label ?? "Get 1,000 tUSD practice money"}
+    <Button size={size} variant={variant} disabled={!isConnected || isPending || wait} onClick={claim} title={!isConnected ? "Connect a wallet first" : wait ? `Next claim in about ${hours} h` : "Practice tokens with no value"}>
+      <Droplets />{wait ? `More practice tokens in ${hours} h` : label ?? "Get 1,000 practice tUSD"}
     </Button>
   )
 }

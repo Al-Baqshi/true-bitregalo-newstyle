@@ -115,9 +115,9 @@ export function RequestWizard() {
           <Choice<Pay>
             value={settle} onChange={setSettle}
             options={[
-              { value: "2", title: "Hold it safely (escrow)", description: "When you choose an offer, its price moves from your wallet into the workspace vault. You release it when the work is done. If you never do, it returns to you once the supplier's delivery time is over.", disabled: rules.loaded && !rules.escrow ? "Off in this workspace" : undefined },
+              { value: "2", title: "Hold it safely (escrow)", description: "When you choose an offer, its price moves from your wallet into the workspace vault. You release it when the work is done. If you never do, once the supplier's delivery time is over it can only go back to you.", disabled: rules.loaded && !rules.escrow ? "Off in this workspace" : undefined },
               { value: "1", title: "Pay straight away (direct payment)", description: "The supplier is paid in full the moment you choose their offer.", disabled: rules.loaded && !rules.direct ? "Off in this workspace" : undefined },
-              { value: "0", title: "Just record it", description: "No money moves on the blockchain. The request, the offers and your choice are the record." },
+              { value: "0", title: "Just record it", description: "Nothing is paid on the blockchain. The request, the offers and your choice are the record." },
             ]}
           />
           {paid && (

@@ -76,7 +76,7 @@ function TopBar({ here, actions }: { here: Here; actions: typeof NEW_ACTIONS }) 
         </Link>
         <PlaceSwitcher here={here} />
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-          <span className="mr-1 hidden items-center gap-2 rounded-md bg-secondary px-2.5 py-1 text-xs font-[560] text-muted-foreground xl:inline-flex" title={`${chain.name}: practice money with no value`}>
+          <span className="mr-1 hidden items-center gap-2 rounded-md bg-secondary px-2.5 py-1 text-xs font-[560] text-muted-foreground xl:inline-flex" title={`${chain.name}: practice tokens with no value`}>
             <span className="size-1.5 rounded-full bg-success" aria-hidden />
             Practice network
           </span>
@@ -222,7 +222,7 @@ function SubNav({ base, group, current }: { base: string; group: NavGroup; curre
   )
 }
 
-/** Phone and tablet: home, market, new, money and more, within thumb reach. */
+/** Phone and tablet: home, market, new, payments and more, within thumb reach. */
 function BottomTabs({ here, groups, actions, currentGroup, onHome }: { here: Here; groups: NavGroup[]; actions: typeof NEW_ACTIONS; currentGroup: string | null; onHome: boolean }) {
   const path = usePathname()
   const [sheet, setSheet] = useState<"new" | "more" | null>(null)
@@ -310,7 +310,7 @@ function MoreLinks({ links }: { links: { href: string; label: string; icon: NavI
         <ThemeChoice />
         <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
           <span className="size-1.5 rounded-full bg-success" aria-hidden />
-          Practice network ({chain.name}). The money here has no value.
+          Practice network ({chain.name}). The tokens here have no value.
         </p>
       </div>
     </>

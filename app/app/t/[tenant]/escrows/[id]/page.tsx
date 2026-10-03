@@ -11,7 +11,7 @@ import { ConnectButton } from "@/components/app/connect-button"
 import { Button } from "@/components/ui/button"
 
 /** What each state means, in the words the page uses. */
-const STATE = ["", "Money held", "Released to the supplier", "Handed back to the buyer", "Returned to the buyer after the deadline"]
+const STATE = ["", "Payment held", "Released to the supplier", "Handed back to the buyer", "Returned to the buyer after the deadline"]
 const PILL: Record<number, { word: string; tone: "accent" | "good" | "muted" }> = {
   1: { word: "Held", tone: "accent" },
   2: { word: "Released", tone: "good" },
@@ -64,15 +64,15 @@ export default function EscrowPage({ params }: { params: Promise<{ id: string }>
   const deadline = when(e.expiresAt)
 
   const journey: JourneyStep[] = [
-    { title: "Money locked", note: `${new Intl.NumberFormat().format(Number(e.amount) / 10 ** dec)} ${sym} moved into the vault`, state: "done" },
+    { title: "Payment locked", note: `${new Intl.NumberFormat().format(Number(e.amount) / 10 ** dec)} ${sym} moved into the vault`, state: "done" },
     { title: "Work in progress", note: active ? (overdue ? `Deadline passed ${inWords(e.expiresAt)}` : `Deadline ${deadline} (${inWords(e.expiresAt)})`) : "Finished", state: active ? "current" : "done" },
     { title: active ? "Settled" : STATE[e.state], note: active ? "Released, handed back, or returned at the deadline" : e.state === 2 ? "The supplier was paid" : "The buyer got it all back", state: active ? "next" : "done" },
   ]
 
-  /** One sentence on where the money stands right now. */
+  /** One sentence on where the payment stands right now. */
   const standing = active
     ? overdue
-      ? `The deadline (${deadline}) has passed without a release or a hand-back, so this money can only go back to the buyer.`
+      ? `The deadline (${deadline}) has passed without a release or a hand-back, so this payment can only go back to the buyer.`
       : `Held by the vault until the buyer releases it, the supplier hands it back, or the deadline on ${deadline} passes.`
     : e.state === 2
       ? <>The buyer released it. The supplier received <Amount value={e.amount - fee} decimals={dec} symbol={sym} />, the amount minus the {pct}% platform fee.</>
@@ -110,19 +110,19 @@ export default function EscrowPage({ params }: { params: Promise<{ id: string }>
       <Card><Journey steps={journey} /></Card>
 
       {active && (
-        <Section title="Who can move this money">
+        <Section title="Who can move this payment">
           <p className="max-w-[62ch] text-base">
             Only the buyer can release it. Only the supplier can hand it back.
             {overdue
               ? " The deadline has passed, so neither can happen any more: anyone can now return it to the buyer, in full."
-              : <> After <span className="font-[560]">{deadline}</span> neither can happen any more: the money can then only go back to the buyer, in full, and anyone can trigger that.</>}
+              : <> After <span className="font-[560]">{deadline}</span> neither can happen any more: the payment can then only go back to the buyer, in full, and anyone can trigger that.</>}
           </p>
           <dl className="mt-5 divide-y divide-border border-y border-border">
             <Outcome label="If the buyer releases it" muted={overdue}>The supplier receives <Amount value={e.amount - fee} decimals={dec} symbol={sym} />: the amount minus the {pct}% platform fee.</Outcome>
             <Outcome label="If the supplier hands it back" muted={overdue}>The buyer gets all <Amount value={e.amount} decimals={dec} symbol={sym} /> back.</Outcome>
             <Outcome label={overdue ? "Now that the deadline has passed" : `If neither happens by ${deadline}`}>Anyone can return it to the buyer, in full.</Outcome>
           </dl>
-          <p className="mt-4 max-w-[68ch] text-sm text-muted-foreground">No person holds this money: not BitRegalo, not the workspace admin. The vault contract follows these three rules and nothing else, and nobody can move the money towards themselves.</p>
+          <p className="mt-4 max-w-[68ch] text-sm text-muted-foreground">No person holds this payment: not BitRegalo, not the workspace admin. The vault contract follows these three rules and nothing else, and nobody can move the payment towards themselves.</p>
         </Section>
       )}
 
@@ -142,12 +142,12 @@ export default function EscrowPage({ params }: { params: Promise<{ id: string }>
               </Action>
             )}
             {canHandBack && (
-              <Action body={<>Can&apos;t deliver? Handing the money back returns all <Amount value={e.amount} decimals={dec} symbol={sym} /> to the buyer. This cannot be undone.</>}>
-                <Button variant={canRelease ? "secondary" : "default"} disabled={isPending} onClick={act("Hand back", "cancel")}>Hand the money back</Button>
+              <Action body={<>Can&apos;t deliver? Handing it back returns all <Amount value={e.amount} decimals={dec} symbol={sym} /> to the buyer. This cannot be undone.</>}>
+                <Button variant={canRelease ? "secondary" : "default"} disabled={isPending} onClick={act("Hand back", "cancel")}>Hand the payment back</Button>
               </Action>
             )}
             {canReturn && (
-              <Action body={<>The deadline has passed without a release, so the money goes back to the buyer. Anyone can send it on its way.</>}>
+              <Action body={<>The deadline has passed without a release, so the payment can only go back to the buyer. Anyone can send it on its way.</>}>
                 <Button disabled={isPending} onClick={act("Return to buyer", "expire")}>Return it to the buyer</Button>
               </Action>
             )}
@@ -170,7 +170,7 @@ export default function EscrowPage({ params }: { params: Promise<{ id: string }>
   )
 }
 
-/** One of the ways an escrow can end: the condition on the left, what happens to the money on the right. */
+/** One of the ways an escrow can end: the condition on the left, what happens to the payment on the right. */
 function Outcome({ label, children, muted = false }: { label: string; children: React.ReactNode; muted?: boolean }) {
   return (
     <div className={`grid gap-1 py-3 sm:grid-cols-[15rem_minmax(0,1fr)] sm:gap-6 ${muted ? "text-subtle" : ""}`}>

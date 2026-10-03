@@ -81,7 +81,7 @@ export default function Workspaces() {
           <div>
             <dt className="t-subheading">Use the BitRegalo network</dt>
             <dd className="mt-1 text-sm text-muted-foreground">
-              For people and businesses on their own: send money, hold it in escrow, ask for things and offer them, in USDT, in a
+              For people and businesses on their own: send payments, hold them in escrow, ask for things and offer them, in USDT, in a
               marketplace by country. Nothing to set up.
             </dd>
             <dd className="mt-2"><Button asChild variant="link" className="text-sm"><Link href="/app">Go to the network<ArrowRight /></Link></Button></dd>

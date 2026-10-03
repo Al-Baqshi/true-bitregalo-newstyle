@@ -72,7 +72,7 @@ export default function TreasuryPage() {
     <div className="space-y-10">
       <PageHead
         title="Treasury"
-        intro="Your organisation's own money box. Sales, redemptions and payment links land here. Only its owner can take money out; BitRegalo cannot touch it."
+        intro="Your organisation's own funds, in a contract it owns. Sales, redemptions and payment links land here. Only its owner can withdraw; BitRegalo cannot touch it."
         action={<Button asChild variant="secondary"><Link href={`${base}/get-paid?to=${tr}`}>Get paid into it</Link></Button>}
       />
       <Explainer id="treasury" title="What this is">
@@ -107,14 +107,14 @@ export default function TreasuryPage() {
 
       {!isOwner && (
         <Notice title="Read-only view">
-          <p>Only the treasury&apos;s owner, <Addr a={owner ?? ""} />, can take money out or hand the treasury over. {address ? "The connected wallet is not the owner." : "Connect the owner's wallet to do either."}</p>
+          <p>Only the treasury&apos;s owner, <Addr a={owner ?? ""} />, can withdraw or hand the treasury over. {address ? "The connected wallet is not the owner." : "Connect the owner's wallet to do either."}</p>
         </Notice>
       )}
 
       {isOwner && (
         <Section title="Owner actions" description="Only you see these. Each one is a transaction your wallet signs.">
           <div className="space-y-6">
-            <Card flush title="Take money out" description="It goes to your connected wallet. Leave the amount empty to take all of it.">
+            <Card flush title="Withdraw from the treasury" description="It goes to your connected wallet. Leave the amount empty to take all of it.">
               {withdrawable.length === 0 && <Empty title="Nothing to withdraw" body="The treasury holds no balance yet." />}
               {withdrawable.map((r) => (
                 <div key={r.token} className="grid gap-3 border-b border-border px-5 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_11rem_auto] sm:items-end sm:px-6">

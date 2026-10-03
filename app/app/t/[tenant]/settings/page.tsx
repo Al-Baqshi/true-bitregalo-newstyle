@@ -130,7 +130,7 @@ export default function AdminPage() {
 
           <Section
             title="Ways to settle"
-            description="How a request or listing here can be paid. “Just record it” is always available; these two are the ways that move money."
+            description="How a request or listing here can be paid. “Just record it” is always available; these two make an actual payment."
           >
             <div className="grid max-w-160 gap-3">
               <AddOn
@@ -144,7 +144,7 @@ export default function AdminPage() {
                 checked={e}
                 onChange={setE}
                 title="Hold it safely (escrow)"
-                description="The money is locked in the workspace's vault until the buyer releases it, the supplier hands it back, or the deadline returns it to the buyer."
+                description="The payment is locked in the workspace's vault until the buyer releases it or the supplier hands it back. After the deadline it can only go back to the buyer."
                 tag={escrow === undefined ? undefined : escrow ? "On now" : "Off now"}
               />
             </div>

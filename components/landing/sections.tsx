@@ -8,7 +8,7 @@ import { HeroDemo } from "./hero-demo"
  * The landing page, top to bottom. Its job is to make plain within seconds that
  * BitRegalo is infrastructure, not one product: what it is, the building blocks,
  * the two ways to use it (on the BitRegalo network or in an organisation's own
- * workspace), why the money is safe, and what to do next. It shows the mechanism
+ * workspace), why a held payment is safe, and what to do next. It shows the mechanism
  * at work instead of illustrating a mood. Sections that need more room live in
  * their own files: building-blocks.tsx and two-ways.tsx.
  */
@@ -20,16 +20,16 @@ export function Hero() {
   return (
     <section className={`${wrap} grid items-center gap-x-14 gap-y-8 pb-20 pt-8 sm:pt-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.96fr)] lg:pb-28 lg:pt-20`}>
       <div>
-        <h1 className="t-display">Public rails for work and money.</h1>
+        <h1 className="t-display">Public rails for work and payments.</h1>
         <p className="t-lede mt-5 sm:mt-6">
-          BitRegalo is decentralised infrastructure. People and organisations agree on work and payment, and a public contract enforces the deal. Nobody in the middle holds the money, not even us.
+          BitRegalo is decentralised infrastructure. People and organisations agree on the work and the price, and a public contract enforces the deal. Nobody in the middle holds the payment, not even us.
         </p>
         <div className="mt-7 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
           <Button asChild size="lg" className="max-sm:px-3"><Link href="/app">Open the app<ArrowRight /></Link></Button>
           <Button asChild size="lg" variant="outline" className="max-sm:px-3"><Link href="#organisations">For organisations</Link></Button>
         </div>
         <p className="mt-5 hidden max-w-[52ch] text-sm text-muted-foreground sm:block">
-          The app runs on a practice network today, with free practice money, so you can try every step.
+          The app runs on a practice network today, with free practice tokens, so you can try every step.
         </p>
       </div>
       <HeroDemo />
@@ -43,8 +43,8 @@ const STEPS = [
     body: "What is to be done, for how much and by when. Through a request, a listing, or directly between two people.",
   },
   {
-    title: "Settle the money",
-    body: "Hold it in escrow until the work is done, pay straight away, or simply record the deal with no money moving.",
+    title: "Settle the payment",
+    body: "Hold it in escrow until the work is done, pay straight away, or simply record the deal with no payment at all.",
   },
   {
     title: "Keep the record",
@@ -79,11 +79,11 @@ export function HowItWorks() {
 
 const OUTCOMES = [
   { name: "Released", text: "The buyer releases it. The supplier is paid." },
-  { name: "Handed back", text: "The supplier hands it back. The buyer has the money again." },
-  { name: "Returned", text: "The deadline passes with no decision. The money can only go back to the buyer, and anyone can trigger that." },
+  { name: "Handed back", text: "The supplier hands it back. The buyer has the full amount again." },
+  { name: "Returned", text: "The deadline passes with no decision. The payment can only go back to the buyer, and anyone can trigger that." },
 ]
 const COMPARISON = [
-  { label: "Who holds the money", traditional: "An agent, a bank or a platform", bitregalo: "A public contract. Never BitRegalo." },
+  { label: "Who holds the payment", traditional: "An agent, a bank or a platform", bitregalo: "A public contract. Never BitRegalo." },
   { label: "What you rely on", traditional: "The agent's honesty and solvency", bitregalo: "Rules anyone can read" },
   { label: "If nobody decides", traditional: "It waits on the agent or on arbitration", bitregalo: "After the deadline it can only go back to the buyer" },
   { label: "Records", traditional: "Statements on request", bitregalo: "Public records, as they happen" },
@@ -94,7 +94,7 @@ export function Trust() {
     <section id="trust" className={band}>
       <div className={`${wrap} grid gap-x-14 gap-y-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]`}>
         <div>
-          <h2 className="t-headline">No one else can touch the money. Not even us.</h2>
+          <h2 className="t-headline">No one else can touch the payment. Not even us.</h2>
           <p className="t-lede mt-5">
             Traditional escrow asks you to trust an agent. Here the agent is a public contract, and an escrow has only three outcomes.
           </p>
@@ -124,7 +124,7 @@ export function Trust() {
             ))}
           </div>
           <p className="mt-6 max-w-[62ch] text-base text-muted-foreground">
-            BitRegalo never takes custody, and neither does a workspace admin. Held money can only go to the supplier or back to the buyer.
+            BitRegalo never takes custody, and neither does a workspace admin. A held payment can only go to the supplier or back to the buyer.
           </p>
         </div>
       </div>
@@ -136,7 +136,7 @@ const FEATURED = [
   {
     sector: "Construction",
     image: { src: "/assets/parallax/construction.webp", alt: "Tower cranes over a building site at night" },
-    title: "Subcontractors see the money before they start.",
+    title: "Subcontractors see the payment before they start.",
     text: "Each package is paid into its own escrow before work begins. The subcontractor can check it is there, and nobody can move it except to them or back to the buyer.",
   },
   {
@@ -148,8 +148,8 @@ const FEATURED = [
 ]
 const MORE_CASES = [
   { title: "Freelance and milestones", text: "Each milestone goes into escrow before work starts and is released on acceptance." },
-  { title: "Cross-border trade", text: "Two parties who have never met agree a price, and the money waits in a contract until delivery." },
-  { title: "People across borders", text: "Send money or a gift in USDT to someone in another country, with a reference and a receipt." },
+  { title: "Cross-border trade", text: "Two parties who have never met agree a price, and the payment waits in a contract until delivery." },
+  { title: "People across borders", text: "Send a payment or a gift in USDT to someone in another country, with a reference and a receipt." },
   { title: "Grants and allocations", text: "Every allocation is visible. Whatever is not released can go back to the funder after the deadline." },
 ]
 
@@ -203,7 +203,7 @@ export function Protocol() {
           </p>
           <pre className="mt-8 overflow-x-auto rounded-xl border border-border bg-card px-5 py-4 font-mono text-sm leading-7 text-foreground">
             <code>
-              <span className="text-muted-foreground">{"// once an escrow holds the money"}</span>{"\n"}
+              <span className="text-muted-foreground">{"// once an escrow holds the payment"}</span>{"\n"}
               vault.<span className="text-gold">release</span>(id){"  "}<span className="text-muted-foreground">{"// buyer only: pays the supplier"}</span>{"\n"}
               vault.<span className="text-gold">cancel</span>(id){"   "}<span className="text-muted-foreground">{"// supplier only: hands it back"}</span>{"\n"}
               vault.<span className="text-gold">expire</span>(id){"   "}<span className="text-muted-foreground">{"// anyone, after the deadline: back to the buyer"}</span>

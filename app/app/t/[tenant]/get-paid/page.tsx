@@ -55,7 +55,7 @@ function GetPaidInner() {
   const fixedAmount = Number(amount) > 0
   return (
     <div className="space-y-8">
-      <PageHead title="Get paid" intro="Make a link or a QR code. Whoever opens it sees the amount and your wallet, signs once, and the money reaches your wallet in that same transaction." />
+      <PageHead title="Get paid" intro="Make a link or a QR code. Whoever opens it sees the amount and your wallet, signs once, and the payment reaches your wallet in that same transaction." />
       <Explainer id="get-paid" title="How this works">
         <p>Nothing is written to the blockchain when you make a link. The link only carries who gets paid, in which currency, how much, and a reference. The payment itself happens when the other person opens the link and signs. Every payment then appears under Payments, with a receipt you can both keep.</p>
         <p>Leave the amount empty for a link where the payer chooses, such as a tip jar or a gift. Set it for an invoice.</p>

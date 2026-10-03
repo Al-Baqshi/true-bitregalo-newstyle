@@ -99,7 +99,7 @@ export function PayWizard({ prefill = {} }: { prefill?: PayPrefill }) {
   return (
     <Wizard
       title={locked ? "Confirm this payment" : "Pay someone"}
-      intro={locked ? "Someone sent you a payment link. Check the recipient and the amount, then sign. The money goes straight to them." : "Send a stablecoin or a workspace token to any wallet. It arrives in one transaction, with a receipt you can both keep."}
+      intro={locked ? "Someone sent you a payment link. Check the recipient and the amount, then sign. The payment goes straight to them." : "Send a stablecoin or a workspace token to any wallet. It arrives in one transaction, with a receipt you can both keep."}
       steps={steps}
       signLabel="Pay now"
       plan={[
@@ -135,7 +135,7 @@ export function PayWizard({ prefill = {} }: { prefill?: PayPrefill }) {
         >
           <p>
             {chosen ? <><span className="t-num font-[560] text-foreground">{amount} {chosen.symbol}</span> went to <span className="t-mono text-foreground">{short(to)}</span>. </> : null}
-            They have the money now. The receipt shows the amount, the reference and both wallets; send them the link as proof.
+            It is in their wallet now. The receipt shows the amount, the reference and both wallets; send them the link as proof.
           </p>
         </Done>
       )}

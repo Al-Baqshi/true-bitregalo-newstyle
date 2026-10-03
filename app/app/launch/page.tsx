@@ -109,7 +109,7 @@ function LaunchWizard() {
                 { value: "procurement", title: PURPOSE_NAME.procurement, description: "Post requests, suppliers make offers, and the one you choose is paid through escrow." },
                 { value: "marketplace", title: PURPOSE_NAME.marketplace, description: "Suppliers list what they sell. Buyers take a listing and pay straight away or by escrow." },
                 { value: "grants", title: PURPOSE_NAME.grants, description: "Every payment is tied to a request that donors and members can see." },
-                { value: "records", title: PURPOSE_NAME.records, description: "Prove who asked, who was chosen and when. No money moves." },
+                { value: "records", title: PURPOSE_NAME.records, description: "Prove who asked, who was chosen and when. Nothing is paid." },
               ]}
             />
           </fieldset>
@@ -117,21 +117,21 @@ function LaunchWizard() {
       ),
     },
     {
-      id: "payments", title: "How people pay", caption: "“Just record it” always works. Switch on the ways that move money.",
+      id: "payments", title: "How people pay", caption: "“Just record it” always works. Switch on the ways to pay.",
       valid: paid && baseTokens.length === 0 ? "Choose at least one token people can pay in" : paid && !(Number(serviceFee) >= 0) ? "Enter a service fee (0 is fine)" : true,
       content: (
         <div className="grid gap-4">
-          <AddOn checked={escrow} onChange={setEscrow} title="Hold it safely (escrow)" description="The buyer's money is locked in your workspace's vault. Only the buyer can release it to the supplier, only the supplier can hand it back, and at the deadline it returns to the buyer by itself." />
+          <AddOn checked={escrow} onChange={setEscrow} title="Hold it safely (escrow)" description="The buyer's payment is locked in your workspace's vault. Only the buyer can release it to the supplier, and only the supplier can hand it back. After the deadline it can only go back to the buyer, and anyone can trigger that." />
           <AddOn checked={direct} onChange={setDirect} title="Pay straight away (direct payment)" description="The supplier is paid from the buyer's wallet the moment an offer is chosen on a request or a listing is taken." />
 
           {paid && (
             <div className="mt-4 grid gap-4 border-t border-border pt-6">
               <div>
                 <h3 className="t-subheading">Tokens you accept</h3>
-                <p className="mt-1 text-sm text-muted-foreground">The money people can pay in here. Switch each one on or off; you can add more later in Settings.</p>
+                <p className="mt-1 text-sm text-muted-foreground">What people can pay with here. Switch each one on or off; you can add more later in Settings.</p>
               </div>
               {STABLES.map((st) => (
-                <AddOn key={st.address} checked={stables.includes(st.address)} onChange={(v) => setStables(v ? [...stables, st.address] : stables.filter((x) => x !== st.address))} title={st.symbol} tag={st.faucet ? "Free practice money" : undefined} description={st.name} />
+                <AddOn key={st.address} checked={stables.includes(st.address)} onChange={(v) => setStables(v ? [...stables, st.address] : stables.filter((x) => x !== st.address))} title={st.symbol} tag={st.faucet ? "Free practice token" : undefined} description={st.name} />
               ))}
               {extraTokens.map((t) => (
                 <div key={t} className="flex items-center justify-between gap-3 rounded-xl border border-border-strong/60 px-4 py-2.5">
@@ -156,7 +156,7 @@ function LaunchWizard() {
             </div>
           )}
 
-          {!paid && <Note>With both switched off, your workspace records requests, offers and choices without moving money. You can switch payments on later in Settings.</Note>}
+          {!paid && <Note>With both switched off, your workspace records requests, offers and choices, and nothing is paid through it. You can switch payments on later in Settings.</Note>}
 
           {(launchFeeText || (paid && feeBps !== undefined)) && (
             <div className="mt-2 rounded-lg bg-secondary px-4 py-4">
@@ -193,14 +193,14 @@ function LaunchWizard() {
 
   if (escrow) {
     steps.push({
-      id: "rules", title: "Escrow rules", caption: "How long money may stay held in the vault.",
+      id: "rules", title: "Escrow rules", caption: "How long a payment may stay held in the vault.",
       valid: !(Number(minDays) > 0) || !(Number(maxDays) >= Number(minDays)) ? "The longest term must be at least the shortest" : Number(minDays) * 24 < 1 ? "The shortest term is at least one hour" : true,
       content: (
         <div className="grid gap-5 sm:grid-cols-2">
           <Label title="Shortest term (days)" hint="The soonest an escrow can be due. At least one hour, which is about 0.05 days.">
             <input className={cn(input, "t-num")} type="number" inputMode="decimal" min="0.05" step="any" value={minDays} onChange={(e) => setMinDays(e.target.value)} />
           </Label>
-          <Label title="Longest term (days)" hint="The longest an escrow can run. Money not released by then goes back to the buyer by itself.">
+          <Label title="Longest term (days)" hint="The longest an escrow can run. A payment not released by its deadline can only go back to the buyer.">
             <input className={cn(input, "t-num")} type="number" inputMode="numeric" min="1" value={maxDays} onChange={(e) => setMaxDays(e.target.value)} />
           </Label>
         </div>
@@ -250,9 +250,9 @@ function LaunchWizard() {
   }
   if (withRequest) {
     const settleOpts = [
-      { value: "2" as Pay, title: "Hold it safely", description: "The money is locked when you choose an offer and released when you say so.", disabled: escrow ? undefined : "Escrow is switched off for this workspace" },
+      { value: "2" as Pay, title: "Hold it safely", description: "The payment is locked when you choose an offer and released when you say so.", disabled: escrow ? undefined : "Escrow is switched off for this workspace" },
       { value: "1" as Pay, title: "Pay straight away", description: "The supplier is paid the moment you choose their offer.", disabled: direct ? undefined : "Direct payment is switched off for this workspace" },
-      { value: "0" as Pay, title: "Just record it", description: "No money moves." },
+      { value: "0" as Pay, title: "Just record it", description: "Nothing is paid." },
     ]
     steps.push({
       id: "request", title: "Your first request", caption: "Suppliers answer with offers. You choose one.",

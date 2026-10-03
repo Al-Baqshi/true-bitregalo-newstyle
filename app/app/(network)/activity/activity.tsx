@@ -82,7 +82,7 @@ export function useMyActivity() {
   if (me) {
     const allBids = bidRefs.map((ref, k) => ({ ...ref, bid: bids.data?.[k]?.result as Bid | undefined }))
 
-    // Escrows first: they hold money.
+    // Escrows first: they hold payments.
     escrows.data.forEach((e, i) => {
       if (!e || (!mine(e.issuer) && !mine(e.receiver))) return
       const id = String(escrows.ids[i])
@@ -168,7 +168,7 @@ export function useMyActivity() {
             : <>Made for you by {who(o.supplier)} · delivery within {days(o.timeframe)} · {HOW[o.settlement]}</>,
         amount: o.settlement !== 0 ? money(o.amount, o.token) : undefined,
         status: forMe ? { word: "Waiting for you", tone: "accent" } : { word, tone: o.state === 1 ? "accent" : o.state === 2 ? "good" : "muted" },
-        needs: forMe ? (o.settlement === 2 ? "Fund it: the money is then held until you release it" : o.settlement === 1 ? "Take it and pay" : "Take it") : undefined,
+        needs: forMe ? (o.settlement === 2 ? "Fund it: the payment is then held until you release it" : o.settlement === 1 ? "Take it and pay" : "Take it") : undefined,
       })
     })
 

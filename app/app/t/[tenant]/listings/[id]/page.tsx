@@ -16,9 +16,9 @@ import { Button } from "@/components/ui/button"
 /** The state of a listing, in a word. The contract says listed / confirmed; people say open / taken. */
 const STATE = ["—", "Open", "Taken", "Withdrawn"] as const
 const MODE = [
-  { name: "Just record it", pill: "record only", after: "No money moves. The listing and who took it are the record." },
+  { name: "Just record it", pill: "record only", after: "Nothing is paid. The listing and who took it are the record." },
   { name: "Pay straight away", pill: "direct payment", after: "The supplier is paid from the buyer's wallet the moment the listing is taken." },
-  { name: "Hold it safely", pill: "escrow", after: "When the listing is taken, the price is locked in the workspace vault. The buyer releases it when the work is delivered; if they never do, it returns to them after the delivery time." },
+  { name: "Hold it safely", pill: "escrow", after: "When the listing is taken, the price is locked in the workspace vault. The buyer releases it when the work is delivered; if they never do, after the delivery time it can only go back to them." },
 ]
 
 function duration(s: bigint) {
@@ -125,9 +125,9 @@ export default function OfferDetail({ params }: { params: Promise<{ id: string }
         <Section title="Take this listing">
           <Notice tone="accent" action={<Button disabled={isPending} onClick={confirm}>{offer.settlement === 2 ? "Take it and fund the escrow" : offer.settlement === 1 ? "Take it and pay" : "Take this listing"}</Button>}>
             <p>
-              {offer.settlement === 2 && <>Taking it moves <Amount value={offer.amount} decimals={erc.decimals} symbol={erc.symbol} />{fee && <> plus a {fee} service fee</>} from your wallet into the vault. You release it to the supplier when the work is delivered. If you never do, it returns to you after {duration(offer.timeframe)}.</>}
+              {offer.settlement === 2 && <>Taking it moves <Amount value={offer.amount} decimals={erc.decimals} symbol={erc.symbol} />{fee && <> plus a {fee} service fee</>} from your wallet into the vault. You release it to the supplier when the work is delivered. If you never do, after {duration(offer.timeframe)} it can only go back to you.</>}
               {offer.settlement === 1 && <>Taking it pays the supplier <Amount value={offer.amount} decimals={erc.decimals} symbol={erc.symbol} /> straight away from your wallet{fee && <>, plus a {fee} service fee</>}.</>}
-              {offer.settlement === 0 && <>Taking it records that you accepted this offer. No money moves.</>}
+              {offer.settlement === 0 && <>Taking it records that you accepted this offer. Nothing is paid.</>}
               {paid && <> Your wallet will be charged <Amount value={total} decimals={erc.decimals} symbol={erc.symbol} />. Your balance: <Amount value={erc.balance} decimals={erc.decimals} symbol={erc.symbol} />.</>}
             </p>
           </Notice>

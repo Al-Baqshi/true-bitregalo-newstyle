@@ -45,7 +45,7 @@ export default function Overview() {
           hasPay ? (
             <>
               <Button asChild><Link href={`${base}/get-paid`}>Get paid</Link></Button>
-              <Button asChild variant="secondary"><Link href={`${base}/pay`}>Send money</Link></Button>
+              <Button asChild variant="secondary"><Link href={`${base}/pay`}>Send a payment</Link></Button>
               <Button asChild variant="secondary"><Link href={`${base}/requests/new`}>Ask for something</Link></Button>
             </>
           ) : (
@@ -93,7 +93,7 @@ export default function Overview() {
         </Facts>
         <p className="mt-6 border-t border-border pt-4 text-sm text-muted-foreground">
           {versionWord}. Its own contracts: records <Addr a={t.instance} />, vault <Addr a={t.vault} />
-          {t.treasury && <>, treasury <Addr a={t.treasury} /></>}. Money held in escrow sits in the vault, and nobody, including BitRegalo and the admin, can send it anywhere but to the supplier or back to the buyer.
+          {t.treasury && <>, treasury <Addr a={t.treasury} /></>}. Payments held in escrow sit in the vault, and nobody, including BitRegalo and the admin, can send them anywhere but to the supplier or back to the buyer.
         </p>
       </Card>
 
@@ -116,7 +116,7 @@ export default function Overview() {
           </Card>
 
           <Card flush title="Escrows" action={<Button asChild size="sm" variant="ghost"><Link href={`${base}/escrows`}>All escrows</Link></Button>}>
-            {escrows.data.length === 0 && <Empty title="No escrows yet" body="An escrow opens when someone chooses an offer on a request, or takes a listing, that is paid by escrow." action={<Button asChild size="sm" variant="secondary"><Link href={`${base}/escrows/new`}>Hold money for someone</Link></Button>} />}
+            {escrows.data.length === 0 && <Empty title="No escrows yet" body="An escrow opens when someone chooses an offer on a request, or takes a listing, that is paid by escrow." action={<Button asChild size="sm" variant="secondary"><Link href={`${base}/escrows/new`}>Hold a payment for someone</Link></Button>} />}
             {escrows.data.slice(0, 5).map((e, i) => e && (
               <LedgerRow
                 key={String(escrows.ids[i])}

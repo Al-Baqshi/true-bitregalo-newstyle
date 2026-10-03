@@ -4,7 +4,7 @@ How BitRegalo looks and why. Code is the source of truth (`app/globals.css`, `co
 
 ## The idea
 
-A statement, not a dashboard. People come to BitRegalo to move money they care about, often for the first time on a blockchain. Every screen should read like a well-kept financial statement: a clear title, plain words, exact figures aligned on the right, and the state of every record said in a word. Expression lives in a few precise details (the flared headline face, the gold of "held" money, the escrow demo on the landing page), never in decoration.
+A statement, not a dashboard. People come to BitRegalo to move payments they care about, often for the first time on a blockchain. Every screen should read like a well-kept financial statement: a clear title, plain words, exact figures aligned on the right, and the state of every record said in a word. Expression lives in a few precise details (the flared headline face, the gold of "held" money, the escrow demo on the landing page), never in decoration.
 
 ## Themes
 
@@ -28,7 +28,7 @@ Two themes from one palette, chosen by the visitor (Light, Dark, or Match my dev
 
 Rules:
 
-- Gold is the only accent. It is the primary button in both themes, and marks money that is held or open, the current selection, and links. Emerald means it settled. Red is reserved for failure and destruction.
+- Gold is the only accent. It is the primary button in both themes, and marks payments that are held or open, the current selection, and links. Emerald means it settled. Red is reserved for failure and destruction.
 - One primary button per view. The header's wallet button is an outline so a page's own prompt to connect stays the primary.
 - Every text pair meets WCAG AA in both themes (most reach AAA); control borders meet 3:1. Never fade text with opacity to make it secondary: use `muted-foreground` or `subtle`.
 - Brand orange appears only as the dot on the "i" of the wordmark.
@@ -60,9 +60,9 @@ One family, **Commissioner** (variable, self-hosted in `app/fonts`). Its flare a
 
 There are two places a person can be, and both use the same layout so it only has to be learned once (and carries straight into the mobile app). The model is defined once in `components/app/nav.ts`.
 
-- **The BitRegalo network** (`/app`): open to everyone. Home; Marketplace (browse by country, requests, listings); Money (payments, escrows, my activity); For organisations (workspaces). It runs on BitRegalo's own public workspace, so its pages are the workspace pages served at `/app`.
-- **An organisation's workspace** (`/app/t/{id}`): Overview; Market (shop, requests, listings); Money (payments, escrows, treasury, tokens); Set up (projects, settings). The sidebar names the workspace and links back to the network.
-- On a desktop both are a left sidebar. On a phone they are bottom tabs (Home or Overview, Market, **New**, Money, More), with the pages of the current tab as a row of tabs under the top bar. **New** lists what can be started here: send money, get paid, hold money for someone, ask for something, offer something (and, in a workspace, sell, create a token, start a project).
+- **The BitRegalo network** (`/app`): open to everyone. Home; Marketplace (browse by country, requests, listings); Payments (sent and received, escrows, my activity); For organisations (workspaces, connect a platform). It runs on BitRegalo's own public workspace, so its pages are the workspace pages served at `/app`.
+- **An organisation's workspace** (`/app/t/{id}`): Overview; Market (shop, requests, listings); Payments (sent and received, escrows, treasury, tokens); Set up (projects, settings, connect a platform). The sidebar names the workspace and links back to the network.
+- On a desktop both are a left sidebar. On a phone they are bottom tabs (Home or Overview, Market, **New**, Payments, More), with the pages of the current tab as a row of tabs under the top bar. **New** lists what can be started here: send money, get paid, hold money for someone, ask for something, offer something (and, in a workspace, sell, create a token, start a project).
 - The top bar's place switcher shows where you are (BitRegalo network, or the workspace's name) and moves between the network and every organisation workspace.
 - Pages that need a newer contract version are hidden from the navigation of older workspaces.
 - Page content sits in a single column up to 56rem wide. Sections are separated by space first; a `Card` is used only when a set of records or a form needs a surface. Cards are never nested.
@@ -88,7 +88,7 @@ Motion explains state and confirms input; it is never decoration.
 
 - Buttons squeeze to 98% on press. Menus scale from their trigger in 150ms. Sheets slide up in 300ms. Easing is a strong ease-out (`--ease-out`).
 - Content that arrives after a decision (a wizard step, a result) rises 6px as it fades in.
-- The landing page's escrow demo moves the money along its only three paths in 700ms.
+- The landing page's escrow demo moves the payment along its only three paths in 700ms.
 - Everything respects reduced-motion settings.
 
 ## Phone
@@ -100,4 +100,4 @@ Motion explains state and confirms input; it is never decoration.
 
 ## Voice
 
-Plain, direct and calm, in British/NZ spelling and sentence case. Say what happens to the money and who can move it. Use the product's words (workspace, request, listing, escrow, treasury, token) and never internal ones (tenant, instance, RFP state numbers). Label demonstrations as examples; never invent customers, figures or claims.
+Plain, direct and calm, in British/NZ spelling and sentence case. Say what happens to the payment and who can move it. Never write "money"; say payment, USDT or tokens. Use the product's words (workspace, request, listing, escrow, treasury, token) and never internal ones (tenant, instance, RFP state numbers). Label demonstrations as examples; never invent customers, figures or claims.

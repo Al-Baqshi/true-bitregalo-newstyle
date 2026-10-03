@@ -1,12 +1,12 @@
 import {
-  Activity, ArrowLeftRight, Building2, Coins, FileSearch, Folder, Globe2, House, Landmark, type LucideIcon, Lock, PackageCheck,
+  Activity, ArrowLeftRight, Building2, Cable, Coins, FileSearch, Folder, Globe2, House, Landmark, type LucideIcon, Lock, PackageCheck,
   QrCode, Send, Settings2, ShieldCheck, Store, Tag,
 } from "lucide-react"
 
 /*
  * How the app is organised. There are two places a person can be:
  *
- *   The BitRegalo network  everyone, anywhere: send money, hold it in escrow, ask for
+ *   The BitRegalo network  everyone, anywhere: send USDT, hold a payment in escrow, ask for
  *                          things and offer them in a marketplace by country. It runs on
  *                          BitRegalo's own public workspace. Pages live at /app.
  *
@@ -47,10 +47,10 @@ export const NETWORK: NavModel = {
     },
     {
       key: "money",
-      label: "Money",
+      label: "Payments",
       icon: ArrowLeftRight,
       items: [
-        { key: "payments", label: "Payments", path: "/payments", icon: ArrowLeftRight, also: ["/pay", "/get-paid"], minVersion: 1 },
+        { key: "payments", label: "Sent and received", path: "/payments", icon: ArrowLeftRight, also: ["/pay", "/get-paid"], minVersion: 1 },
         { key: "escrows", label: "Escrows", path: "/escrows", icon: Lock },
         { key: "activity", label: "My activity", path: "/activity", icon: Activity },
       ],
@@ -59,7 +59,10 @@ export const NETWORK: NavModel = {
       key: "orgs",
       label: "For organisations",
       icon: Building2,
-      items: [{ key: "workspaces", label: "Workspaces", path: "/workspaces", icon: Building2, also: ["/launch"] }],
+      items: [
+        { key: "workspaces", label: "Workspaces", path: "/workspaces", icon: Building2, also: ["/launch"] },
+        { key: "connect", label: "Connect a platform", path: "/connect", icon: Cable },
+      ],
     },
   ],
 }
@@ -80,10 +83,10 @@ export const WORKSPACE: NavModel = {
     },
     {
       key: "money",
-      label: "Money",
+      label: "Payments",
       icon: ArrowLeftRight,
       items: [
-        { key: "payments", label: "Payments", path: "/payments", icon: ArrowLeftRight, also: ["/pay", "/get-paid"], minVersion: 1 },
+        { key: "payments", label: "Sent and received", path: "/payments", icon: ArrowLeftRight, also: ["/pay", "/get-paid"], minVersion: 1 },
         { key: "escrows", label: "Escrows", path: "/escrows", icon: Lock },
         { key: "treasury", label: "Treasury", path: "/treasury", icon: Landmark, minVersion: 1 },
         { key: "tokens", label: "Tokens", path: "/tokens", icon: Coins },
@@ -96,6 +99,7 @@ export const WORKSPACE: NavModel = {
       items: [
         { key: "projects", label: "Projects", path: "/projects", icon: Folder },
         { key: "settings", label: "Settings", path: "/settings", icon: Settings2 },
+        { key: "connect", label: "Connect a platform", path: "/connect", icon: Cable },
       ],
     },
   ],
@@ -104,9 +108,9 @@ export const WORKSPACE: NavModel = {
 /** The things a person can start. Verb first, in the order people reach for them. */
 export type NewAction = { key: string; label: string; hint: string; path: string; icon: LucideIcon; minVersion?: number; workspaceOnly?: boolean }
 export const NEW_ACTIONS: NewAction[] = [
-  { key: "pay", label: "Send money", hint: "Pay someone or send a gift, with a reference and a receipt", path: "/pay", icon: Send, minVersion: 1 },
+  { key: "pay", label: "Send a payment", hint: "Pay someone or send a gift in USDT, with a reference and a receipt", path: "/pay", icon: Send, minVersion: 1 },
   { key: "get-paid", label: "Get paid", hint: "Make a payment link or QR code", path: "/get-paid", icon: QrCode, minVersion: 1 },
-  { key: "escrow", label: "Hold money for someone", hint: "Lock a payment until the work is done", path: "/escrows/new", icon: ShieldCheck },
+  { key: "escrow", label: "Hold a payment for someone", hint: "Lock it in escrow until the work is done", path: "/escrows/new", icon: ShieldCheck },
   { key: "request", label: "Ask for something", hint: "Post a request; suppliers send prices and you choose one", path: "/requests/new", icon: FileSearch },
   { key: "listing", label: "Offer something", hint: "List what you sell at a fixed price", path: "/listings/new", icon: PackageCheck },
   { key: "sale", label: "Sell in the shop", hint: "Put vouchers, credits or memberships on sale", path: "/shop/new", icon: Store, minVersion: 1, workspaceOnly: true },

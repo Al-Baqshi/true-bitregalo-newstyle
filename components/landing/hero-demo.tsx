@@ -8,12 +8,12 @@ import { Chip, money, moveCls } from "./demo-parts"
 /*
  * Three building blocks, each doing its one job, in the first screen of the site.
  *
- *   Escrow   money held until the work is done; only three things can happen to it.
+ *   Escrow   a payment held until the work is done; only three things can happen to it.
  *   Request  "I need this": suppliers answer with a price and a time, the buyer chooses one.
  *   Listing  "I offer this": a fixed price and time, taken as it stands.
  *
  * A chosen offer or a taken listing hands its amount to the escrow tab, so the three
- * read as one story: agree on the work, then hold the money until it is done.
+ * read as one story: agree on the work, then hold the payment until it is done.
  * Every name and amount is made up, and the caption says so.
  */
 type Tab = "escrow" | "request" | "listing"
@@ -24,7 +24,7 @@ const TABS: { key: Tab; label: string }[] = [
 ]
 const CAPTION: Record<Tab, string> = {
   escrow:
-    "An example with made-up names. The buyer can only release; the supplier can only hand back; after the deadline the money can only return to the buyer, and anyone can trigger that. Nobody can send it anywhere else, including BitRegalo.",
+    "An example with made-up names. The buyer can only release; the supplier can only hand back; after the deadline the payment can only return to the buyer, and anyone can trigger that. Nobody can send it anywhere else, including BitRegalo.",
   request: "An example with made-up names. The request, every offer and the buyer's choice are public records.",
   listing: "An example with made-up names. A listing can be open to anyone, as here, or made for one named buyer.",
 }

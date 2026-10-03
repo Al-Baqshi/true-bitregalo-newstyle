@@ -168,7 +168,7 @@ export default function Platform() {
                   workspace on the current contracts fixes that.{" "}
                   {deployFee === 0n
                     ? "Creating it is free: there is no launch fee right now."
-                    : <>Creating it costs the normal launch fee{deployFee !== undefined && <> of <span className="t-num text-foreground"><Amount value={deployFee} /> {deployFeeSym}</span></>}, in practice money.</>}{" "}
+                    : <>Creating it costs the normal launch fee{deployFee !== undefined && <> of <span className="t-num text-foreground"><Amount value={deployFee} /> {deployFeeSym}</span></>}, in practice tokens.</>}{" "}
                   Once it exists, the app is pointed at it: one setting, the public workspace number, which BitRegalo changes.
                 </p>
                 {isOwner && feeShort ? (
@@ -182,7 +182,7 @@ export default function Platform() {
                       The launch fee is paid in {deployFeeSym}, and this wallet holds none.{" "}
                       {canSwitchFeeToTest
                         ? "On the practice network the fee is better charged in tUSD, which anyone can take from the faucet. One signature switches it, keeping the same amount; then create the network."
-                        : "Take practice money from the faucet first, then create the network."}
+                        : "Take practice tokens from the faucet first, then create the network."}
                     </p>
                   </Notice>
                 ) : isOwner ? (
@@ -341,10 +341,10 @@ export default function Platform() {
         {unregistered.length > 0 && !isOwner && <p className="mt-3 text-sm text-muted-foreground">Only the owner of the platform rules contract can register a version.</p>}
       </Section>
 
-      <Section title="The platform's contracts" description="Three contracts, each with an owner. None of them can touch money held in a workspace's vault.">
+      <Section title="The platform's contracts" description="Three contracts, each with an owner. None of them can touch payments held in a workspace's vault.">
         <Card flush>
           {[
-            { name: "Platform rules", tech: "BitRegaloMother", what: "Creates new workspaces and holds the fee settings. Cannot touch anyone's money.", addr: addresses.mother, owner: mOwner },
+            { name: "Platform rules", tech: "BitRegaloMother", what: "Creates new workspaces and holds the fee settings. Cannot touch anyone's funds.", addr: addresses.mother, owner: mOwner },
             { name: "Fee vault", tech: "Treasury", what: "Receives every fee. Only its owner can withdraw.", addr: addresses.treasury, owner: tOwner },
             { name: "Token maker", tech: "TokenFactory", what: "Creates tokens for workspaces and projects.", addr: addresses.tokenFactory, owner: fOwner },
           ].map((c) => (
@@ -362,7 +362,7 @@ export default function Platform() {
           ))}
         </Card>
         <p className="mt-4 max-w-[62ch] text-sm text-muted-foreground">
-          Before real money is involved, these owners should become a shared multi-signature wallet, so that no single key controls the platform.
+          Before real funds are involved, these owners should become a shared multi-signature wallet, so that no single key controls the platform.
         </p>
       </Section>
     </div>

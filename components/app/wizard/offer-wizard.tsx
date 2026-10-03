@@ -25,7 +25,7 @@ type Pay = "0" | "1" | "2"
 const PAY_NAME: Record<Pay, string> = { "2": "Escrow", "1": "Direct payment", "0": "Record only" }
 
 /**
- * A buyer who wants to hold money for someone sends the supplier a link to this wizard:
+ * A buyer who wants to hold a payment for someone sends the supplier a link to this wizard:
  * `listings/new?for=<buyer>&supplier=<supplier>&token=<token>&amount=<decimal>&days=<n>&escrow=1&title=<text>&country=<CC>`.
  * The supplier lists the job for that buyer only; the buyer then funds the escrow by taking it.
  * `supplier` (optional) is the wallet the buyer meant the link for.
@@ -107,7 +107,7 @@ export function OfferWizard() {
       ),
     } satisfies WizardStep] : []),
     {
-      id: "price", title: "Price and payment", caption: "What you charge, and how the buyer's money moves when they take the listing.",
+      id: "price", title: "Price and payment", caption: "What you charge, and how the buyer pays when they take the listing.",
       valid: (settle === "2" && !rules.escrow) || (settle === "1" && !rules.direct) ? "That payment option is off in this workspace" : paid && !chosen ? "This workspace accepts no currency yet" : paid && !(Number(price) > 0) ? "Set a price" : true,
       content: (
         <div className="grid gap-5">
@@ -116,7 +116,7 @@ export function OfferWizard() {
             options={[
               { value: "2", title: "Hold it safely (escrow)", description: "The buyer's payment is locked in the workspace vault when they take the listing. They release it to you on delivery.", disabled: rules.loaded && !rules.escrow ? "Off in this workspace" : undefined },
               { value: "1", title: "Pay straight away (direct payment)", description: "You are paid the moment a buyer takes the listing.", disabled: rules.loaded && !rules.direct ? "Off in this workspace" : undefined },
-              { value: "0", title: "Just record it", description: "A recorded commitment to supply. No money moves on the blockchain." },
+              { value: "0", title: "Just record it", description: "A recorded commitment to supply. Nothing is paid on the blockchain." },
             ]}
           />
           {paid && chosen && (
@@ -146,7 +146,7 @@ export function OfferWizard() {
         <div className="grid gap-5">
           <Label
             title="You deliver within (days)"
-            hint={settle === "2" ? "This is also how long the money is held. If the buyer has not released it by then, it returns to them." : "How long you need once a buyer takes the listing."}
+            hint={settle === "2" ? "This is also how long the payment is held. If the buyer has not released it by then, it can only go back to them." : "How long you need once a buyer takes the listing."}
           >
             <input className={`${input} max-w-40`} type="number" inputMode="decimal" min="0.05" step="any" value={days} onChange={(e) => setDays(e.target.value)} />
           </Label>
@@ -220,7 +220,7 @@ export function OfferWizard() {
     <Wizard
       title={pre ? "List the job for your buyer" : "Create a listing"}
       intro={pre
-        ? "Check what the buyer asked for and change anything you need to, then sign. Only they can take this listing; when they do, their money is held in escrow until they release it to you."
+        ? "Check what the buyer asked for and change anything you need to, then sign. Only they can take this listing; when they do, their payment is held in escrow until they release it to you."
         : "The other direction from a request: you say what you charge and how fast you deliver, and a buyer takes it. The payment settles the way you choose."}
       steps={steps}
       signLabel={pre ? "List the job" : "Publish listing"}
@@ -263,10 +263,10 @@ export function OfferWizard() {
               title={pre ? "Send this link to the buyer so they can fund it" : who === "one" ? "Send this link to your buyer" : "Share the link with buyers"}
             >
               {settle === "2"
-                ? <>When the buyer takes the listing, the money is held in escrow until they release it to you. If they never do, it returns to them after {days} {dayWord}.</>
+                ? <>When the buyer takes the listing, the payment is held in escrow until they release it to you. If they never do, after {days} {dayWord} it can only go back to them.</>
                 : settle === "1"
                   ? <>When the buyer takes the listing, you are paid straight away.</>
-                  : <>When a buyer takes the listing, it is recorded. No money moves.</>}
+                  : <>When a buyer takes the listing, it is recorded. Nothing is paid.</>}
             </ShareLink>
           </Done>
         )
@@ -275,7 +275,7 @@ export function OfferWizard() {
   )
 }
 
-/** What the supplier sees first when a buyer sent them a "hold money for someone" link. */
+/** What the supplier sees first when a buyer sent them a "hold a payment for someone" link. */
 function JobIntro({ pre, knownSymbol, tokenAccepted, feeBps, onStart }: { pre: Prefill; knownSymbol?: string; tokenAccepted: boolean; feeBps: number; onStart: () => void }) {
   const t = useTenant()
   const { address, isConnected } = useAccount()
@@ -297,7 +297,7 @@ function JobIntro({ pre, knownSymbol, tokenAccepted, feeBps, onStart }: { pre: P
         title="Accept a job"
         intro={
           <>
-            {validBuyer ? short(pre.buyer) : "Someone"} asked you to do this: {what}{money ? `, ${money}` : ""}{time ? `, ${time}` : ""}. Accepting lists the job for them only; they then put the money in escrow, and you are paid when they release it.
+            {validBuyer ? short(pre.buyer) : "Someone"} asked you to do this: {what}{money ? `, ${money}` : ""}{time ? `, ${time}` : ""}. Accepting lists the job for them only; they then put the payment in escrow, and you are paid when they release it.
           </>
         }
       />

@@ -147,7 +147,7 @@ export function DetailsEditor({
       <TitleField value={d.title} onChange={(title) => set({ title })} autoFocus hint={`What people see first in the marketplace, ${LIMITS.titleMin} to ${LIMITS.title} characters.`} />
       <MoreDetailsFields value={d} set={set} countryRequired descriptionHint="The first line shows in lists. Plain text; line breaks are kept." />
       <Note>
-        Your wallet signs a message to prove the details come from the {what}&apos;s owner. It is not a transaction and costs nothing. Everything here becomes public in the marketplace; the money and the state of the {what} stay on the blockchain.
+        Your wallet signs a message to prove the details come from the {what}&apos;s owner. It is not a transaction and costs nothing. Everything here becomes public in the marketplace; the amount and the state of the {what} stay on the blockchain.
       </Note>
       {error && <p className="rounded-lg bg-destructive-fill px-4 py-3 text-sm" role="alert">The details were not saved: {error}. Nothing else changed; you can try again.</p>}
       {problem && charCount(d.title.trim()) > 0 && <p className="text-sm text-muted-foreground" role="status">{problem}</p>}

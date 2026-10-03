@@ -54,14 +54,14 @@ export default function MyActivity() {
         <Card flush>
           <Empty
             title="Nothing yet"
-            body={`When you post a request, make an offer, create or take a listing, or hold money for someone ${where}, it appears here.`}
-            action={<Button asChild size="sm"><Link href={`${t.base}/escrows/new`}>Hold money for someone</Link></Button>}
+            body={`When you post a request, make an offer, create or take a listing, or hold a payment for someone ${where}, it appears here.`}
+            action={<Button asChild size="sm"><Link href={`${t.base}/escrows/new`}>Hold a payment for someone</Link></Button>}
           />
         </Card>
       )}
 
       {a.needs.length > 0 && (
-        <Card flush title={`Needs you (${a.needs.length})`} description="Each one waits for your signature. Open it to see what happens to the money.">
+        <Card flush title={`Needs you (${a.needs.length})`} description="Each one waits for your signature. Open it to see what happens to the payment.">
           {a.needs.map((item) => <ActivityRow key={item.key} item={item} />)}
         </Card>
       )}
@@ -82,7 +82,7 @@ export default function MyActivity() {
         <Notice tone="muted" title="Payments are not listed here yet">
           <p>
             {t.isPublic
-              ? "The network's current contracts have no direct payments, so there are none to show. Sending money and getting paid arrive when the network moves to the current contracts."
+              ? "The network's current contracts have no direct payments, so there are none to show. Sending payments and getting paid arrive when the network moves to the current contracts."
               : "This workspace runs the first version of the contracts, which has no direct payments."}
           </p>
         </Notice>

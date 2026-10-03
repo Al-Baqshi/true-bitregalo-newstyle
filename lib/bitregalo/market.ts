@@ -4,7 +4,7 @@
  *
  * The index stores what the chain cannot: a title, a description, a category, a country
  * and a city for each request and listing. Each entry is signed by the wallet that owns
- * the on-chain record. Money and state always come from the chain; this only describes.
+ * the on-chain record. Payments and state always come from the chain; this only describes.
  *
  * Wire format: docs/market-api.md.
  */

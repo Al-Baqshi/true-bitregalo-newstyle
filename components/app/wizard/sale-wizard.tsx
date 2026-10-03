@@ -115,11 +115,11 @@ export function SaleWizard({ initialToken }: { initialToken?: string }) {
     },
     {
       id: "price", title: "Price",
-      valid: pricing === "paid" && !rules.direct ? "Direct payment is off in this workspace. Turn it on under Settings to sell for money" : pricing === "paid" && !pay ? "This workspace accepts no currency yet" : pricing === "paid" && !(priceUnits > 0n) ? "Set a price" : true,
+      valid: pricing === "paid" && !rules.direct ? "Direct payment is off in this workspace. Turn it on under Settings to sell for a stablecoin" : pricing === "paid" && !pay ? "This workspace accepts no currency yet" : pricing === "paid" && !(priceUnits > 0n) ? "Set a price" : true,
       content: (
         <div className="grid gap-5">
           <Choice<Pricing> value={pricing} onChange={setPricing} options={[
-            { value: "paid", title: "Sold for a stablecoin", description: "Buyers pay per token. The money goes to your treasury, less the platform fee." },
+            { value: "paid", title: "Sold for a stablecoin", description: "Buyers pay per token. The payment goes to your treasury, less the platform fee." },
             { value: "free", title: "Free to claim", description: "Buyers receive the tokens without paying. Good for vouchers, invitations and memberships." },
           ]} />
           {pricing === "paid" && pay && (
@@ -221,7 +221,7 @@ export function SaleWizard({ initialToken }: { initialToken?: string }) {
           }
         >
           <p>Sale #{String(r.saleId)} is in the shop: {qty} {sym}{pricing === "paid" && pay ? ` at ${price} ${pay.symbol} each` : ", free to claim"}.</p>
-          <p>Share the sale page. Anyone with a wallet can {pricing === "paid" ? "buy" : "claim"}.{pricing === "paid" ? " The money arrives in your treasury, and you can withdraw it at any time." : ""}</p>
+          <p>Share the sale page. Anyone with a wallet can {pricing === "paid" ? "buy" : "claim"}.{pricing === "paid" ? " Payments arrive in your treasury, and you can withdraw them at any time." : ""}</p>
         </Done>
       )}
     />

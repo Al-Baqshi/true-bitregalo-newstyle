@@ -15,7 +15,7 @@ import { Label, Note, input } from "./fields"
 import { Button } from "@/components/ui/button"
 
 /**
- * Hold money for someone, with today's contracts. An escrow starts only when a buyer takes a
+ * Hold a payment for someone, with today's contracts. An escrow starts only when a buyer takes a
  * listing, so the buyer makes a link for the supplier: the supplier opens it and lists the job
  * for this buyer only, paid by escrow (one signature), and the buyer then funds that listing.
  * Making the link writes nothing to the chain.
@@ -59,7 +59,7 @@ export function EscrowWizard() {
     rules.loaded && !rules.escrow ? "Escrow is switched off here"
     : !isAddress(supplier.trim()) ? "Enter the supplier's wallet address"
     : address && supplier.trim().toLowerCase() === address.toLowerCase() ? "That is your own wallet. The supplier needs a different one"
-    : titleLen < 3 ? "Say what the money is for (at least 3 characters)"
+    : titleLen < 3 ? "Say what the payment is for (at least 3 characters)"
     : titleLen > 120 ? "Keep the title to 120 characters"
     : !chosen ? (tokens.all.length > 0 ? "No currency is accepted here yet" : "Loading the currencies accepted here…")
     : !/^\d+(\.\d+)?$/.test(amount.trim()) || !(Number(amount) > 0) ? "Enter how much to hold"
@@ -100,22 +100,22 @@ export function EscrowWizard() {
   return (
     <div className="space-y-10">
       <PageHead
-        title="Hold money for someone"
-        intro="Agree a job and a price. You fund it, the money is held in escrow, and only you can release it to the supplier when the work is done. If you never do, it comes back to you after the deadline."
+        title="Hold a payment for someone"
+        intro="Agree a job and a price. You fund it, the payment is held in escrow, and only you can release it to the supplier when the work is done. If you never do, after the deadline it can only go back to you."
       />
 
       {rules.loaded && !rules.escrow && (
         <Notice tone="accent" title="Escrow is switched off here">
-          <p>This workspace does not hold money in escrow, so this cannot work here. The workspace admin can switch it on in Settings.</p>
+          <p>This workspace does not hold payments in escrow, so this cannot work here. The workspace admin can switch it on in Settings.</p>
         </Notice>
       )}
 
-      <Section title="How it works" description="Three steps. Nothing is signed and no money moves until step 3.">
+      <Section title="How it works" description="Three steps. Nothing is paid until step 3.">
         <ol className="grid gap-x-8 gap-y-6 sm:grid-cols-3">
           {[
             { title: "You send a link", body: "Fill in the job below and send the supplier the link or QR code. Making it writes nothing to the chain." },
             { title: "The supplier accepts", body: "They open the link and sign once. That lists the job for you only, to be paid by escrow." },
-            { title: "You fund it", body: "You get the listing link back (it also shows under My activity). Approve and confirm, and the money is held until you release it." },
+            { title: "You fund it", body: "You get the listing link back (it also shows under My activity). Approve and confirm, and the payment is held until you release it." },
           ].map((s, i) => (
             <li key={s.title}>
               <span className="t-num flex size-8 items-center justify-center rounded-full border border-border-strong text-sm font-[600]" aria-hidden>{i + 1}</span>
@@ -148,7 +148,7 @@ export function EscrowWizard() {
             </div>
             <Label
               title="Days the supplier has"
-              hint={<>Counted from when you fund it. If you have not released the money by then, it comes back to you.{rules.loaded && <> Escrows {where} run from {termLow} h to {termHigh} days.</>}</>}
+              hint={<>Counted from when you fund it. If you have not released it by then, it can only go back to you.{rules.loaded && <> Escrows {where} run from {termLow} h to {termHigh} days.</>}</>}
             >
               <input className={`${input} t-num max-w-40`} type="text" inputMode="decimal" value={days} onChange={(e) => setDays(e.target.value.replace(",", "."))} autoComplete="off" />
             </Label>

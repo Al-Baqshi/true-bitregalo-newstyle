@@ -53,7 +53,7 @@ export default function Shop() {
         action={isAdmin ? <Button asChild><Link href={`${base}/shop/new`}>Sell in the shop</Link></Button> : undefined}
       />
       <Explainer id="shop" title="How buying works">
-        <p>Each sale names a token, a price per token and how many are left. When you buy, your stablecoin goes to the workspace&apos;s treasury and the tokens come to you in the same transaction. Nobody holds your money in between.</p>
+        <p>Each sale names a token, a price per token and how many are left. When you buy, your stablecoin goes to the workspace&apos;s treasury and the tokens come to you in the same transaction. Nobody holds your payment in between.</p>
         <p>To use what you bought, open the token and <b>redeem</b> it with a reference the workspace understands. Redeeming hands the token back to them, free of charge.</p>
       </Explainer>
 

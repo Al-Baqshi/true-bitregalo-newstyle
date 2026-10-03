@@ -7,7 +7,7 @@ import { Chip, money, moveCls } from "./demo-parts"
 /*
  * The mechanism, shown rather than described: one escrow, and the only three things
  * that can ever happen to it. Each party's single button sits under that party, and
- * the money moves the one way that button allows.
+ * the payment moves the one way that button allows.
  *
  * Everything here is an illustration. The names and the amounts are made up.
  */
@@ -31,12 +31,12 @@ const COPY: Record<State, { status: string; where: string; line: string }> = {
   handedBack: {
     status: "Handed back",
     where: "Back with the buyer",
-    line: "The supplier could not deliver and handed it back. The buyer has the money again.",
+    line: "The supplier could not deliver and handed it back. The buyer has the full amount again.",
   },
   expired: {
     status: "Returned",
     where: "Back with the buyer",
-    line: "The deadline passed with no decision. From then on the money can only go back to the buyer, and anyone can trigger that return.",
+    line: "The deadline passed with no decision. From then on the payment can only go back to the buyer, and anyone can trigger that return.",
   },
 }
 
@@ -69,7 +69,7 @@ export function EscrowPanel({ deal }: { deal: Deal }) {
       </p>
       <p className="mt-1.5 text-sm text-muted-foreground">{c.where}</p>
 
-      {/* Where the money is. The coin slides to whoever ends up with it. */}
+      {/* Where the payment is. The coin slides to whoever ends up with it. */}
       <div className="relative mt-7" aria-hidden>
         <div className="absolute inset-x-[16.666%] top-2.75 h-0.5 rounded-full bg-border" />
         <div className="grid grid-cols-3">

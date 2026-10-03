@@ -29,9 +29,9 @@ export default function EscrowsPage() {
   const shown = escrows.data.filter(Boolean).length
   const total = count !== undefined ? Number(count) : 0
   const who = (a: string) => (me && a.toLowerCase() === me ? <span className="font-[560] text-foreground">you</span> : <span className="whitespace-nowrap"><Addr a={a} /></span>)
-  /** What happens to the money next, in a few words. */
+  /** What happens to the payment next, in a few words. */
   const next = (state: number, expiresAt: bigint) => {
-    if (state === 1) return timeLeft(expiresAt) === "elapsed" ? "past its deadline, goes back to the buyer" : `returns to the buyer in ${timeLeft(expiresAt)} unless released`
+    if (state === 1) return timeLeft(expiresAt) === "elapsed" ? "past its deadline, can only go back to the buyer" : `can go back to the buyer in ${timeLeft(expiresAt)} unless released`
     if (state === 2) return "released to the supplier"
     if (state === 3) return "handed back to the buyer"
     return "returned to the buyer at the deadline"
@@ -41,12 +41,12 @@ export default function EscrowsPage() {
     <div className="space-y-8">
       <PageHead
         title="Escrows"
-        intro={`Money held ${t.isPublic ? "on the BitRegalo network" : "in this workspace"} until work is delivered, and money that was held before. Open one to see who can move it and when.`}
-        action={<Button asChild><Link href={`${base}/escrows/new`}>Hold money for someone</Link></Button>}
+        intro={`Payments held ${t.isPublic ? "on the BitRegalo network" : "in this workspace"} until work is delivered, and payments that were held before. Open one to see who can move it and when.`}
+        action={<Button asChild><Link href={`${base}/escrows/new`}>Hold a payment for someone</Link></Button>}
       />
       <Explainer id="escrows" title="What is an escrow?">
-        <p>Money held safely by {t.isPublic ? "the network's" : "the workspace's"} vault contract while work is done. It ends in one of three ways: the <b>buyer releases</b> it to the supplier, the <b>supplier hands it back</b>, or the <b>deadline passes</b> and it returns to the buyer.</p>
-        <p>No person holds the money: not BitRegalo{t.isPublic ? "" : ", not the workspace admin"}. An escrow opens when a request or a listing is paid by escrow. To start one yourself, use <b>Hold money for someone</b>: you send the supplier a link, they accept, and you fund it.</p>
+        <p>A payment held safely by {t.isPublic ? "the network's" : "the workspace's"} vault contract while work is done. It ends in one of three ways: the <b>buyer releases</b> it to the supplier, the <b>supplier hands it back</b>, or the <b>deadline passes</b> and it can only go back to the buyer. Anyone can trigger that return.</p>
+        <p>No person holds the payment: not BitRegalo{t.isPublic ? "" : ", not the workspace admin"}. An escrow opens when a request or a listing is paid by escrow. To start one yourself, use <b>Hold a payment for someone</b>: you send the supplier a link, they accept, and you fund it.</p>
       </Explainer>
 
       <Card flush title={total > 0 ? `All escrows (${total})` : "All escrows"} description={total > shown && shown > 0 ? `Showing the newest ${shown}.` : undefined}>
@@ -54,8 +54,8 @@ export default function EscrowsPage() {
         {!loading && shown === 0 && (
           <Empty
             title="No escrows yet"
-            body="One opens when someone chooses an offer on a request, or takes a listing, that is paid by escrow. You can also start one: hold money for someone."
-            action={<Button asChild size="sm" variant="secondary"><Link href={`${base}/escrows/new`}>Hold money for someone</Link></Button>}
+            body="One opens when someone chooses an offer on a request, or takes a listing, that is paid by escrow. You can also start one: hold a payment for someone."
+            action={<Button asChild size="sm" variant="secondary"><Link href={`${base}/escrows/new`}>Hold a payment for someone</Link></Button>}
           />
         )}
         {!loading && escrows.data.map((e, i) => {

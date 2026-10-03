@@ -3,19 +3,21 @@ import { Logo } from "@/components/brand/logo"
 
 const COLUMNS: { title: string; links: { label: string; href: string; external?: boolean }[] }[] = [
   {
-    title: "Product",
+    title: "Explore",
     links: [
-      { label: "Open the app", href: "/app" },
       { label: "How it works", href: "/#how" },
-      { label: "Use cases", href: "/#use-cases" },
+      { label: "Building blocks", href: "/#building-blocks" },
+      { label: "For organisations", href: "/#organisations" },
+      { label: "Marketplace", href: "/app/market" },
+      { label: "Open the app", href: "/app" },
     ],
   },
   {
     title: "Protocol",
     links: [
       { label: "Escrow", href: "/protocols/escrow" },
-      { label: "Requests (RFP)", href: "/protocols/rfp" },
-      { label: "Listings (RTS)", href: "/protocols/rts" },
+      { label: "Requests", href: "/protocols/rfp" },
+      { label: "Listings", href: "/protocols/rts" },
       { label: "Whitepaper", href: "/whitepaper" },
     ],
   },
@@ -47,7 +49,7 @@ export function Footer() {
               <Logo className="h-[1.3rem] w-auto" title="" aria-hidden />
             </Link>
             <p className="mt-4 max-w-[34ch] text-sm text-muted-foreground">
-              Decentralised escrow infrastructure, on multiple chains. The buyer can only release, the supplier can only hand back, and no one else can touch the escrow.
+              Decentralised infrastructure for work and money: escrow, requests, listings and workspaces on public contracts. Nobody else can move held money, including BitRegalo.
             </p>
           </div>
           {COLUMNS.map((c) => (

@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { PageHead, Section } from "@/components/app/ui"
-import { HowItWorks, SettleModes, Glossary } from "@/components/app/explain"
+import { BuildingBlocks, Glossary, HowItWorks, SettleModes, TwoWays } from "@/components/app/explain"
 import { Button } from "@/components/ui/button"
 
 export const metadata: Metadata = { title: { absolute: "Help · BitRegalo App" } }
@@ -11,15 +11,28 @@ export default function Help() {
     <div className="space-y-14">
       <PageHead
         title="Help"
-        intro="How BitRegalo works, in plain language. None of it needs blockchain knowledge: your wallet signs each step, and the record is public."
+        intro="How BitRegalo works, in plain words. You need no blockchain knowledge: your wallet signs each step, and the record is public."
         action={<Button asChild variant="secondary"><Link href="/whitepaper">Read the whitepaper</Link></Button>}
       />
 
-      <Section title="How it works" description="Four steps, the same every time." className="scroll-mt-24" >
+      <Section title="Two ways to use BitRegalo" description="The open network for everyone, and workspaces for organisations. Both run on the same public contracts.">
+        <div id="model" className="scroll-mt-24"><TwoWays /></div>
+        <p className="mt-4 max-w-[66ch] text-sm text-muted-foreground">
+          The place switcher at the top of the app shows where you are. Anything you start on the network is recorded on the network;
+          anything you start inside a workspace is recorded under that workspace.{" "}
+          <Link href="/app/workspaces" className="text-gold underline underline-offset-4">See the workspaces</Link>.
+        </p>
+      </Section>
+
+      <Section title="The building blocks" description="The same on the network and in every workspace.">
+        <div id="blocks" className="scroll-mt-24"><BuildingBlocks /></div>
+      </Section>
+
+      <Section title="How a request works" description="Four steps, the same every time.">
         <div id="how" className="scroll-mt-24"><HowItWorks /></div>
       </Section>
 
-      <Section title="Three ways to settle" description="You choose one for each request or listing.">
+      <Section title="Three ways to settle" description="Chosen for each request or listing.">
         <div id="settle" className="scroll-mt-24"><SettleModes /></div>
       </Section>
 
@@ -35,7 +48,7 @@ export default function Help() {
           </div>
           <div>
             <dt className="t-subheading">Nothing happens until you sign</dt>
-            <dd className="mt-1 text-sm text-muted-foreground">Every wizard ends with a review. If a step fails, what came before it is already done, and signing again continues from there.</dd>
+            <dd className="mt-1 text-sm text-muted-foreground">Every guided task ends with a review. If a step fails, what came before it is already done, and signing again continues from there.</dd>
           </div>
           <div>
             <dt className="t-subheading">Everything is on the record</dt>

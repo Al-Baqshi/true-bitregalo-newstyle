@@ -1,20 +1,26 @@
 import {
-  ArrowLeftRight, Coins, FileSearch, Folder, House, Landmark, type LucideIcon, Lock, PackageCheck, QrCode, Send, Settings2, Store, Tag,
+  Activity, ArrowLeftRight, Building2, Coins, FileSearch, Folder, Globe2, House, Landmark, type LucideIcon, Lock, PackageCheck,
+  QrCode, Send, Settings2, ShieldCheck, Store, Tag,
 } from "lucide-react"
 
 /*
- * How a workspace is organised. Four destinations, the same on every screen size:
- * a sidebar on a desktop, bottom tabs on a phone (and, later, in the mobile app).
+ * How the app is organised. There are two places a person can be:
  *
- *   Overview   what is happening here
- *   Market     things on offer and things asked for
- *   Money      what was paid, what is held, what the workspace owns
- *   Set up     how the workspace is organised and run
+ *   The BitRegalo network  everyone, anywhere: send money, hold it in escrow, ask for
+ *                          things and offer them in a marketplace by country. It runs on
+ *                          BitRegalo's own public workspace. Pages live at /app.
+ *
+ *   A workspace            one organisation's own BitRegalo: its own contracts, rules,
+ *                          currencies, tokens, shop and treasury. Everything done inside
+ *                          it is recorded under it. Pages live at /app/t/{id}.
+ *
+ * Both are laid out the same way, a sidebar on a desktop and bottom tabs on a phone,
+ * so people learn one structure. The same groups carry into the mobile app.
  */
 export type NavItem = {
   key: string
   label: string
-  /** Path after /app/t/{id}. "" is the overview. */
+  /** Path after the base ("/app" or "/app/t/{id}"). "" is the home page. */
   path: string
   icon: LucideIcon
   /** Other paths that belong to this item (their pages highlight it). */
@@ -23,61 +29,98 @@ export type NavItem = {
   minVersion?: number
 }
 export type NavGroup = { key: string; label: string; icon: LucideIcon; items: NavItem[] }
+export type NavModel = { home: NavItem; groups: NavGroup[] }
 
-export const OVERVIEW: NavItem = { key: "overview", label: "Overview", path: "", icon: House }
+/* ── The BitRegalo network ─────────────────────────────────────────────────── */
+export const NETWORK: NavModel = {
+  home: { key: "home", label: "Home", path: "", icon: House },
+  groups: [
+    {
+      key: "market",
+      label: "Marketplace",
+      icon: Globe2,
+      items: [
+        { key: "market", label: "Browse by country", path: "/market", icon: Globe2 },
+        { key: "requests", label: "Requests", path: "/requests", icon: FileSearch },
+        { key: "listings", label: "Listings", path: "/listings", icon: Tag },
+      ],
+    },
+    {
+      key: "money",
+      label: "Money",
+      icon: ArrowLeftRight,
+      items: [
+        { key: "payments", label: "Payments", path: "/payments", icon: ArrowLeftRight, also: ["/pay", "/get-paid"], minVersion: 1 },
+        { key: "escrows", label: "Escrows", path: "/escrows", icon: Lock },
+        { key: "activity", label: "My activity", path: "/activity", icon: Activity },
+      ],
+    },
+    {
+      key: "orgs",
+      label: "For organisations",
+      icon: Building2,
+      items: [{ key: "workspaces", label: "Workspaces", path: "/workspaces", icon: Building2, also: ["/launch"] }],
+    },
+  ],
+}
 
-export const GROUPS: NavGroup[] = [
-  {
-    key: "market",
-    label: "Market",
-    icon: Store,
-    items: [
-      { key: "shop", label: "Shop", path: "/sales", icon: Store, minVersion: 1 },
-      { key: "requests", label: "Requests", path: "/rfps", icon: FileSearch },
-      { key: "listings", label: "Listings", path: "/offers", icon: Tag },
-    ],
-  },
-  {
-    key: "money",
-    label: "Money",
-    icon: ArrowLeftRight,
-    items: [
-      { key: "payments", label: "Payments", path: "/payments", icon: ArrowLeftRight, also: ["/pay", "/get-paid"], minVersion: 1 },
-      { key: "escrows", label: "Escrows", path: "/escrows", icon: Lock },
-      { key: "treasury", label: "Treasury", path: "/treasury", icon: Landmark, minVersion: 1 },
-      { key: "tokens", label: "Tokens", path: "/tokens", icon: Coins },
-    ],
-  },
-  {
-    key: "setup",
-    label: "Set up",
-    icon: Settings2,
-    items: [
-      { key: "projects", label: "Projects", path: "/projects", icon: Folder },
-      { key: "settings", label: "Settings", path: "/admin", icon: Settings2 },
-    ],
-  },
-]
+/* ── Inside an organisation's workspace ────────────────────────────────────── */
+export const WORKSPACE: NavModel = {
+  home: { key: "overview", label: "Overview", path: "", icon: House },
+  groups: [
+    {
+      key: "market",
+      label: "Market",
+      icon: Store,
+      items: [
+        { key: "shop", label: "Shop", path: "/shop", icon: Store, minVersion: 1 },
+        { key: "requests", label: "Requests", path: "/requests", icon: FileSearch },
+        { key: "listings", label: "Listings", path: "/listings", icon: Tag },
+      ],
+    },
+    {
+      key: "money",
+      label: "Money",
+      icon: ArrowLeftRight,
+      items: [
+        { key: "payments", label: "Payments", path: "/payments", icon: ArrowLeftRight, also: ["/pay", "/get-paid"], minVersion: 1 },
+        { key: "escrows", label: "Escrows", path: "/escrows", icon: Lock },
+        { key: "treasury", label: "Treasury", path: "/treasury", icon: Landmark, minVersion: 1 },
+        { key: "tokens", label: "Tokens", path: "/tokens", icon: Coins },
+      ],
+    },
+    {
+      key: "setup",
+      label: "Set up",
+      icon: Settings2,
+      items: [
+        { key: "projects", label: "Projects", path: "/projects", icon: Folder },
+        { key: "settings", label: "Settings", path: "/settings", icon: Settings2 },
+      ],
+    },
+  ],
+}
 
 /** The things a person can start. Verb first, in the order people reach for them. */
-export type NewAction = { key: string; label: string; hint: string; path: string; icon: LucideIcon; minVersion?: number }
+export type NewAction = { key: string; label: string; hint: string; path: string; icon: LucideIcon; minVersion?: number; workspaceOnly?: boolean }
 export const NEW_ACTIONS: NewAction[] = [
-  { key: "pay", label: "Pay someone", hint: "Send a payment with a reference and a receipt", path: "/pay", icon: Send, minVersion: 1 },
+  { key: "pay", label: "Send money", hint: "Pay someone or send a gift, with a reference and a receipt", path: "/pay", icon: Send, minVersion: 1 },
   { key: "get-paid", label: "Get paid", hint: "Make a payment link or QR code", path: "/get-paid", icon: QrCode, minVersion: 1 },
-  { key: "request", label: "Post a request", hint: "Ask suppliers for a price, then choose one", path: "/rfps/new", icon: FileSearch },
-  { key: "listing", label: "Create a listing", hint: "Offer something at a fixed price", path: "/offers/new", icon: PackageCheck },
-  { key: "sale", label: "Sell in the shop", hint: "Put vouchers, credits or memberships on sale", path: "/sales/new", icon: Store, minVersion: 1 },
-  { key: "token", label: "Create a token", hint: "A credit or voucher your workspace issues", path: "/tokens/new", icon: Coins },
-  { key: "project", label: "Start a project", hint: "Group related work under one name", path: "/projects/new", icon: Folder },
+  { key: "escrow", label: "Hold money for someone", hint: "Lock a payment until the work is done", path: "/escrows/new", icon: ShieldCheck },
+  { key: "request", label: "Ask for something", hint: "Post a request; suppliers send prices and you choose one", path: "/requests/new", icon: FileSearch },
+  { key: "listing", label: "Offer something", hint: "List what you sell at a fixed price", path: "/listings/new", icon: PackageCheck },
+  { key: "sale", label: "Sell in the shop", hint: "Put vouchers, credits or memberships on sale", path: "/shop/new", icon: Store, minVersion: 1, workspaceOnly: true },
+  { key: "token", label: "Create a token", hint: "A credit or voucher your workspace issues", path: "/tokens/new", icon: Coins, workspaceOnly: true },
+  { key: "project", label: "Start a project", hint: "Group related work under one name", path: "/projects/new", icon: Folder, workspaceOnly: true },
 ]
 
-/** Which item, and which group, the current path belongs to. `rest` is the path after /app/t/{id}. */
-export function locate(rest: string): { item: NavItem; group: NavGroup | null } {
-  if (rest === "" || rest === "/") return { item: OVERVIEW, group: null }
-  for (const group of GROUPS) {
+/** Which item, and which group, `rest` (the path after the base) belongs to. */
+export function locate(model: NavModel, rest: string): { item: NavItem | null; group: NavGroup | null } {
+  if (rest === "" || rest === "/") return { item: model.home, group: null }
+  for (const group of model.groups) {
     for (const item of group.items) {
       if ([item.path, ...(item.also ?? [])].some((p) => rest === p || rest.startsWith(p + "/"))) return { item, group }
     }
   }
-  return { item: OVERVIEW, group: null }
+  return { item: null, group: null }
 }

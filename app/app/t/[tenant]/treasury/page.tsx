@@ -14,7 +14,7 @@ import { OlderContract } from "@/components/app/older-contract"
 
 export default function TreasuryPage() {
   const t = useTenant()
-  const base = `/app/t/${t.id}`
+  const base = t.base
   const { address } = useAccount()
   const { send, isPending } = useTx()
   const tr = t.treasury

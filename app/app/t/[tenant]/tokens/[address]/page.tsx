@@ -1,7 +1,7 @@
 "use client"
 import { use, useState } from "react"
 import Link from "next/link"
-import { useAccount, useReadContracts } from "wagmi"
+import { useAccount, useReadContract, useReadContracts } from "wagmi"
 import { parseUnits, isAddress, maxUint256, type Address } from "viem"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import { useErc20, useTx } from "@/lib/bitregalo/hooks"
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button"
 
 export default function TokenPage({ params }: { params: Promise<{ address: string }> }) {
   const t = useTenant()
-  const base = `/app/t/${t.id}`
+  const base = t.base
   const { address: raw } = use(params)
   const token = raw as Address
   const { address } = useAccount()
@@ -33,6 +33,9 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
   })
   const [name, symbol, supply, cap, owner, balance, cfg, redeemableRaw] = (q.data ?? []).map((r) => r.result) as [string?, string?, bigint?, bigint?, Address?, bigint?, (readonly [boolean, number, bigint])?, boolean?]
   const erc = useErc20(token, address)
+  // Who issued it, and for which project: recorded by the token maker when it was created.
+  const info = useReadContract({ address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "tokenInfo", args: [token], query: { enabled: isAddress(raw) } })
+  const created = info.data as readonly [bigint, bigint, Address, bigint] | undefined
   const [redeemAmt, setRedeemAmt] = useState("")
   const [redeemRef, setRedeemRef] = useState("")
   const [to, setTo] = useState("")
@@ -75,19 +78,22 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
       <PageHead
         back={back}
         title={<>{name ?? "…"} <span className="text-muted-foreground">{symbol ?? ""}</span></>}
-        intro={<>A token of this workspace, at <Addr a={token} />. {accepted ? `People can pay in ${sym} here.` : `It is not accepted as payment here yet.`}</>}
-        action={isAdmin && hasPay ? <Button asChild variant="secondary"><Link href={`${base}/sales/new?token=${token}`}>Sell {sym} in the shop</Link></Button> : undefined}
+        intro={<>A token issued for this workspace, at <Addr a={token} />. {accepted ? `It can be used to pay here.` : `It is not yet usable for payments in this workspace; only the workspace admin can switch that on.`}</>}
+        action={isAdmin && hasPay ? <Button asChild variant="secondary"><Link href={`${base}/shop/new?token=${token}`}>Sell {sym} in the shop</Link></Button> : undefined}
       />
 
       <Stats>
-        <Stat label="You hold" value={address ? <Amount value={balance ?? 0n} /> : "—"} hint={address ? sym : "Connect a wallet to see your balance"} />
+        <Stat label={address ? "You hold" : "Your balance"} value={address ? <Amount value={balance ?? 0n} /> : "—"} hint={address ? sym : "Connect a wallet to see your balance"} />
         <Stat label="In existence" value={<Amount value={supply ?? 0n} />} hint={sym} />
         <Stat label="Maximum" value={capped ? <Amount value={cap!} /> : fixed ? <Amount value={supply ?? 0n} /> : "No limit"} hint={fixed ? "Fixed: nobody can create more" : capped ? "Written into the contract" : "Its creator can create more"} />
       </Stats>
 
       <Card title="About this token">
         <Facts>
-          <Fact label="Accepted as payment here">{accepted ? `Yes. Requests, listings and escrows in this workspace can be paid in ${sym}.` : "Not yet. Only this workspace's admin can switch it on."}</Fact>
+          {(!created || !/^0x0{40}$/.test(created[2])) && <Fact label="Issued by">
+            {!created ? "…" : <><Addr a={created[2]} />{address && created[2].toLowerCase() === address.toLowerCase() ? " (you)" : created[2].toLowerCase() === t.admin.toLowerCase() ? " (the workspace admin)" : ""}{created[1] > 0n ? `, for project #${String(created[1])}` : ""}</>}
+          </Fact>}
+          <Fact label="Can it be used to pay here?">{accepted ? `Yes. Requests, listings and escrows in this workspace can be paid in ${sym}.` : isAdmin ? "Not yet usable for payments in this workspace. You run it, so you can switch payments on below." : "Not yet usable for payments in this workspace. The workspace admin has not switched it on, and only the admin can."}</Fact>
           <Fact label="Redeeming">{!hasPay ? "Not available in this workspace version." : redeemable ? `Yes. Holders can hand ${sym} back to the workspace with a reference, at no fee.` : "Not yet. Opening a sale switches it on, or the admin can switch it on below."}</Fact>
           <Fact label="Supply">{fixed ? "Fixed. Nobody can create more, including its creator." : capped ? <>Capped at <Amount value={cap!} /> {sym}. {canMint ? "You created it and can create more up to that." : "Its creator can create more up to that."}</> : canMint ? "Open. You created it and can create more whenever you need to." : "Open. Its creator can create more."}</Fact>
           <Fact label="Who can create more">{fixed ? "Nobody, ever. Minting is switched off." : treasuryOwns ? "The workspace treasury, as it sells." : owner ? <><Addr a={owner} />{canMint ? " (you)" : ""}</> : "…"}</Fact>
@@ -130,14 +136,14 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
               </Card>
             )}
             {isAdmin && (
-              <Card title="Accept as payment" description={accepted ? `People can already pay in ${sym} in this workspace.` : `Let requests, listings and escrows in this workspace be paid in ${sym}.`}>
+              <Card title="Payments in this workspace" description={accepted ? `${sym} can already be used to pay here.` : `Let requests, listings and escrows in this workspace be paid in ${sym}.`}>
                 {!accepted && (
                   <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
                     <Label title={`Service fee per payment (${sym})`} hint="Added to each payment and paid to the platform. 0 is fine."><input className={`${input} t-num`} type="number" inputMode="decimal" min="0" step="any" value={fee} onChange={(e) => setFee(e.target.value)} /></Label>
-                    <div className="sm:pb-8"><Button variant="secondary" disabled={isPending} onClick={() => send(`Accept ${sym}`, { address: t.instance, abi: abis.instance, functionName: "setToken", args: [token, true, 18, parseUnits(fee || "0", 18)] }).then(refresh)}>Accept {sym}</Button></div>
+                    <div className="sm:pb-8"><Button variant="secondary" disabled={isPending} onClick={() => send(`Accept ${sym}`, { address: t.instance, abi: abis.instance, functionName: "setToken", args: [token, true, 18, parseUnits(fee || "0", 18)] }).then(refresh)}>Allow payments in {sym}</Button></div>
                   </div>
                 )}
-                {accepted && <Button variant="secondary" disabled={isPending} onClick={() => send(`Stop accepting ${sym}`, { address: t.instance, abi: abis.instance, functionName: "setToken", args: [token, false, 18, 0n] }).then(refresh)}>Stop accepting it</Button>}
+                {accepted && <Button variant="secondary" disabled={isPending} onClick={() => send(`Stop accepting ${sym}`, { address: t.instance, abi: abis.instance, functionName: "setToken", args: [token, false, 18, 0n] }).then(refresh)}>Stop payments in {sym}</Button>}
               </Card>
             )}
             {showAllowRedeem && (

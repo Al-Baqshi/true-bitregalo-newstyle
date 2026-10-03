@@ -35,7 +35,7 @@ function GetPaidInner() {
   const ready = isAddress(to) && !!chosen
   const link = (() => {
     if (!ready || typeof window === "undefined") return ""
-    const u = new URL(`/app/t/${t.id}/pay`, window.location.origin)
+    const u = new URL(`${t.base}/pay`, window.location.origin)
     u.searchParams.set("to", to)
     u.searchParams.set("token", chosen!.address)
     if (Number(amount) > 0) { u.searchParams.set("amount", amount); u.searchParams.set("fixed", "1") }

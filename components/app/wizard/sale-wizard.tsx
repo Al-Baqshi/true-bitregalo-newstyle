@@ -22,7 +22,7 @@ function toUnix(v: string) {
 
 export function SaleWizard({ initialToken }: { initialToken?: string }) {
   const t = useTenant()
-  const base = `/app/t/${t.id}`
+  const base = t.base
   const { address } = useAccount()
   const rules = useInstanceRules(t.instance)
   const payTokens = useSettlementTokens(t.instance, t.id)
@@ -215,8 +215,8 @@ export function SaleWizard({ initialToken }: { initialToken?: string }) {
           title="Your sale is open"
           actions={
             <>
-              <Button asChild><Link href={`${base}/sales/${String(r.saleId)}`}>Open the sale page</Link></Button>
-              <Button asChild variant="secondary"><Link href={`${base}/sales`}>Back to the shop</Link></Button>
+              <Button asChild><Link href={`${base}/shop/${String(r.saleId)}`}>Open the sale page</Link></Button>
+              <Button asChild variant="secondary"><Link href={`${base}/shop`}>Back to the shop</Link></Button>
             </>
           }
         >

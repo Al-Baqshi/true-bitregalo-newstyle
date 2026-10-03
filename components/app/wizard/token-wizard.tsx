@@ -246,7 +246,7 @@ export function TokenWizard({ fixedTenant, initialTenant }: { fixedTenant?: bigi
           actions={
             <>
               <Button asChild><Link href={`/app/t/${tenant}/tokens/${results.token as string}`}>Open the token</Link></Button>
-              <Button asChild variant="secondary"><Link href={`/app/t/${tenant}/rfps/new`}>Post a request paid in {sym}</Link></Button>
+              <Button asChild variant="secondary"><Link href={`/app/t/${tenant}/requests/new`}>Post a request paid in {sym}</Link></Button>
             </>
           }
         >

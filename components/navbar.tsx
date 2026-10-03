@@ -8,11 +8,13 @@ import { ThemeChoice, ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 
+/* The site's sections in the order a visitor meets them, then the marketplace and the documents. */
 const LINKS = [
   { label: "How it works", href: "/#how" },
-  { label: "Use cases", href: "/#use-cases" },
-  { label: "Protocol", href: "/protocols/escrow" },
-  { label: "Whitepaper", href: "/whitepaper" },
+  { label: "Building blocks", href: "/#building-blocks" },
+  { label: "For organisations", href: "/#organisations" },
+  { label: "Marketplace", href: "/app/market" },
+  { label: "Protocol", href: "/protocols/escrow", section: "/protocols" },
   { label: "Contact", href: "/contact" },
 ]
 
@@ -23,26 +25,26 @@ export function Navbar() {
   useEffect(() => setOpen(false), [path])
   return (
     <header className="pt-safe sticky top-0 z-40 border-b border-border bg-background/92 backdrop-blur-md">
-      <div className="mx-auto flex h-[var(--topbar-h)] max-w-6xl items-center gap-6 px-5 sm:px-8">
+      <div className="mx-auto flex h-(--topbar-h) max-w-6xl items-center gap-5 px-5 sm:px-8">
         <Link href="/" className="flex shrink-0 items-center rounded-md outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring" aria-label="BitRegalo home">
           <Logo className="h-[1.45rem] w-auto" title="" aria-hidden />
         </Link>
-        <nav aria-label="Site" className="hidden items-center gap-1 md:flex">
+        <nav aria-label="Site" className="hidden items-center lg:flex">
           {LINKS.map((l) => {
-            const active = !l.href.startsWith("/#") && path.startsWith(l.href)
+            const active = !l.href.startsWith("/#") && path.startsWith(l.section ?? l.href)
             return (
               <Link key={l.href} href={l.href} aria-current={active ? "page" : undefined}
-                className={`flex h-10 items-center rounded-lg px-3 text-sm outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${active ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                className={`flex h-10 items-center whitespace-nowrap rounded-lg px-2.5 text-sm outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring xl:px-3 ${active ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
                 {l.label}
               </Link>
             )
           })}
         </nav>
         <div className="ml-auto flex items-center gap-1.5">
-          <ThemeToggle className="hidden md:flex" />
+          <ThemeToggle className="hidden lg:flex" />
           <Button asChild size="sm"><Link href="/app">Open the app</Link></Button>
           <Sheet open={open} onOpenChange={setOpen}>
-            <button onClick={() => setOpen(true)} aria-label="Menu" className="flex size-11 items-center justify-center rounded-lg outline-none transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:hidden">
+            <button onClick={() => setOpen(true)} aria-label="Menu" className="flex size-11 items-center justify-center rounded-lg outline-none transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:hidden">
               <Menu className="size-5" />
             </button>
             <SheetContent title="Menu">
@@ -55,7 +57,7 @@ export function Navbar() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-4 border-t border-border pt-4">
+              <div className="mt-5 border-t border-border pt-4">
                 <p className="mb-2 text-sm font-[560]">Appearance</p>
                 <ThemeChoice />
               </div>

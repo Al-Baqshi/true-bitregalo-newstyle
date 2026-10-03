@@ -21,7 +21,7 @@ const PILL: Record<number, { word: string; tone: "accent" | "good" | "muted" }> 
 
 export default function EscrowPage({ params }: { params: Promise<{ id: string }> }) {
   const t = useTenant()
-  const base = `/app/t/${t.id}`
+  const base = t.base
   const { id: raw } = use(params)
   const id = BigInt(raw)
   const { address, isConnected } = useAccount()

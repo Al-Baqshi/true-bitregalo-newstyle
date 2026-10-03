@@ -10,7 +10,7 @@ import { OlderContract } from "@/components/app/older-contract"
 
 export default function Payments() {
   const t = useTenant()
-  const base = `/app/t/${t.id}`
+  const base = t.base
   const { address } = useAccount()
   const hasPay = t.version >= 1n
   const { count } = usePaymentCount(hasPay)

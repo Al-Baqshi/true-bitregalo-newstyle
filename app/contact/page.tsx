@@ -15,9 +15,9 @@ const WAYS = [
   },
   {
     label: "Phone",
-    href: "tel:+64273385000",
-    value: "+64 27 338 5000",
-    note: "A New Zealand mobile. Call or send a text message.",
+    href: "tel:+6499208896",
+    value: "09 920 8896",
+    note: "Our office landline in New Zealand. From outside New Zealand, call +64 9 920 8896.",
   },
 ]
 

@@ -81,12 +81,12 @@ const protocols: Record<string, ProtocolDef> = {
         text: "release() belongs to the issuer, cancel() to the receiver. There is no action that moves the escrow toward the caller.",
       },
       {
-        title: "Automatic expiry",
+        title: "Expiry with one way out",
         text: "If nothing happens by the end of the term, the escrow can only return to the issuer. Anyone can trigger the return; no claims process, no intervention.",
       },
       {
         title: "Non-custodial",
-        text: "The escrow lives in the smart contract. BitRegalo never takes custody, and there is no admin key.",
+        text: "The escrow lives in the smart contract. BitRegalo never takes custody, and no admin can move held money: the platform can pause new escrows, but release, hand back and expiry always work.",
       },
     ],
   },

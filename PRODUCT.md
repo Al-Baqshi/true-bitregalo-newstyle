@@ -30,21 +30,39 @@ navigation is organised so the same structure can carry over to that app.
 
 ## Product Purpose
 
-BitRegalo turns a promise about money into a rule a public contract enforces. An organisation
-launches its own workspace (its own contracts and its own treasury) and uses it to sell, take
-payments, post requests, list offers and hold money in escrow until work is delivered. Success is a
-first-time visitor understanding what it does within seconds, and a first-time user completing a
-payment, a request or an escrow without needing to understand blockchains.
+BitRegalo is decentralised infrastructure for commerce: it turns a promise about money into a
+rule a public contract enforces. It offers four building blocks, all on the same contracts:
+
+- **Escrow**: money held until the work is done. The buyer can only release it, the supplier can
+  only hand it back, and after the deadline it can only return to the buyer.
+- **Requests (RFP)**: "I need this." Suppliers answer with a price and a time; the buyer chooses
+  one and settles by escrow, by direct payment, or just records the choice.
+- **Listings (RTS)**: "I offer this." A fixed price and delivery time, open to anyone or to one
+  named buyer.
+- **Workspaces (entities)**: an organisation's own copy of the infrastructure, with its own
+  contracts, rules, fees, accepted currencies, tokens, shop and treasury.
+
+There are two ways to use it:
+
+1. **The BitRegalo network**, for anyone, anywhere. Send money or a gift to someone, hold money in
+   escrow for someone, ask for things and offer them in a marketplace browsed by country. USDT is
+   the everyday currency between people (tUSD on the practice network). It runs on BitRegalo's own
+   public workspace.
+2. **Workspaces for organisations.** An organisation (for example an NGO platform, or a
+   construction marketplace) runs its own workspace: its own contracts and rules, its own currencies
+   (such as a local stablecoin) and its own tokens. Everything done inside it is recorded under it.
+
+Success is a first-time visitor understanding this within seconds, and a first-time user sending
+money, holding money in escrow, or posting a request without needing to understand blockchains.
 
 ## Positioning
 
-- **Non-custodial escrow with fixed outcomes.** The issuer can only release, the receiver can only
-  hand back, and an expired escrow returns to the issuer automatically. Nobody else, including
-  BitRegalo and the workspace admin, can move the money.
-- **Each organisation runs its own contract.** A workspace is a pair of contracts (records + vault)
+- **Non-custodial escrow with fixed outcomes.** Nobody else, including BitRegalo and the workspace
+  admin, can move held money anywhere but to the supplier or back to the buyer.
+- **Each organisation runs its own contracts.** A workspace is a pair of contracts (records + vault)
   plus a treasury owned by its admin, not an account on someone else's ledger.
-- **Everything is a public record.** Requests, offers, awards and payments are written to a public
-  blockchain; a "hidden title" stores only a fingerprint of the wording.
+- **A global marketplace by country, on public rails.** Requests and listings are public records;
+  their descriptions, country and category are signed by the poster's wallet.
 
 ## Operating Context
 
@@ -61,7 +79,7 @@ payment, a request or an escrow without needing to understand blockchains.
 
 ## Capabilities and Constraints
 
-Confirmed functionality in the app today:
+Confirmed functionality in the app today (on the network and in every workspace):
 
 - Workspaces: launch wizard, overview, settings (accepted tokens, settlement modes).
 - Shop: sell utilities (tokens such as vouchers, credits, memberships) for a stablecoin; buyers redeem.
@@ -71,10 +89,18 @@ Confirmed functionality in the app today:
 - Projects (grouping), Tokens (create, accept as payment), Treasury (workspace-owned funds).
 - Platform page for the operator: earnings by token, gas sponsorship, contract versions, ownership.
 - Older workspaces (version 0) lack shop, payments and treasury and show an "older contract" notice.
+- Marketplace details (title, description, category, country, city) live in an off-chain index
+  (bitregalo-platform `cmd/market`, Postgres on Railway), each entry signed by the record's owner.
+  Contract of record: `docs/market-api.md`.
+- "Hold money for someone" uses today's contracts: the buyer sends the supplier a link, the supplier
+  lists the job for that one buyer with escrow, the buyer funds it. A one-sided `openEscrow` would
+  need a new contract version.
 
-Product vocabulary (use these words, with these meanings): Workspace, Request, Offer, Listing,
-Escrow, Hidden title, Project, Token, Treasury, Utility sale, Redeem, Payment link, Platform fee,
-Service fee, Testnet / practice network.
+Product vocabulary (use these words, with these meanings): BitRegalo network, Workspace,
+Organisation, Request, Offer (an answer to a request), Listing, Escrow, Buyer, Supplier, Release,
+Hand back, Returned, Marketplace, Country, Private wording, Project, Token, Treasury, Shop,
+Redeem, Payment link, Platform fee, Service fee, Practice network. The contract's own terms
+(issuer, receiver, cancel, RFP, RTS, tenant, instance) appear only in technical reference.
 
 Constraints:
 

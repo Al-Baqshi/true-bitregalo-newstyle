@@ -441,8 +441,8 @@ Are you prepared to voyage into the future alongside BitRegalo? Let us chart thi
 Email:
 [ceo@bitregalo.com](mailto:ceo@bitregalo.com)
 
-Mobile (New Zealand):
-+64 27 338 5000
+Phone (New Zealand):
++64 9 920 8896
 
 ENS Name:
 Bitregalo.eth

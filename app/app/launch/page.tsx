@@ -1,6 +1,7 @@
 "use client"
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { useAccount, useReadContracts } from "wagmi"
 import { formatUnits, isAddress, maxUint256, parseUnits, zeroAddress, type Address } from "viem"
 import { abis, addresses, STABLES } from "@/lib/bitregalo/config"
@@ -30,8 +31,14 @@ const PURPOSE_NAME: Record<Purpose, string> = {
   records: "Records only",
 }
 
-export default function LaunchWizard() {
+export default function Launch() {
+  return <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}><LaunchWizard /></Suspense>
+}
+
+function LaunchWizard() {
   const { address } = useAccount()
+  // ?preset=public: the BitRegalo network's own workspace on the current contracts. Same steps, other defaults.
+  const preset = useSearchParams().get("preset") === "public"
   const mother = useReadContracts({
     contracts: [
       { address: addresses.mother, abi: abis.mother, functionName: "deployFeeAmount" },
@@ -45,20 +52,20 @@ export default function LaunchWizard() {
   const feeStable = STABLES.find((x) => x.address.toLowerCase() === (deployFeeToken ?? "").toLowerCase())
 
   // basics
-  const [name, setName] = useState("")
-  const [purpose, setPurpose] = useState<Purpose>("shop")
+  const [name, setName] = useState(preset ? "BitRegalo network" : "")
+  const [purpose, setPurpose] = useState<Purpose>(preset ? "marketplace" : "shop")
   // payments
-  const [direct, setDirect] = useState(PRESETS.shop.direct)
-  const [escrow, setEscrow] = useState(PRESETS.shop.escrow)
+  const [direct, setDirect] = useState(PRESETS[preset ? "marketplace" : "shop"].direct)
+  const [escrow, setEscrow] = useState(PRESETS[preset ? "marketplace" : "shop"].escrow)
   const [stables, setStables] = useState<string[]>(STABLES.map((x) => x.address))
   const useUsdt = stables.includes(addresses.usdt)
   const [extraTokens, setExtraTokens] = useState<string[]>([])
   const [newToken, setNewToken] = useState("")
   const [serviceFee, setServiceFee] = useState("0.1")
   const [minDays, setMinDays] = useState("1")
-  const [maxDays, setMaxDays] = useState("180")
+  const [maxDays, setMaxDays] = useState(preset ? "365" : "180")
   // add-ons
-  const [withProject, setWithProject] = useState(true)
+  const [withProject, setWithProject] = useState(!preset)
   const [withToken, setWithToken] = useState(false)
   const [withRequest, setWithRequest] = useState(false)
   const [projectName, setProjectName] = useState("")
@@ -85,12 +92,12 @@ export default function LaunchWizard() {
 
   const steps: WizardStep[] = [
     {
-      id: "basics", title: "Your workspace", caption: "What to call it and what it is for.",
+      id: "basics", title: preset ? "The public network" : "Your workspace", caption: preset ? "Its name in this app, and what it is for. Both are filled in for the network." : "What to call it and what it is for.",
       valid: !name.trim() ? "Give your workspace a name" : true,
       content: (
         <div className="grid gap-6">
           <Label title="Workspace name" hint="Shown in this app, in this browser. The public record holds addresses, not names.">
-            <input className={input} value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Construction" autoFocus />
+            <input className={input} value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Construction" autoFocus={!preset} />
           </Label>
           <fieldset>
             <legend className="t-label">What will it be used for?</legend>
@@ -355,11 +362,15 @@ export default function LaunchWizard() {
 
   return (
     <Wizard
-      title="Create a workspace"
-      intro="Your organisation's own space for selling, taking payments, posting requests and holding money in escrow. It runs on its own contracts, under the same rules as every other workspace. You are the admin, and its treasury belongs to you alone."
+      title={preset ? "Create the public network" : "Create a workspace"}
+      intro={
+        preset
+          ? "This creates the BitRegalo network's new workspace on the current contracts: open to everyone, with escrow and direct payments in tUSD and USDT. Your wallet signs as its admin. Once it exists, BitRegalo points the app at it, and everything people do on the network is recorded there."
+          : "Your organisation's own workspace: its own contracts, rules and fees, the currencies it accepts, its tokens, shop and treasury. Everything done in it is recorded under it, apart from the BitRegalo network. You are its admin, and its treasury belongs to you alone."
+      }
       steps={steps}
       plan={plan}
-      signLabel="Create workspace"
+      signLabel={preset ? "Create the public network" : "Create workspace"}
       summary={[
         { label: "Workspace", value: name.trim() || "—" },
         { label: "Used for", value: PURPOSE_NAME[purpose] },
@@ -372,14 +383,28 @@ export default function LaunchWizard() {
         { label: "Extras", value: [withProject && "a project", withToken && "a token", withRequest && "a first request"].filter(Boolean).join(", ") || "none" },
         { label: "Transactions to sign", value: String(plan.length) },
       ]}
-      done={(r) => (
+      done={(r) => preset ? (
+        <Done
+          title="The new public network is created"
+          actions={
+            <>
+              <Button asChild><Link href="/app/operator">Back to Platform</Link></Button>
+              <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}`}>Open workspace #{String(r.tenantId)}</Link></Button>
+            </>
+          }
+        >
+          <p className="t-figure text-foreground">Workspace #{String(r.tenantId)}</p>
+          <p className="text-foreground">Tell BitRegalo: workspace #{String(r.tenantId)} is the new public network.</p>
+          <p>It has its own records contract (<Addr a={String(r.instance)} />), vault (<Addr a={String(r.vault)} />) and treasury, and your wallet is its admin. Until the app is pointed at it, the network at /app still runs on its old workspace. After that one setting changes, everything people do on the network is recorded in workspace #{String(r.tenantId)}.</p>
+        </Done>
+      ) : (
         <Done
           title={`${name.trim()} is live`}
           actions={
             <>
               <Button asChild><Link href={`/app/t/${String(r.tenantId)}`}>Open your workspace</Link></Button>
-              <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/sales/new`}>Sell in the shop</Link></Button>
-              {r.rfpId !== undefined && <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/rfps/${String(r.rfpId)}`}>View your request</Link></Button>}
+              <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/shop/new`}>Sell in the shop</Link></Button>
+              {r.rfpId !== undefined && <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/requests/${String(r.rfpId)}`}>View your request</Link></Button>}
               {r.token !== undefined && <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/tokens/${String(r.token)}`}>View {sym}</Link></Button>}
             </>
           }

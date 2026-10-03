@@ -26,10 +26,20 @@ export type RunContext = {
   results: Record<string, unknown>
   tx: (label: string, params: Parameters<ReturnType<typeof useTx>["send"]>[1]) => Promise<TransactionReceipt>
 }
-export type WizardAction = { id: string; label: string; detail?: string; run: (ctx: RunContext) => Promise<void> }
+/** `kind: "message"` for a step that only asks the wallet to sign a message (no fee, nothing on the chain). */
+export type WizardAction = { id: string; label: string; detail?: string; kind?: "tx" | "message"; run: (ctx: RunContext) => Promise<void> }
 export type SummaryRow = { label: string; value: React.ReactNode }
 
 type Status = "idle" | "running" | "done" | "error"
+
+const count = (n: number, one: string, many: string) => (n === 1 ? `one ${one}` : `${n} ${many}`)
+function signSummary(plan: WizardAction[]) {
+  const messages = plan.filter((a) => a.kind === "message").length
+  const txs = plan.length - messages
+  if (messages === 0) return count(txs, "transaction", "transactions")
+  if (txs === 0) return count(messages, "message", "messages")
+  return `${count(txs, "transaction", "transactions")} and ${count(messages, "message", "messages")}`
+}
 
 export function Wizard(props: {
   /** Kept so callers compile; the title says what the wizard is. */
@@ -168,7 +178,7 @@ export function Wizard(props: {
                 )}
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    Your wallet will ask you to sign {props.plan.length === 1 ? "one transaction" : `${props.plan.length} transactions`}, in this order. Each one is public on the chain once confirmed.
+                    Your wallet will ask you to sign {signSummary(props.plan)}, in this order. {props.plan.some((a) => a.kind === "message") ? "Transactions are public on the chain once confirmed; a signed message costs nothing." : "Each one is public on the chain once confirmed."}
                   </p>
                   <ol className="mt-4 divide-y divide-border rounded-lg border border-border">
                     {props.plan.map((a, i) => {

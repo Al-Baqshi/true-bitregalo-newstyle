@@ -19,7 +19,7 @@ export type PayPrefill = { to?: string; token?: string; amount?: string; ref?: s
 
 export function PayWizard({ prefill = {} }: { prefill?: PayPrefill }) {
   const t = useTenant()
-  const base = `/app/t/${t.id}`
+  const base = t.base
   const { address } = useAccount()
   const rules = useInstanceRules(t.instance)
   const tokens = useSettlementTokens(t.instance, t.id)

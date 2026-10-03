@@ -1,9 +1,10 @@
 "use client"
 import { useState } from "react"
-import { useAccount, useReadContracts } from "wagmi"
+import Link from "next/link"
+import { useAccount, useReadContract, useReadContracts } from "wagmi"
 import { parseUnits, type Address } from "viem"
 import { useTx } from "@/lib/bitregalo/hooks"
-import { abis, addresses, versions, STABLES } from "@/lib/bitregalo/config"
+import { abis, addresses, versions, PUBLIC_WORKSPACE_ID, STABLES } from "@/lib/bitregalo/config"
 import { Addr, Amount, Card, Fact, Facts, Field, LedgerRow, Notice, PageHead, Pill, Section, Stat, Stats, inputCls } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -48,6 +49,21 @@ export default function Platform() {
   const me = address?.toLowerCase()
   const isOwner = !!me && mOwner?.toLowerCase() === me
   const ownsTreasury = !!me && tOwner?.toLowerCase() === me
+
+  // The BitRegalo network at /app is one ordinary workspace, chosen in the app's settings.
+  const pub = useReadContract({ address: addresses.mother, abi: abis.mother, functionName: "tenants", args: [PUBLIC_WORKSPACE_ID] })
+  const pubT = pub.data as { instance: Address; admin: Address; version: bigint } | undefined
+  const latest = versionCount !== undefined && registered > 0 ? registered - 1 : null
+  const pubVersion = pubT ? Number(pubT.version) : null
+  const pubBehind = pubVersion !== null && latest !== null && pubVersion < latest
+  // The owner pays the launch fee like anyone else; check they hold enough of the fee token.
+  const feeBalance = useReadContract({
+    address: deployFeeToken, abi: abis.erc20, functionName: "balanceOf", args: [address!],
+    query: { enabled: !!address && !!deployFeeToken && isOwner, refetchInterval: 15_000 },
+  })
+  const feeShort = isOwner && deployFee !== undefined && deployFee > 0n && feeBalance.data !== undefined && (feeBalance.data as bigint) < deployFee
+  const canSwitchFeeToTest = !!addresses.testStable && deployFeeToken?.toLowerCase() !== addresses.testStable.toLowerCase()
+  const versionName = (v: number | null) => (v === null ? "…" : v === latest ? `Current contracts (version ${v})` : v === 0 ? "First version (version 0)" : `Version ${v}`)
 
   const n = Number(tokenCount ?? 0n)
   const factoryTokens = useReadContracts({
@@ -136,6 +152,53 @@ export default function Platform() {
           </div>
         </Notice>
       )}
+
+      <Section title="The public network" description="The BitRegalo network at /app runs on one ordinary workspace that BitRegalo operates. Which one is a setting of the app.">
+        <Card>
+          <Facts columns={3}>
+            <Fact label="Runs on">Workspace #{String(PUBLIC_WORKSPACE_ID)}</Fact>
+            <Fact label="Its contracts">{versionName(pubVersion)}</Fact>
+            <Fact label="Newest registered">{latest === null ? "…" : `Version ${latest}`}</Fact>
+          </Facts>
+          <div className="mt-6 border-t border-border pt-5">
+            {pubBehind ? (
+              <div className="grid gap-4">
+                <p className="max-w-[62ch] text-sm text-muted-foreground">
+                  The network runs on older contracts than the current ones, so it has no direct payments, shop or treasury. A new public
+                  workspace on the current contracts fixes that.{" "}
+                  {deployFee === 0n
+                    ? "Creating it is free: there is no launch fee right now."
+                    : <>Creating it costs the normal launch fee{deployFee !== undefined && <> of <span className="t-num text-foreground"><Amount value={deployFee} /> {deployFeeSym}</span></>}, in practice money.</>}{" "}
+                  Once it exists, the app is pointed at it: one setting, the public workspace number, which BitRegalo changes.
+                </p>
+                {isOwner && feeShort ? (
+                  <Notice tone="accent" title={`First: your wallet has no ${deployFeeSym} for the launch fee`}
+                    action={canSwitchFeeToTest ? (
+                      <Button disabled={isPending} onClick={() => send("Charge the launch fee in tUSD", { address: addresses.mother, abi: abis.mother, functionName: "setDeployFee", args: [addresses.testStable!, deployFee!] }).then(refresh)}>
+                        Charge it in tUSD instead
+                      </Button>
+                    ) : undefined}>
+                    <p>
+                      The launch fee is paid in {deployFeeSym}, and this wallet holds none.{" "}
+                      {canSwitchFeeToTest
+                        ? "On the practice network the fee is better charged in tUSD, which anyone can take from the faucet. One signature switches it, keeping the same amount; then create the network."
+                        : "Take practice money from the faucet first, then create the network."}
+                    </p>
+                  </Notice>
+                ) : isOwner ? (
+                  <div><Button asChild><Link href="/app/launch?preset=public">Create the public network on the current contracts</Link></Button></div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Only the platform owner creates it. {address ? "Your connected wallet is not the owner." : "Connect the owner's wallet to do it."}</p>
+                )}
+              </div>
+            ) : (
+              <p className="max-w-[62ch] text-sm text-muted-foreground">
+                {pubVersion === null || latest === null ? "Reading the network's contracts…" : "The network runs on the current contracts. Nothing to do."}
+              </p>
+            )}
+          </div>
+        </Card>
+      </Section>
 
       <Stats>
         <Stat label="Workspaces" value={count(tenantCount)} hint="launched so far" />

@@ -1,13 +1,17 @@
 "use client"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useAccount } from "wagmi"
+import { useAccount, useSignMessage } from "wagmi"
+import { toast } from "sonner"
 import { zeroAddress, type Address } from "viem"
 import { abis } from "@/lib/bitregalo/config"
 import { encodeLabel, eventArgs, fingerprint, labelBytes, useProjects, useSettlementTokens } from "@/lib/bitregalo/instances"
 import { useInstanceRules } from "@/lib/bitregalo/instance-rules"
 import { useTenant } from "@/lib/bitregalo/tenant"
-import { Wizard, type WizardStep } from "./wizard"
+import { LIMITS, categoryLabel, charCount, guessCountry, putEntry, useMarketAvailable } from "@/lib/bitregalo/market"
+import { DescriptionField, MoreDetailsFields, TitleField, detailsProblem, emptyDetails, toInput, type Details } from "@/components/app/market/details-form"
+import { marketErrorText, placeOf } from "@/components/app/market/words"
+import { Wizard, type WizardAction, type WizardStep } from "./wizard"
 import { Choice, Done, Label, Note, input } from "./fields"
 import { Amount } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
@@ -19,16 +23,25 @@ const PAY_NAME: Record<Pay, string> = { "2": "Escrow", "1": "Direct payment", "0
 
 export function RequestWizard() {
   const t = useTenant()
-  const base = `/app/t/${t.id}`
+  const base = t.base
   const { address } = useAccount()
+  const { signMessageAsync } = useSignMessage()
   const rules = useInstanceRules(t.instance)
   const tokens = useSettlementTokens(t.instance, t.id)
   const projects = useProjects(t.instance)
   const mine = projects.list.filter((p) => p.active && !!address && p.owner.toLowerCase() === address.toLowerCase())
+  const available = useMarketAvailable()
 
-  const [title, setTitle] = useState("")
+  // Title and description: `details` doubles as the private wording when the wording is private.
+  const [d, setD] = useState<Details>(() => emptyDetails())
+  const set = (patch: Partial<Details>) => setD((x) => ({ ...x, ...patch }))
+  useEffect(() => {
+    const g = guessCountry()
+    if (g) setD((x) => (x.country ? x : { ...x, country: g }))
+  }, [])
+  const title = d.title
+  const details = d.description
   const [vis, setVis] = useState<Vis>("public")
-  const [details, setDetails] = useState("")
   const [settle, setSettle] = useState<Pay>("2")
   const [token, setToken] = useState<string>("")
   const [days, setDays] = useState("7")
@@ -38,26 +51,58 @@ export function RequestWizard() {
   const paid = settle !== "0"
   const settleValid = (settle === "2" && !rules.escrow) || (settle === "1" && !rules.direct) ? "That payment option is off in this workspace" : null
 
+  // The marketplace lists public requests with a country. On the network the country is required.
+  const countryRequired = t.isPublic
+  const publish = available && vis === "public" && d.country !== ""
+  const chars = charCount(title.trim())
+  const bytes = labelBytes(title)
+  const onChainOnly = vis === "public" && !publish
+  const whatValid: true | string =
+    chars < LIMITS.titleMin ? `Add a title of at least ${LIMITS.titleMin} characters`
+    : chars > LIMITS.title ? `Titles are at most ${LIMITS.title} characters`
+    : vis === "public" && available && countryRequired && !d.country ? "Choose a country"
+    : publish ? detailsProblem(d) ?? true
+    : onChainOnly && bytes > 31 ? "A title kept only on the blockchain can be at most 31 characters"
+    : true
+
+  const titleHint =
+    vis === "private" || chars === 0 ? "A few plain words that say what you need."
+    : publish ? (bytes <= 31 ? "Short enough to be readable on the blockchain too." : "Longer than 31 characters, so the blockchain keeps a fingerprint of it and the marketplace shows it in full.")
+    : "Readable by anyone on the blockchain. A few plain words that say what you need."
+
   const steps: WizardStep[] = [
     {
-      id: "what", title: "What do you need?", caption: "The title is what suppliers see when they browse requests.",
-      valid: !title.trim() ? "Add a title" : vis === "public" && labelBytes(title) > 31 ? "Public titles are at most 31 characters" : true,
+      id: "what", title: "What and where", caption: "The title is what suppliers see first. Public requests are listed in the marketplace by country.",
+      valid: whatValid,
       content: (
         <div className="grid gap-5">
-          <Label title="Title" hint="A few plain words that say what you need." counter={vis === "public" ? `${labelBytes(title)}/31` : undefined}>
-            <input className={input} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Scaffolding for 12 weeks" autoFocus />
-          </Label>
+          <TitleField value={title} onChange={(v) => set({ title: v })} autoFocus hint={titleHint} counter={onChainOnly ? `${bytes}/31` : `${chars}/${LIMITS.title}`} />
           <Choice<Vis>
             value={vis} onChange={setVis}
             options={[
-              { value: "public", title: "Public title", description: "Anyone can read the title on the blockchain. Best for open tenders." },
-              { value: "private", title: "Keep the wording private", description: "Only a fingerprint of your text is stored, so the words are not readable. You share the details with suppliers yourself and can prove them later. Who posted it, the offers and any payment are still public." },
+              { value: "public", title: "Public", description: available ? "Anyone can read the title and description in the marketplace. Best for open tenders." : "Anyone can read the title on the blockchain. Best for open tenders." },
+              { value: "private", title: "Keep the wording private", description: `Only a fingerprint of your text is stored, so the words are not readable. You share the details with suppliers yourself and can prove them later. Who posted it, the offers and any payment are still public.${available ? " It is not listed in the marketplace." : ""}` },
             ]}
           />
           {vis === "private" && (
-            <Label title="Details (not stored on the blockchain)" hint="Keep a copy. Its fingerprint is what proves later what you asked for.">
-              <textarea className={`${input} h-auto py-2.5`} rows={4} value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Quantities, site address, standards…" />
-            </Label>
+            <DescriptionField
+              title="Details (not stored on the blockchain)"
+              value={details} onChange={(v) => set({ description: v })}
+              hint="Keep a copy. Its fingerprint, with the title, is what proves later what you asked for."
+              placeholder="Quantities, site address, standards…"
+            />
+          )}
+          {vis === "public" && available && (
+            <MoreDetailsFields
+              value={d} set={set} countryRequired={countryRequired}
+              descriptionHint="Shown in the marketplace under the title. The first line shows in lists."
+              countryHint={countryRequired ? "Where the work or delivery is. People browse the marketplace by country." : "Leave it empty to keep this request out of the marketplace. Its title then lives only on the blockchain, up to 31 characters."}
+            />
+          )}
+          {vis === "public" && !available && (
+            <Note>
+              The marketplace index is unavailable right now, so a description, category and country cannot be published. The request will show its short title only. You can add the details later from its page.
+            </Note>
           )}
         </div>
       ),
@@ -113,39 +158,78 @@ export function RequestWizard() {
     },
   ]
 
+  const plan: WizardAction[] = [{
+    id: "post", label: `Post “${title.trim() || "request"}”`, detail: `${PAY_NAME[settle]}${paid && chosenToken ? ` in ${chosenToken.symbol}` : ""} · offers open for ${days} ${Number(days) === 1 ? "day" : "days"}`,
+    run: async ({ tx, results }) => {
+      const scope = vis === "public" ? encodeLabel(title) : fingerprint(`${title}\n\n${details}`)
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + Math.round(Number(days) * 86400))
+      const r = await tx("Post request", { address: t.instance, abi: abis.instance, functionName: "postRfp", args: [scope, deadline, paid ? (chosenToken!.address as Address) : zeroAddress, BigInt(project), Number(settle)] })
+      results.rfpId = eventArgs<{ rfpId: bigint }>(r, abis.instance, "RfpPosted").rfpId
+    },
+  }]
+  if (publish) {
+    plan.push({
+      id: "details", kind: "message", label: "Publish the details", detail: "Your wallet signs a message, no fee. The title, description, category and place go to the marketplace.",
+      run: async ({ results }) => {
+        const rfpId = results.rfpId as bigint
+        const id = toast.loading("Publish the details: sign the message in your wallet…")
+        try {
+          if (!address) throw new Error("connect your wallet first")
+          await putEntry({ workspace: t.id, kind: "request", recordId: rfpId }, toInput(d), address, signMessageAsync)
+          toast.success("Details published", { id })
+          results.published = true
+        } catch (e) {
+          const why = marketErrorText(e)
+          toast.error("The details were not saved", { id, description: why })
+          throw new Error(`${why}. Request #${String(rfpId)} itself is posted; you can also add the details later from its page`)
+        }
+      },
+    })
+  }
+
+  const listing =
+    vis === "private" ? "Not listed: the wording is private"
+    : !available ? "The marketplace index is unavailable, so the request will show its short title only. Add the details later from its page."
+    : publish ? "Listed once you sign the message"
+    : "Not listed: no country chosen"
+
   return (
     <Wizard
       title="Post a request"
       intro="Say what you need and how the chosen supplier will be paid. Suppliers send offers with their price and time, and you choose one."
       steps={steps}
       signLabel="Post request"
-      plan={[{
-        id: "post", label: `Post “${title.trim() || "request"}”`, detail: `${PAY_NAME[settle]}${paid && chosenToken ? ` in ${chosenToken.symbol}` : ""} · offers open for ${days} ${Number(days) === 1 ? "day" : "days"}`,
-        run: async ({ tx, results }) => {
-          const scope = vis === "public" ? encodeLabel(title) : fingerprint(`${title}\n\n${details}`)
-          const deadline = BigInt(Math.floor(Date.now() / 1000) + Math.round(Number(days) * 86400))
-          const r = await tx("Post request", { address: t.instance, abi: abis.instance, functionName: "postRfp", args: [scope, deadline, paid ? (chosenToken!.address as Address) : zeroAddress, BigInt(project), Number(settle)] })
-          results.rfpId = eventArgs<{ rfpId: bigint }>(r, abis.instance, "RfpPosted").rfpId
-        },
-      }]}
+      plan={plan}
       summary={[
         { label: "Title", value: title.trim() || "—" },
-        { label: "Wording", value: vis === "public" ? "Public" : "Hidden" },
+        { label: "Wording", value: vis === "public" ? "Public" : "Private" },
+        ...(publish ? [
+          { label: "Category", value: d.category ? categoryLabel(d.category) : "—" },
+          { label: "Where", value: placeOf(d) || "—" },
+        ] : []),
         { label: "Payment", value: PAY_NAME[settle] },
         { label: "Currency", value: paid ? chosenToken?.symbol ?? "—" : "—" },
         { label: "Offers open for", value: `${days} ${Number(days) === 1 ? "day" : "days"}` },
+        { label: "Marketplace", value: listing },
       ]}
       done={(r) => (
         <Done
           title="Your request is open"
           actions={
             <>
-              <Button asChild><Link href={`${base}/rfps/${String(r.rfpId)}`}>Open request #{String(r.rfpId)}</Link></Button>
-              <Button asChild variant="secondary"><Link href={`${base}/rfps`}>All requests</Link></Button>
+              <Button asChild><Link href={`${base}/requests/${String(r.rfpId)}`}>Open request #{String(r.rfpId)}</Link></Button>
+              <Button asChild variant="secondary"><Link href={`${base}/requests`}>All requests</Link></Button>
             </>
           }
         >
           <p>Request #{String(r.rfpId)} is posted and takes offers for {days} {Number(days) === 1 ? "day" : "days"}.</p>
+          {r.published ? (
+            <p>Its title, description and place are in the marketplace, so suppliers browsing {placeOf({ city: "", country: d.country })} can find it.</p>
+          ) : vis === "public" && !available ? (
+            <p>The marketplace index was unavailable, so the request shows its short title only. You can add the details from its page later.</p>
+          ) : vis === "public" ? (
+            <p>It is not in the marketplace. To list it, add a country and details from its page.</p>
+          ) : null}
           <p>Share its page with suppliers. Their offers appear there, and you choose the one you want.</p>
         </Done>
       )}

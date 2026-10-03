@@ -22,6 +22,16 @@ export const addresses = {
   testStable: (dep as { testStable?: string }).testStable as Address | undefined,
 }
 
+/**
+ * The BitRegalo public network: the workspace anyone uses when they are not inside an
+ * organisation's own workspace. It is an ordinary workspace run by BitRegalo, chosen here.
+ * Override per build with NEXT_PUBLIC_PUBLIC_WORKSPACE, or set `publicWorkspace` in the
+ * deployments file.
+ */
+export const PUBLIC_WORKSPACE_ID = BigInt(
+  process.env.NEXT_PUBLIC_PUBLIC_WORKSPACE ?? String((dep as { publicWorkspace?: number }).publicWorkspace ?? 0)
+)
+
 /** Implementation pairs from the deployments file, oldest first. Registration state lives on the mother. */
 export const versions = Object.entries(dep.versions as Record<string, { instanceImpl: string; vaultImpl: string; treasuryImpl?: string }>)
   .map(([k, v]) => ({ n: Number(k.replace(/^v/, "")), instanceImpl: v.instanceImpl as Address, vaultImpl: v.vaultImpl as Address, treasuryImpl: v.treasuryImpl as Address | undefined }))

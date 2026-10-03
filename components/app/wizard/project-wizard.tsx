@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 
 export function ProjectWizard() {
   const t = useTenant()
-  const base = `/app/t/${t.id}`
+  const base = t.base
   const nameOf = useWorkspaceName()
   const [name, setName] = useState("")
   const [vis, setVis] = useState<"public" | "private">("public")
@@ -58,7 +58,7 @@ export function ProjectWizard() {
           title={`Project #${String(r.projectId)} created`}
           actions={
             <>
-              <Button asChild><Link href={`${base}/rfps/new`}>Post a request for it</Link></Button>
+              <Button asChild><Link href={`${base}/requests/new`}>Post a request for it</Link></Button>
               <Button asChild variant="secondary"><Link href={`/app/create/token?instance=${t.id}`}>Create a token for it</Link></Button>
               <Button asChild variant="ghost"><Link href={`${base}/projects`}>All projects</Link></Button>
             </>

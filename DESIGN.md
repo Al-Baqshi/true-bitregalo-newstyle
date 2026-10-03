@@ -58,17 +58,12 @@ One family, **Commissioner** (variable, self-hosted in `app/fonts`). Its flare a
 
 ## Layout and navigation
 
-The app has two levels, and the same structure works on a desktop, a phone, and (next) the native mobile app.
+There are two places a person can be, and both use the same layout so it only has to be learned once (and carries straight into the mobile app). The model is defined once in `components/app/nav.ts`.
 
-- **Global** (outside a workspace): Workspaces, Create, Help. A top bar with links on desktop; a menu sheet on a phone.
-- **Inside a workspace**: four destinations, defined once in `components/app/nav.ts`.
-  - Overview: what is happening here.
-  - Market: Shop, Requests, Listings.
-  - Money: Payments, Escrows, Treasury, Tokens.
-  - Set up: Projects, Settings.
-  
-  On a desktop they are a left sidebar. On a phone they are bottom tabs (Overview, Market, New, Money, More), with the pages inside the current tab as a row of tabs under the top bar. **New** opens every action a person can start (pay someone, get paid, post a request, create a listing, sell, create a token, start a project).
-- The workspace name in the top bar is a switcher to every other workspace.
+- **The BitRegalo network** (`/app`): open to everyone. Home; Marketplace (browse by country, requests, listings); Money (payments, escrows, my activity); For organisations (workspaces). It runs on BitRegalo's own public workspace, so its pages are the workspace pages served at `/app`.
+- **An organisation's workspace** (`/app/t/{id}`): Overview; Market (shop, requests, listings); Money (payments, escrows, treasury, tokens); Set up (projects, settings). The sidebar names the workspace and links back to the network.
+- On a desktop both are a left sidebar. On a phone they are bottom tabs (Home or Overview, Market, **New**, Money, More), with the pages of the current tab as a row of tabs under the top bar. **New** lists what can be started here: send money, get paid, hold money for someone, ask for something, offer something (and, in a workspace, sell, create a token, start a project).
+- The top bar's place switcher shows where you are (BitRegalo network, or the workspace's name) and moves between the network and every organisation workspace.
 - Pages that need a newer contract version are hidden from the navigation of older workspaces.
 - Page content sits in a single column up to 56rem wide. Sections are separated by space first; a `Card` is used only when a set of records or a form needs a surface. Cards are never nested.
 

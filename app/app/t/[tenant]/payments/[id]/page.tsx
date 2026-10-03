@@ -17,7 +17,7 @@ const NO_REF = `0x${"0".repeat(64)}`
 
 export default function Receipt({ params }: { params: Promise<{ id: string }> }) {
   const t = useTenant()
-  const base = `/app/t/${t.id}`
+  const base = t.base
   const { id: raw } = use(params)
   const id = BigInt(raw)
   const { address } = useAccount()

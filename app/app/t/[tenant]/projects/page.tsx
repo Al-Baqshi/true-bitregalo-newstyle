@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 
 export default function ProjectsPage() {
   const t = useTenant()
-  const base = `/app/t/${t.id}`
+  const base = t.base
   const projects = useProjects(t.instance)
   // Same read as inside useProjects (wagmi shares it), so the page can tell "still loading" from "none yet".
   const count = useReadContract({ address: t.instance, abi: abis.instance, functionName: "projectCount", query: { enabled: !!t.instance, refetchInterval: 20_000 } })

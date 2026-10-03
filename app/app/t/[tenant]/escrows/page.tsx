@@ -1,10 +1,12 @@
 "use client"
+import Link from "next/link"
 import { useAccount } from "wagmi"
 import { Explainer } from "@/components/app/explain"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import { useOverview, useEscrows } from "@/lib/bitregalo/hooks"
 import { useSettlementTokens } from "@/lib/bitregalo/instances"
 import { Card, Addr, Pill, LedgerRow, Amount, PageHead, Empty, RowsSkeleton, timeLeft } from "@/components/app/ui"
+import { Button } from "@/components/ui/button"
 
 /** The state of an escrow in a word, and the tone it is said in. */
 const PILL: Record<number, { word: string; tone: "accent" | "good" | "muted" }> = {
@@ -16,7 +18,7 @@ const PILL: Record<number, { word: string; tone: "accent" | "good" | "muted" }> 
 
 export default function EscrowsPage() {
   const t = useTenant()
-  const base = `/app/t/${t.id}`
+  const base = t.base
   const { address } = useAccount()
   const ov = useOverview()
   const count = ov.data?.[2]?.result as bigint | undefined
@@ -37,16 +39,24 @@ export default function EscrowsPage() {
 
   return (
     <div className="space-y-8">
-      <PageHead title="Escrows" intro="Money this workspace's vault is holding, or has held, until work was delivered. Open one to see who can move it and when." />
+      <PageHead
+        title="Escrows"
+        intro={`Money held ${t.isPublic ? "on the BitRegalo network" : "in this workspace"} until work is delivered, and money that was held before. Open one to see who can move it and when.`}
+        action={<Button asChild><Link href={`${base}/escrows/new`}>Hold money for someone</Link></Button>}
+      />
       <Explainer id="escrows" title="What is an escrow?">
-        <p>Money held safely by the workspace vault while work is done. It ends in one of three ways: the <b>buyer releases</b> it to the supplier, the <b>supplier hands it back</b>, or the <b>deadline passes</b> and it returns to the buyer.</p>
-        <p>No person holds the money: not BitRegalo, not the workspace admin. An escrow opens when a request or a listing is paid by escrow.</p>
+        <p>Money held safely by {t.isPublic ? "the network's" : "the workspace's"} vault contract while work is done. It ends in one of three ways: the <b>buyer releases</b> it to the supplier, the <b>supplier hands it back</b>, or the <b>deadline passes</b> and it returns to the buyer.</p>
+        <p>No person holds the money: not BitRegalo{t.isPublic ? "" : ", not the workspace admin"}. An escrow opens when a request or a listing is paid by escrow. To start one yourself, use <b>Hold money for someone</b>: you send the supplier a link, they accept, and you fund it.</p>
       </Explainer>
 
       <Card flush title={total > 0 ? `All escrows (${total})` : "All escrows"} description={total > shown && shown > 0 ? `Showing the newest ${shown}.` : undefined}>
         {loading && <RowsSkeleton rows={3} />}
         {!loading && shown === 0 && (
-          <Empty title="No escrows yet" body="One opens when someone chooses an offer on a request, or takes a listing, that is paid by escrow." />
+          <Empty
+            title="No escrows yet"
+            body="One opens when someone chooses an offer on a request, or takes a listing, that is paid by escrow. You can also start one: hold money for someone."
+            action={<Button asChild size="sm" variant="secondary"><Link href={`${base}/escrows/new`}>Hold money for someone</Link></Button>}
+          />
         )}
         {!loading && escrows.data.map((e, i) => {
           if (!e) return null

@@ -52,11 +52,11 @@ export const PHASES: Phase[] = [
   {
     n: 3,
     title: "Delivery confirmation",
-    status: "Next",
+    status: "Done",
     items: [
-      { title: "Delivery code", status: "Next", note: "The recipient confirms delivery with a QR code and no wallet. Presenting it releases the payment to the supplier and records the handover. Designed, not built" },
-      { title: "Buyer-approved extension of the term", status: "Next", note: "An order can wait for a late delivery instead of returning. Designed, not built" },
-      { title: "Deadline watcher", status: "Next", note: "A service that sends the return when a term passes, so it needs nobody to act. Designed, not built" },
+      { title: "Delivery code", status: "Done", note: "Protocol version 3 on the practice network. The recipient confirms delivery with a QR code and no wallet; presenting it releases the payment to the supplier and records the handover" },
+      { title: "Buyer-approved extension of the term", status: "Done", note: "An order can wait for a late delivery instead of returning" },
+      { title: "Deadline watcher", status: "Done", note: "The keeper service returns held payments a few minutes after their deadline and presents delivery codes for people without a wallet" },
     ],
   },
   {

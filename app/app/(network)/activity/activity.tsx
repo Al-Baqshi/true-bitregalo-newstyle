@@ -10,7 +10,8 @@ import { useReadContracts, useAccount } from "wagmi"
 import type { Address } from "viem"
 import { abis } from "@/lib/bitregalo/config"
 import { useTenant } from "@/lib/bitregalo/tenant"
-import { useEscrows, useOffers, useOverview, usePaymentCount, usePayments, useRfps, type Bid } from "@/lib/bitregalo/hooks"
+import { useDeliveries, useEscrows, useOffers, useOverview, usePaymentCount, usePayments, useRfps, type Bid } from "@/lib/bitregalo/hooks"
+import { hasFingerprint } from "@/lib/bitregalo/delivery"
 import { decodeLabel, useSettlementTokens } from "@/lib/bitregalo/instances"
 import { Addr, Amount, LedgerRow, Pill, timeLeft, type Tone } from "@/components/app/ui"
 
@@ -49,6 +50,7 @@ export function useMyActivity() {
   const rfps = useRfps(rfpCount)
   const offers = useOffers(offerCount)
   const escrows = useEscrows(escrowCount)
+  const deliveries = useDeliveries(escrows.ids)
   const { count: payCount } = usePaymentCount()
   const payments = usePayments(payCount)
   const tokens = useSettlementTokens(t.instance, t.id)
@@ -88,15 +90,17 @@ export function useMyActivity() {
       const buyer = mine(e.issuer)
       const held = e.state === 1
       const overdue = held && timeLeft(e.expiresAt) === "elapsed"
-      const word = ["—", "Held", "Released", "Handed back", "Returned"][e.state] ?? "—"
+      const d = deliveries.get(escrows.ids[i])
+      const delivered = !!d && d.deliveredAt > 0n
+      const word = delivered ? "Delivered" : ["—", "Held", "Released", "Handed back", "Returned"][e.state] ?? "—"
       items.push({
         key: `escrow-${id}`,
         kind: "escrow",
         href: `${base}/escrows/${id}`,
         title: `Escrow #${id}`,
         meta: buyer
-          ? <>You are the buyer · for {who(e.receiver)}{held && <> · {overdue ? "past its deadline" : `deadline in ${timeLeft(e.expiresAt)}`}</>}</>
-          : <>You are the supplier · from {who(e.issuer)}{held && <> · {overdue ? "past its deadline, goes back to the buyer" : `the buyer releases it when the work is done`}</>}</>,
+          ? <>You are the buyer · for {who(e.receiver)}{held && <> · {overdue ? "past its deadline" : `deadline in ${timeLeft(e.expiresAt)}`}</>}{held && hasFingerprint(d?.codeHash) ? " · carries a delivery code" : ""}</>
+          : <>You are the supplier · from {who(e.issuer)}{held && <> · {overdue ? "past its deadline, goes back to the buyer" : hasFingerprint(d?.codeHash) ? "released when the delivery code is presented, or by the buyer" : `the buyer releases it when the work is done`}</>}</>,
         amount: money(e.amount, e.token),
         status: { word, tone: held ? "accent" : e.state === 2 ? "good" : "muted" },
         needs: buyer && held ? (overdue ? "Past its deadline: send it back to yourself" : "Release it when the work is done") : undefined,

@@ -152,15 +152,15 @@ const FEATURED = [
 ]
 /*
  * The marketplace example carried one step further: an order confirmed by the person who
- * receives it. The delivery code is designed, not built (PRODUCT.md, "Designed, not built"),
- * and the block says so. The last step is the alternative to the fourth, not a fifth step.
+ * receives it. The delivery code is built and runs on the practice network (protocol version 3;
+ * PRODUCT.md, "Built and running"). The last step is the alternative to the fourth, not a fifth step.
  */
 const DELIVERY = [
-  { title: "Order", text: "The buyer orders flowers from a florist in Spain for a friend there. The payment is held by the contract, and the buyer's app creates a long random delivery code. The contract keeps only its fingerprint." },
-  { title: "Code to the recipient", text: "The buyer sends the code to the friend as a QR code or a link. It can be printed. The florist never sees it before delivery." },
-  { title: "Scan on delivery", text: "At the door the florist scans the code with their own phone. The friend needs no wallet, no app and no account." },
+  { title: "Order", text: "The buyer orders flowers from a florist in Spain for a friend there and takes the florist's listing into a held payment. The buyer's browser creates a long random delivery code. The contract keeps only its fingerprint." },
+  { title: "Code to the recipient", text: "The buyer gives the code to the friend as a QR code, a link or a print. The florist never sees it before delivery." },
+  { title: "Scan on delivery", text: "At the door the florist scans the code with their own phone. The page says what will be released and has one button: Confirm delivery. BitRegalo's keeper sends the transaction. The friend needs no wallet, no app and no account." },
   { title: "Released", text: "Presenting the code releases the payment to the florist on the spot and records the handover with its time. That record is the florist's proof of delivery." },
-  { title: "Returned", text: "If nobody presents the code before the deadline, the payment can only go back to the buyer." },
+  { title: "Returned", text: "If nobody presents the code before the deadline, the payment can only go back to the buyer, who can also give it more time. The keeper sends the return a few minutes after the deadline." },
 ]
 const MORE_CASES = [
   { title: "An enterprise running tenders", text: "Each request, every answer and the award are recorded. A supplier who lost can check that nothing was rearranged afterwards." },
@@ -195,12 +195,12 @@ export function UseCases() {
           <div className="max-w-3xl">
             <p className="inline-flex items-center gap-2 rounded-full bg-gold-fill px-3 py-1 text-[13px] font-[560] text-gold">
               <span className="size-1.5 rounded-full bg-current" aria-hidden />
-              Planned, not built
+              On the practice network
             </p>
             <h3 className="flare mt-4 text-2xl font-[620] tracking-tight sm:text-3xl">The same order, confirmed by the person who receives it.</h3>
             <p className="mt-3 max-w-[62ch] text-base text-muted-foreground">
               <span className="font-semibold text-foreground">Example: a gift ordered from another country. </span>
-              A delivery code lets the recipient confirm a delivery without a wallet, and gives the supplier proof of the handover. Today only the buyer&apos;s own wallet can release a held payment.
+              A delivery code lets the recipient confirm a delivery without a wallet, and gives the supplier proof of the handover. The buyer can still release from their own wallet, and the supplier can still hand the payment back.
             </p>
           </div>
           <ol className="mt-10 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-5">

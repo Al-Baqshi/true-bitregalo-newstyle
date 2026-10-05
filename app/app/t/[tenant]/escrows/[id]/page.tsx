@@ -1,10 +1,14 @@
 "use client"
-import { use } from "react"
+import { use, useState } from "react"
 import Link from "next/link"
 import { useAccount } from "wagmi"
 import { useTenant } from "@/lib/bitregalo/tenant"
-import { useCredit, useEscrow, useTx, useErc20 } from "@/lib/bitregalo/hooks"
-import { abis } from "@/lib/bitregalo/config"
+import { useChainNow, useCredit, useDelivery, useEscrow, useTx, useErc20 } from "@/lib/bitregalo/hooks"
+import { useInstanceRules } from "@/lib/bitregalo/instance-rules"
+import { hasFingerprint, storedCode } from "@/lib/bitregalo/delivery"
+import { abis, KEEPER_API } from "@/lib/bitregalo/config"
+import { DeliveryCodeCard } from "@/components/app/delivery-code"
+import { Label, input } from "@/components/app/wizard/fields"
 import { Card, Addr, Pill, Amount, PageHead, Section, Facts, Fact, Empty, Notice, RowsSkeleton } from "@/components/app/ui"
 import { Journey, when, inWords, type JourneyStep } from "@/components/app/journey"
 import { ConnectButton } from "@/components/app/connect-button"
@@ -30,6 +34,13 @@ export default function EscrowPage({ params }: { params: Promise<{ id: string }>
   const erc = useErc20(e?.token, address)
   // A payout the token refused to deliver is credited to the same wallet, to collect later.
   const credit = useCredit(e?.token, address)
+  // Delivery confirmation (protocol version 3): the code's fingerprint and the recorded handover.
+  const delivery = useDelivery(id)
+  const rules = useInstanceRules(t.instance)
+  // Deadlines are judged by the network's clock.
+  const now = useChainNow()
+  const [newDeadline, setNewDeadline] = useState("")
+  const [showCode, setShowCode] = useState(false)
   const back = { href: `${base}/escrows`, label: "All escrows" }
   const title = `Escrow #${raw}`
 
@@ -56,7 +67,7 @@ export default function EscrowPage({ params }: { params: Promise<{ id: string }>
   const isBuyer = me === e.issuer.toLowerCase()
   const isSupplier = me === e.receiver.toLowerCase()
   const active = e.state === 1
-  const overdue = Number(e.expiresAt) <= Date.now() / 1000
+  const overdue = Number(e.expiresAt) <= now
   const fee = (e.amount * BigInt(e.feeBps)) / 10_000n
   const sym = erc.symbol
   const dec = erc.decimals
@@ -64,11 +75,20 @@ export default function EscrowPage({ params }: { params: Promise<{ id: string }>
   const act = (label: string, fn: string) => () => send(label, { address: t.vault, abi: abis.vault, functionName: fn, args: [id] }).then(() => refetch())
   const pill = PILL[e.state] ?? { word: "—", tone: "muted" as const }
   const deadline = when(e.expiresAt)
+  const hasCode = t.delivery && hasFingerprint(delivery.delivery?.codeHash)
+  const deliveredAt = t.delivery && delivery.delivery && delivery.delivery.deliveredAt > 0n ? delivery.delivery.deliveredAt : null
+  const myCode = isBuyer && hasCode ? storedCode(t.vault, id, delivery.delivery?.codeHash) : null
+  // Giving more time: at least an hour from now, at most the workspace's longest term from now, and later than today's deadline.
+  const extendTs = newDeadline ? Math.floor(new Date(newDeadline).getTime() / 1000) : 0
+  const extendMin = Math.max(now + 3600, Number(e.expiresAt) + 1)
+  const extendMax = now + rules.maxTerm
+  const extendProblem = !newDeadline ? "Choose the new deadline" : extendTs <= Number(e.expiresAt) ? "The new deadline must be later than the current one" : extendTs < now + 3600 ? "The new deadline must be at least an hour from now" : rules.loaded && extendTs > extendMax ? `The longest term in this workspace is ${Math.round(rules.maxTerm / 86400)} days from now` : null
+  const returnWord = KEEPER_API ? "anyone can trigger that, and BitRegalo's keeper service does so a few minutes after the deadline" : "someone has to trigger that"
 
   const journey: JourneyStep[] = [
     { title: "Payment locked", note: `${new Intl.NumberFormat().format(Number(e.amount) / 10 ** dec)} ${sym} moved into the vault`, state: "done" },
     { title: "Work in progress", note: active ? (overdue ? `Deadline passed ${inWords(e.expiresAt)}` : `Deadline ${deadline} (${inWords(e.expiresAt)})`) : "Finished", state: active ? "current" : "done" },
-    { title: active ? "Settled" : STATE[e.state], note: active ? "Released, handed back, or returned at the deadline" : e.state === 2 ? "The supplier was paid" : "The buyer got it all back", state: active ? "next" : "done" },
+    { title: active ? "Settled" : STATE[e.state], note: active ? (hasCode ? "Released by the delivery code or the buyer, handed back, or returned at the deadline" : "Released, handed back, or returned at the deadline") : e.state === 2 ? (deliveredAt ? `Handover recorded ${when(deliveredAt)}; the supplier was paid` : "The supplier was paid") : "The buyer got it all back", state: active ? "next" : "done" },
   ]
 
   /** One sentence on where the payment stands right now. */
@@ -77,7 +97,9 @@ export default function EscrowPage({ params }: { params: Promise<{ id: string }>
       ? `The deadline (${deadline}) has passed without a release or a hand-back, so this payment can only go back to the buyer.`
       : `Held by the vault until the buyer releases it, the supplier hands it back, or the deadline on ${deadline} passes.`
     : e.state === 2
-      ? <>The buyer released it. The supplier was paid <Amount value={e.amount - fee} decimals={dec} symbol={sym} />, the amount minus the {pct}% platform fee.</>
+      ? deliveredAt
+        ? <>Delivery was confirmed with the code on {when(deliveredAt)}. The supplier was paid <Amount value={e.amount - fee} decimals={dec} symbol={sym} />, the amount minus the {pct}% platform fee.</>
+        : <>The buyer released it. The supplier was paid <Amount value={e.amount - fee} decimals={dec} symbol={sym} />, the amount minus the {pct}% platform fee.</>
       : e.state === 3
         ? "The supplier handed it back. The buyer got all of it back."
         : "The deadline passed with no release and no hand-back, so it went back to the buyer in full."
@@ -126,15 +148,15 @@ export default function EscrowPage({ params }: { params: Promise<{ id: string }>
       {active && (
         <Section title="Who can move this payment">
           <p className="max-w-[62ch] text-base">
-            Only the buyer can release it. Only the supplier can hand it back.
+            Only the buyer can release it{hasCode ? ", or whoever presents the delivery code at the handover" : ""}. Only the supplier can hand it back.
             {overdue
               ? " The deadline has passed, so neither can happen any more: anyone can now return it to the buyer, in full."
               : <> After <span className="font-[560]">{deadline}</span> neither can happen any more: the payment can then only go back to the buyer, in full, and anyone can trigger that.</>}
           </p>
           <dl className="mt-5 divide-y divide-border border-y border-border">
-            <Outcome label="If the buyer releases it" muted={overdue}>The supplier receives <Amount value={e.amount - fee} decimals={dec} symbol={sym} />: the amount minus the {pct}% platform fee.</Outcome>
+            <Outcome label={hasCode ? "If the buyer releases it, or the delivery code is presented" : "If the buyer releases it"} muted={overdue}>The supplier receives <Amount value={e.amount - fee} decimals={dec} symbol={sym} />: the amount minus the {pct}% platform fee.{hasCode ? " With the code, the handover is recorded with its time." : ""}</Outcome>
             <Outcome label="If the supplier hands it back" muted={overdue}>The buyer gets all <Amount value={e.amount} decimals={dec} symbol={sym} /> back.</Outcome>
-            <Outcome label={overdue ? "Now that the deadline has passed" : `If neither happens by ${deadline}`}>Anyone can return it to the buyer, in full.</Outcome>
+            <Outcome label={overdue ? "Now that the deadline has passed" : `If neither happens by ${deadline}`}>It can only go back to the buyer, in full: {returnWord}.{t.delivery ? " The buyer can give it more time instead." : ""}</Outcome>
           </dl>
           <p className="mt-4 max-w-[68ch] text-sm text-muted-foreground">No person holds this payment: not BitRegalo, not the workspace admin. The vault contract follows these three rules and nothing else, and nobody can move the payment towards themselves.</p>
         </Section>
@@ -161,14 +183,61 @@ export default function EscrowPage({ params }: { params: Promise<{ id: string }>
               </Action>
             )}
             {canReturn && (
-              <Action body={<>The deadline has passed without a release, so the payment can only go back to the buyer. Anyone can send it on its way.</>}>
-                <Button disabled={isPending} onClick={act("Return to buyer", "expire")}>Return it to the buyer</Button>
+              <Action body={<>The deadline has passed without a release, so the payment can only go back to the buyer. Anyone can send it on its way{KEEPER_API ? ", and BitRegalo's keeper service does so a few minutes after the deadline" : ""}.{isBuyer && t.delivery ? " Or give it more time below." : ""}</>}>
+                <Button variant={isBuyer && t.delivery ? "secondary" : "default"} disabled={isPending} onClick={act("Return to buyer", "expire")}>Return it to the buyer</Button>
               </Action>
+            )}
+            {isBuyer && t.delivery && (
+              <div className="border-t border-border pt-5">
+                <p className="t-subheading">Give it more time</p>
+                <p className="mt-1 max-w-[60ch] text-sm text-muted-foreground">
+                  The deadline is {deadline}{overdue ? ", which has passed" : ""}. You can move it later, so the order can wait for a late delivery instead of going back to you. At least an hour from now, and at most {rules.loaded ? `${Math.round(rules.maxTerm / 86400)} days` : "the workspace's longest term"} from now. The supplier gains time; you give up nothing else.
+                </p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,16rem)_auto] sm:items-end">
+                  <Label title="New deadline">
+                    <input className={input} type="datetime-local" value={newDeadline} min={new Date(extendMin * 1000).toISOString().slice(0, 16)} onChange={(ev) => setNewDeadline(ev.target.value)} />
+                  </Label>
+                  <div className="sm:pb-0.5">
+                    <Button variant="secondary" disabled={isPending || !!extendProblem} onClick={() => send("Give it more time", { address: t.vault, abi: abis.vault, functionName: "extendTerm", args: [id, BigInt(extendTs)] }).then(() => { setNewDeadline(""); refetch() })}>Give it more time</Button>
+                  </div>
+                </div>
+                {newDeadline && extendProblem && <p className="mt-2 text-sm text-destructive" role="status">{extendProblem}</p>}
+              </div>
             )}
             {onlyWatching && <p className="text-base text-muted-foreground">You are not the buyer or the supplier, so there is nothing for you to do here. Anyone can watch it, though.</p>}
           </div>
         )}
       </Card>
+
+      {t.delivery && (
+        <Section title="Delivery confirmation" description={hasCode ? "This held payment carries a delivery code. Whoever presents it at the handover releases the payment to the supplier and records the delivery." : "This held payment carries no delivery code. Only the buyer can release it."}>
+          <Card>
+            <Facts columns={2}>
+              <Fact label="Delivery code">{delivery.delivery === undefined ? "…" : hasCode ? "Yes" : "No"}</Fact>
+              <Fact label="Handover">{deliveredAt ? `Recorded ${when(deliveredAt)}` : hasCode ? (active ? "Not yet" : "Not recorded") : "—"}</Fact>
+            </Facts>
+            {hasCode && isBuyer && (
+              <div className="mt-6 border-t border-border pt-5">
+                {myCode ? (
+                  showCode ? <DeliveryCodeCard workspace={t.id} id={id} code={myCode} /> : (
+                    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                      <p className="max-w-[52ch] text-base">The delivery code is kept in this browser. Show it to give it to the recipient again, or to print it.</p>
+                      <Button variant="secondary" onClick={() => setShowCode(true)}>Show the delivery code</Button>
+                    </div>
+                  )
+                ) : (
+                  <p className="max-w-[62ch] text-base text-muted-foreground">The delivery code is not in this browser. It was shown once, when the payment was opened, and the chain keeps only its fingerprint. If the recipient has it, nothing is lost; otherwise only your wallet can release this payment.</p>
+                )}
+              </div>
+            )}
+            {hasCode && isSupplier && active && (
+              <p className="mt-6 max-w-[62ch] border-t border-border pt-5 text-base">
+                At the handover, scan the recipient&apos;s delivery code with your phone (it opens this app&apos;s delivery page) or open the link they show you, and press “Confirm delivery”. Hand over the goods once the release shows as confirmed, not before. The release reaches you as it would from the buyer, and the handover is recorded with its time.
+              </p>
+            )}
+          </Card>
+        </Section>
+      )}
 
       <Card title="Details">
         <Facts columns={3}>

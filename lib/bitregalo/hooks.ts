@@ -1,6 +1,6 @@
 "use client"
 import { useCallback, useEffect, useState } from "react"
-import { useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi"
+import { useBlock, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi"
 import { toast } from "sonner"
 import { zeroAddress, type Abi, type Address } from "viem"
 import { abis, chain, explorerTx } from "./config"
@@ -28,6 +28,8 @@ export type Sale = {
   token: Address; payToken: Address; price: bigint; unit: bigint; remaining: bigint; sold: bigint; maxPerBuyer: bigint
   start: bigint; end: bigint; active: boolean; projectId: bigint; metaHash: `0x${string}`
 }
+/** What a held payment carries for delivery confirmation (protocol version 3): the code's fingerprint, and when it was presented. */
+export type Delivery = { codeHash: `0x${string}`; deliveredAt: bigint }
 export type Payment = {
   payer: Address; payee: Address; token: Address; amount: bigint; ref: `0x${string}`; projectId: bigint; settlementId: bigint
 }
@@ -93,6 +95,22 @@ export function useEscrows(count: bigint | undefined) {
     query: { enabled: ids.length > 0, refetchInterval: 15_000 },
   })
   return { ids, data: (q.data ?? []).map((r) => r.result as Escrow | undefined), isLoading: q.isLoading }
+}
+/** The delivery records of held payments, read only in a workspace that has them. */
+export function useDeliveries(ids: bigint[]) {
+  const { vault, t } = useContracts()
+  const q = useReadContracts({
+    contracts: ids.map((id) => ({ ...vault, functionName: "getDelivery", args: [id] })),
+    query: { enabled: t.delivery && ids.length > 0, refetchInterval: 15_000 },
+  })
+  const map = new Map<string, Delivery>()
+  ids.forEach((id, i) => { const d = q.data?.[i]?.result as Delivery | undefined; if (d) map.set(String(id), d) })
+  return { get: (id: bigint) => map.get(String(id)), isLoading: q.isLoading }
+}
+export function useDelivery(id: bigint) {
+  const { vault, t } = useContracts()
+  const q = useReadContract({ ...vault, functionName: "getDelivery", args: [id], query: { enabled: t.delivery, refetchInterval: 10_000 } })
+  return { delivery: q.data as Delivery | undefined, refetch: q.refetch }
 }
 /** Payments with an amount the payer chose ("Send a payment"). */
 export function usePaymentCount() {
@@ -244,6 +262,17 @@ export function useNow(everyMs = 30_000) {
     return () => clearInterval(id)
   }, [everyMs])
   return now
+}
+
+/**
+ * The network's own time, in seconds, from its newest block; this device's clock until that is
+ * known. Deadlines are judged by the network's clock, so pages that say whether one has passed
+ * should use this.
+ */
+export function useChainNow() {
+  const block = useBlock({ query: { refetchInterval: 10_000 } })
+  const local = useNow(10_000)
+  return block.data ? Number(block.data.timestamp) : local
 }
 
 export type TxParams = { address: Address; abi: Abi; functionName: string; args?: unknown[]; value?: bigint }

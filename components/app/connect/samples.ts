@@ -21,6 +21,12 @@ export type SampleContext = {
   token?: { symbol: string; address: string; decimals: number }
   /** Where this workspace's record pages live, e.g. "https://example.com/app/t/3". */
   pages: string
+  /** True for a protocol version 3 workspace: held payments can carry a delivery code. */
+  delivery: boolean
+  /** The workspace's number, for delivery links. */
+  workspaceId: string
+  /** BitRegalo's keeper for this network, or "" when there is none. */
+  keeperApi: string
 }
 
 /** The exports of the TypeScript ABI file, in the order the page lists them. */
@@ -279,6 +285,81 @@ const [paid] = parseEventLogs({
 })
 // The receipt
 console.log("${c.pages}/payments/" + paid.args.paymentId)
+`
+}
+
+/** Delivery confirmation (protocol version 3): a held payment that the recipient's code can release. */
+export function deliverySample(c: SampleContext): string {
+  return `import { keccak256, parseEventLogs, type Hex } from "viem"
+import { account, publicClient, RECORDS, VAULT, walletClient } from "./bitregalo"
+import { erc20Abi, recordsAbi, vaultAbi } from "./bitregalo-abis"
+
+// 1. The buyer's side. The delivery code is 32 random bytes made on the
+//    buyer's own device. It never goes to a server and never into a query
+//    string. The held payment stores only its fingerprint: keccak256 over
+//    exactly those 32 bytes.
+const bytes = new Uint8Array(32)
+crypto.getRandomValues(bytes)
+const code = ("0x" + Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")) as Hex
+const fingerprint = keccak256(code)
+
+// Take a listing INTO a held payment, with the fingerprint. Same exact approval
+// and maxTotal as without a code; acceptBidWithCode(rfpId, bidId, maxTotal,
+// fingerprint) does the same for an offer on a request.
+const listingId = 1n
+const listing = await publicClient.readContract({
+  address: RECORDS, abi: recordsAbi, functionName: "getOffer", args: [listingId],
+})
+const [, , serviceFee] = await publicClient.readContract({
+  address: RECORDS, abi: recordsAbi, functionName: "tokens", args: [listing.token],
+})
+const total = listing.amount + serviceFee
+const approval = await walletClient.writeContract({
+  account, address: listing.token, abi: erc20Abi,
+  functionName: "approve", args: [VAULT, total],
+})
+await publicClient.waitForTransactionReceipt({ hash: approval })
+const hash = await walletClient.writeContract({
+  account, address: RECORDS, abi: recordsAbi,
+  functionName: "confirmOfferWithCode", args: [listingId, total, fingerprint],
+})
+const receipt = await publicClient.waitForTransactionReceipt({ hash })
+const [taken] = parseEventLogs({
+  abi: recordsAbi, eventName: "OfferConfirmed", logs: receipt.logs,
+})
+const heldPaymentId = taken.args.settlementId
+
+// Give the code to the person who will receive the goods, as a QR code or a
+// link to this app's delivery page (the code sits in the fragment, which the
+// browser never sends). Never to the supplier before delivery.
+const link = \`${c.pages.replace(/\/app(\/t\/\d+)?$/, "/app")}/deliver#w=${c.workspaceId}&id=\${heldPaymentId}&code=\${code}\`
+console.log(link)
+
+// 2. At the handover, anyone may present the code: the supplier who scanned
+//    it, the recipient, or a service for someone without a wallet.
+${c.keeperApi ? `//    BitRegalo's keeper does it for people who have no wallet:
+//    POST ${c.keeperApi}/v1/deliver {"workspace": ${c.workspaceId}, "id": 7, "code": "0x…"}
+//    -> {"released": true, "transaction": "0x…"} or {"error": "…", "message": "…"}.
+//    From a wallet, it is one call:` : "//    From a wallet, it is one call:"}
+await walletClient.writeContract({
+  account, address: VAULT, abi: vaultAbi,
+  functionName: "releaseWithCode", args: [heldPaymentId, code],
+})
+
+// 3. The record. deliveredAt is the time the code was presented, before the
+//    deadline; it is the supplier's proof of the handover.
+const delivery = await publicClient.readContract({
+  address: VAULT, abi: vaultAbi, functionName: "getDelivery", args: [heldPaymentId],
+})
+console.log(delivery.deliveredAt)
+
+// 4. Only the buyer can give a held payment more time: at least an hour from
+//    now, at most the workspace's longest term, and later than today's
+//    deadline. It works after the deadline too, until someone returns it.
+await walletClient.writeContract({
+  account, address: VAULT, abi: vaultAbi,
+  functionName: "extendTerm", args: [heldPaymentId, BigInt(Math.floor(Date.now() / 1000) + 3 * 86400)],
+})
 `
 }
 

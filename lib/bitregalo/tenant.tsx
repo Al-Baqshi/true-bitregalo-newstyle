@@ -15,6 +15,10 @@ export type TenantAddrs = {
   kycRequired: boolean
   /** The key that signs identity approvals for this workspace, when one is set. */
   attester?: Address
+  /** The protocol version this workspace's contracts run: 2, or 3 with delivery confirmation. */
+  protocol: number
+  /** True when held payments here can carry a delivery code and be given more time (protocol version 3). */
+  delivery: boolean
   /** Where this workspace's pages live: "/app" for the public network, "/app/t/{id}" for any other. */
   base: string
   /** True for the BitRegalo public network. */
@@ -41,10 +45,13 @@ export function TenantProvider({ id: given, base, children }: { id: bigint | str
       { address: t!.instance, abi: abis.instance, functionName: "treasury" },
       { address: t!.instance, abi: abis.instance, functionName: "kycRequired" },
       { address: t!.instance, abi: abis.instance, functionName: "attester" },
+      { address: t!.instance, abi: abis.instance, functionName: "PROTOCOL_VERSION" },
     ] : [],
     query: { enabled: found, refetchInterval: 20_000 },
   })
-  const [admin, pendingAdmin, treasury, kycRequired, attester] = (own.data ?? []).map((r) => r.result) as [Address?, Address?, Address?, boolean?, Address?]
+  const [admin, pendingAdmin, treasury, kycRequired, attester, protocolRaw] = (own.data ?? []).map((r) => r.result) as [Address?, Address?, Address?, boolean?, Address?, number?]
+  // Each workspace keeps the contracts it was launched with: ask it, never the mother's numbering.
+  const protocol = Number(protocolRaw ?? 2)
   if (q.isLoading || (found && own.isLoading)) return <p className="text-sm text-muted-foreground" role="status">Loading…</p>
   if (!found) return <p className="text-sm text-muted-foreground">There is no workspace #{String(id)} on this network.</p>
   return (
@@ -56,6 +63,8 @@ export function TenantProvider({ id: given, base, children }: { id: bigint | str
         treasury: treasury && !ZERO.test(treasury) ? treasury : undefined,
         kycRequired: !!kycRequired,
         attester: attester && !ZERO.test(attester) ? attester : undefined,
+        protocol,
+        delivery: protocol >= 3,
         base: base ?? `/app/t/${id}`, isPublic: id === PUBLIC_WORKSPACE_ID,
       }}
     >

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /*
- * Runs the app's main flows against a network running protocol version 2, with the same call
+ * Runs the app's main flows against a network running protocol version 2 or 3, with the same call
  * shapes the app uses (function names, argument order, structs, exact approvals, `maxTotal`).
  * It reads the contracts from lib/bitregalo/bitregalo.json, like the app.
  *
- *   node scripts/smoke-v2.mjs [rpc url] [chain id]
+ *   node scripts/smoke.mjs [rpc url] [chain id]
  *
  * It WRITES transactions: use it on a local or practice network only. Defaults are a local anvil.
  *   RPC_URL       default http://127.0.0.1:8551 (the first argument wins)
@@ -13,14 +13,16 @@
  *   BUYER_KEY     a buyer                                  default: anvil account 1
  *   SUPPLIER_KEY  a supplier                               default: anvil account 2
  *   WORKSPACE     the workspace to use                     default: publicTenantId in the bundle
+ *   KEEPER_API    a keeper's base URL: its delivery relay is then tried too (default: none)
  *
  * One line per step. Exits non-zero on the first failure.
  */
 import { readFileSync } from "node:fs"
 import path from "node:path"
+import { webcrypto } from "node:crypto"
 import {
-  BaseError, ContractFunctionRevertedError, createPublicClient, createWalletClient, decodeErrorResult, defineChain,
-  formatUnits, http, parseEventLogs, parseUnits, stringToHex, zeroAddress,
+  BaseError, bytesToHex, ContractFunctionRevertedError, createPublicClient, createWalletClient, decodeErrorResult, defineChain,
+  formatUnits, http, keccak256, parseEventLogs, parseUnits, stringToHex, zeroAddress,
 } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
 
@@ -123,7 +125,7 @@ const [adminNow, treasuryOwner, protocol, direct, escrowOn, minTerm, feeBps, sta
   read(t.instance, abis.instance, "PROTOCOL_VERSION"), read(t.instance, abis.instance, "directEnabled"), read(t.instance, abis.instance, "escrowEnabled"),
   read(t.instance, abis.instance, "minTerm"), read(t.instance, abis.instance, "feeBps"), read(t.instance, abis.instance, "tokens", [stable]), read(dep.mother, abis.mother, "treasury"),
 ])
-expect(Number(protocol) === 2, `workspace #${workspace} runs protocol version ${protocol}, not 2`)
+expect([2, 3].includes(Number(protocol)), `workspace #${workspace} runs protocol version ${protocol}, not 2 or 3`)
 expect(adminNow.toLowerCase() === admin.address.toLowerCase(), `ADMIN_KEY is ${admin.address}, but the workspace admin is ${adminNow}`)
 expect(treasuryOwner.toLowerCase() === admin.address.toLowerCase(), `ADMIN_KEY is not the treasury's owner (${treasuryOwner})`)
 expect(direct && escrowOn, "the workspace needs both direct payment and escrow switched on")
@@ -415,6 +417,73 @@ await refused(subject, "a gated action after the approval was ended", gated, "Ky
 const tooSoon = await signVoucher(attester, 30 * 86400)
 await refused(admin, "a new approval within ten minutes of ending one", { ...ws2, functionName: "submitKycVoucher", args: [tooSoon.voucher, tooSoon.signature] }, "VoucherSuperseded")
 ok("the attester ends the approval with revokeKyc: the gated action is refused again (KycRequired), and a new approval is refused for ten minutes (VoucherSuperseded)")
+
+// ── 22–25. Delivery confirmation (protocol version 3) ─────────────────────────────────────
+if (Number(protocol) >= 3) {
+  // The code is 32 random bytes; the fingerprint is keccak256 over exactly those bytes. Same as the app.
+  const newCode = () => { const b = new Uint8Array(32); webcrypto.getRandomValues(b); return bytesToHex(b) }
+  const fingerprint = (code) => keccak256(code)
+  const openRequest = async () => {
+    const rfpId = event(await send(buyer, "postRfp", { ...instance, functionName: "postRfp", args: [label32("Delivery test"), BigInt((await now()) + 7 * 86400), stable, 0n, 2] }), abis.instance, "RfpPosted").rfpId
+    const bidId = event(await send(supplier, "bid", { ...instance, functionName: "bid", args: [rfpId, bidAmount, timeframe, BigInt((await now()) + 86400)] }), abis.instance, "BidPlaced").bidId
+    await approveExact(buyer, stable, t.vault, bidAmount + serviceFee, "approve the award total")
+    return { rfpId, bidId }
+  }
+
+  // 22. Award with a code; the same code on a second held payment is refused.
+  const code = newCode()
+  const a1 = await openRequest()
+  const awardedWithCode = await send(buyer, "acceptBidWithCode", { ...instance, functionName: "acceptBidWithCode", args: [a1.rfpId, a1.bidId, bidAmount + serviceFee, fingerprint(code)] })
+  const held = event(awardedWithCode, abis.instance, "RfpAwarded").settlementId
+  const d0 = await read(t.vault, abis.vault, "getDelivery", [held])
+  expect(d0.codeHash.toLowerCase() === fingerprint(code).toLowerCase() && d0.deliveredAt === 0n, "getDelivery does not show the fingerprint that was set")
+  const a2 = await openRequest()
+  await refused(buyer, "the same code on a second held payment", { ...instance, functionName: "acceptBidWithCode", args: [a2.rfpId, a2.bidId, bidAmount + serviceFee, fingerprint(code)] }, "DeliveryCodeReused")
+  const code2 = newCode()
+  const held2 = event(await send(buyer, "acceptBidWithCode (second)", { ...instance, functionName: "acceptBidWithCode", args: [a2.rfpId, a2.bidId, bidAmount + serviceFee, fingerprint(code2)] }), abis.instance, "RfpAwarded").settlementId
+  ok(`award into held payment #${held} with a delivery code: acceptBidWithCode(rfpId, bidId, maxTotal, keccak256(code)); getDelivery shows the fingerprint; the same code again is refused (DeliveryCodeReused)`)
+
+  // 23. A wrong code is refused; a third wallet presents the right one; the handover is recorded.
+  await refused(admin, "a wrong code", { ...vault, functionName: "releaseWithCode", args: [held, newCode()] }, "WrongDeliveryCode")
+  await refused(admin, "presenting a code on a held payment without one", { ...vault, functionName: "releaseWithCode", args: [escrowId, code] }, "NotActive")
+  const supplierBefore2 = await balance(stable, supplier.address)
+  const presented = await send(admin, "releaseWithCode", { ...vault, functionName: "releaseWithCode", args: [held, code] })
+  const d1 = await read(t.vault, abis.vault, "getDelivery", [held])
+  const at = (await pub.getBlock({ blockNumber: presented.blockNumber })).timestamp
+  expect(d1.deliveredAt === at, `deliveredAt is ${d1.deliveredAt}, expected the block's time ${at}`)
+  expect((await read(t.vault, abis.vault, "getEscrow", [held])).state === 2, "the held payment is not released")
+  expect((await balance(stable, supplier.address)) - supplierBefore2 === bidAmount - platformFee, "the supplier did not receive the amount less the platform fee")
+  ok(`present the code from a third wallet: releaseWithCode(id, code) releases to the supplier; a wrong code is refused (WrongDeliveryCode); getDelivery.deliveredAt = ${d1.deliveredAt}`)
+
+  // 24. More time, by the buyer only, at least an hour ahead and later than today's deadline.
+  const e2 = await read(t.vault, abis.vault, "getEscrow", [held2])
+  await refused(supplier, "the supplier extending", { ...vault, functionName: "extendTerm", args: [held2, e2.expiresAt + 86400n] }, "NotIssuer")
+  await refused(buyer, "an extension that is not later than the deadline", { ...vault, functionName: "extendTerm", args: [held2, e2.expiresAt] }, "InvalidTermBounds")
+  await refused(buyer, "an extension under an hour from now", { ...vault, functionName: "extendTerm", args: [held2, BigInt((await now()) + 1800)] }, "InvalidTermBounds")
+  await send(buyer, "extendTerm", { ...vault, functionName: "extendTerm", args: [held2, e2.expiresAt + 86400n] })
+  expect((await read(t.vault, abis.vault, "getEscrow", [held2])).expiresAt === e2.expiresAt + 86400n, "the deadline did not move")
+  ok(`give held payment #${held2} more time as the buyer: extendTerm(id, newExpiresAt) one day later; too short, not later, and not the buyer are refused`)
+
+  // 25. The keeper's relay, when one is given.
+  if (process.env.KEEPER_API) {
+    const base = process.env.KEEPER_API.replace(/\/$/, "")
+    const post = async (body) => { const r = await fetch(`${base}/v1/deliver`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); return r.json() }
+    const wrong = await post({ workspace: Number(workspace), id: Number(held2), code: newCode() })
+    expect(wrong.error === "wrong_code", `the relay answered ${JSON.stringify(wrong)} to a wrong code, expected wrong_code`)
+    const supplierBefore3 = await balance(stable, supplier.address)
+    const done = await post({ workspace: Number(workspace), id: Number(held2), code: code2 })
+    expect(done.released === true && /^0x[0-9a-f]{64}$/i.test(done.transaction ?? ""), `the relay answered ${JSON.stringify(done)}`)
+    await pub.waitForTransactionReceipt({ hash: done.transaction })
+    expect((await read(t.vault, abis.vault, "getEscrow", [held2])).state === 2 && (await read(t.vault, abis.vault, "getDelivery", [held2])).deliveredAt > 0n, "the relay's transaction did not release the payment")
+    expect((await balance(stable, supplier.address)) - supplierBefore3 === bidAmount - platformFee, "the supplier did not receive the payout through the relay")
+    ok(`the keeper's relay at ${base}: a wrong code is answered wrong_code and costs nothing; the right code releases held payment #${held2} (transaction ${done.transaction.slice(0, 10)}…)`)
+  } else {
+    await send(admin, "releaseWithCode (second)", { ...vault, functionName: "releaseWithCode", args: [held2, code2] })
+    console.log("     (no KEEPER_API given: the keeper's relay was not tried; the second code was presented from a wallet instead)")
+  }
+} else {
+  console.log(`     (workspace #${workspace} runs protocol version ${protocol}: delivery confirmation is not available there, so steps 22 to 25 did not run)`)
+}
 
 console.log(`\nall ${step} steps passed against workspace #${workspace} on chain ${chainId} (${rpcUrl})`)
 } catch (e) {

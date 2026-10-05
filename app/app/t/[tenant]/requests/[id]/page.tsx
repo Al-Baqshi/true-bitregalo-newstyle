@@ -3,7 +3,9 @@ import { use, useState } from "react"
 import Link from "next/link"
 import { useAccount } from "wagmi"
 import { parseUnits, type Hex } from "viem"
-import { decodeLabel } from "@/lib/bitregalo/instances"
+import { codeFingerprint, keepCode, newDeliveryCode, type DeliveryCode } from "@/lib/bitregalo/delivery"
+import { DeliveryCodeCard, DeliveryCodeChoice } from "@/components/app/delivery-code"
+import { decodeLabel, eventArgs } from "@/lib/bitregalo/instances"
 import { categoryLabel, useEntry } from "@/lib/bitregalo/market"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import { useNow, useRfp, useTx, useErc20, useTokenCfg } from "@/lib/bitregalo/hooks"
@@ -47,6 +49,12 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
   const [validDays, setValidDays] = useState("14")
   // The offer the buyer is about to choose: shown with its total before anything is signed.
   const [picked, setPicked] = useState<bigint | null>(null)
+  // Delivery confirmation (protocol version 3): on by default when the payment will be held. The code is
+  // drawn here, in the browser, and goes nowhere else.
+  const [withCode, setWithCode] = useState(true)
+  const [code] = useState<DeliveryCode | null>(() => (typeof window === "undefined" ? null : newDeliveryCode()))
+  const [codeSaved, setCodeSaved] = useState(false)
+  const [opened, setOpened] = useState<{ id: bigint; code: DeliveryCode } | null>(null)
   const [editing, setEditing] = useState(false)
   const nowSec = useNow()
   // Title, description, category and place, signed by the requester, from the marketplace index.
@@ -90,6 +98,7 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
   const pickedTotal = (pickedBid?.amount ?? 0n) + serviceFee
   const pickedShort = paid && !!pickedBid && feeKnown && erc.balance < pickedTotal
   const validOk = Number(validDays) > 0
+  const useCode = !!rfp && rfp.settlement === 2 && t.delivery && withCode && !!code
 
   const journey: JourneyStep[] = [
     { title: "Posted", note: `by ${isRequester ? "you" : short(rfp.requester)}`, state: "done" },
@@ -116,7 +125,15 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
     if (paid && erc.allowance < total) {
       await send("Allow the vault to take the total", { address: rfp!.token, abi: abis.erc20, functionName: "approve", args: [t.vault, total] })
     }
-    await send("Choose offer", { address: t.instance, abi: abis.instance, functionName: "acceptBid", args: [id, bidId, paid ? total : 0n] })
+    if (useCode) {
+      // The fingerprint is keccak256 over the 32 bytes of the code, built here on the buyer's side.
+      const r = await send("Choose offer", { address: t.instance, abi: abis.instance, functionName: "acceptBidWithCode", args: [id, bidId, total, codeFingerprint(code!)] })
+      const escrowId = eventArgs<{ settlementId: bigint }>(r, abis.instance, "RfpAwarded").settlementId
+      keepCode(t.vault, escrowId, code!)
+      setOpened({ id: escrowId, code: code! })
+    } else {
+      await send("Choose offer", { address: t.instance, abi: abis.instance, functionName: "acceptBid", args: [id, bidId, paid ? total : 0n] })
+    }
     setPicked(null); refetch(); erc.refetch()
   }
 
@@ -243,7 +260,7 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
               title={`Choose offer #${String(pickedBid.id)}?`}
               action={
                 <div className="flex flex-wrap gap-2">
-                  <Button disabled={isPending || !feeKnown || pickedShort} onClick={() => choose(pickedBid.id, pickedBid.amount)}>
+                  <Button disabled={isPending || !feeKnown || pickedShort || (useCode && !codeSaved)} onClick={() => choose(pickedBid.id, pickedBid.amount)}>
                     {rfp.settlement === 2 ? "Confirm and hold the payment" : rfp.settlement === 1 ? "Confirm and pay" : "Confirm the choice"}
                   </Button>
                   <Button variant="ghost" disabled={isPending} onClick={() => setPicked(null)}>Not now</Button>
@@ -266,6 +283,18 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
                   </p>
                 </>
               )}
+              {rfp.settlement === 2 && t.delivery && (
+                <div className="mt-4">
+                  <DeliveryCodeChoice on={withCode} onChange={setWithCode} code={code} saved={codeSaved} onSaved={setCodeSaved} vault={t.vault} />
+                </div>
+              )}
+            </Notice>
+          )}
+          {opened && (
+            <Notice tone="good" title={`The payment is held in escrow #${String(opened.id)}. Here is the delivery code.`} action={<Button asChild size="sm"><Link href={`${base}/escrows/${opened.id}`}>Open the escrow</Link></Button>}>
+              <div className="mt-3">
+                <DeliveryCodeCard workspace={t.id} id={opened.id} code={opened.code} />
+              </div>
             </Notice>
           )}
         </div>

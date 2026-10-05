@@ -70,6 +70,11 @@ const WORDS: Record<string, string> = {
   AmountTooLarge: "That amount is too large.",
   TransferDeltaMismatch: "This token does not move the exact amount it is asked to (it may take a fee on transfer), so it cannot be used here.",
   InvalidToken: "That address is not a token this protocol can use.",
+  // Delivery codes (protocol version 3)
+  NoDeliveryCode: "This held payment carries no delivery code. Only the buyer can release it.",
+  WrongDeliveryCode: "This code does not belong to this held payment.",
+  DeliveryCodeAlreadySet: "This held payment already carries a delivery code.",
+  DeliveryCodeReused: "This delivery code was already used on another held payment of yours. Each held payment needs a new code.",
   NothingToClaim: "There is nothing credited to your wallet for that token.",
   NothingToCollect: "No fees are waiting in that token.",
   ERC20InsufficientBalance: "The wallet does not hold enough of that token.",

@@ -4,7 +4,8 @@ import { useAccount, useReadContracts } from "wagmi"
 import { zeroAddress } from "viem"
 import { Explainer } from "@/components/app/explain"
 import { useTenant } from "@/lib/bitregalo/tenant"
-import { useOverview, useEscrows, useTx } from "@/lib/bitregalo/hooks"
+import { useDeliveries, useOverview, useEscrows, useTx } from "@/lib/bitregalo/hooks"
+import { hasFingerprint } from "@/lib/bitregalo/delivery"
 import { abis } from "@/lib/bitregalo/config"
 import { useSettlementTokens } from "@/lib/bitregalo/instances"
 import { Card, Addr, Pill, LedgerRow, Amount, Notice, PageHead, Empty, RowsSkeleton, timeLeft } from "@/components/app/ui"
@@ -25,6 +26,7 @@ export default function EscrowsPage() {
   const ov = useOverview()
   const count = ov.data?.[2]?.result as bigint | undefined
   const escrows = useEscrows(count)
+  const deliveries = useDeliveries(escrows.ids)
   const tokens = useSettlementTokens(t.instance, t.id)
   const me = address?.toLowerCase()
   const { send, isPending } = useTx()
@@ -83,15 +85,18 @@ export default function EscrowsPage() {
           const id = String(escrows.ids[i])
           const tk = tokens.all.find((x) => x.address.toLowerCase() === e.token.toLowerCase())
           const pill = PILL[e.state] ?? { word: "—", tone: "muted" as const }
+          const d = deliveries.get(escrows.ids[i])
+          const withCode = hasFingerprint(d?.codeHash)
+          const delivered = !!d && d.deliveredAt > 0n
           return (
             <LedgerRow
               key={id}
               href={`${base}/escrows/${id}`}
               lead={`#${id}`}
               title={`Escrow #${id}`}
-              meta={<>From {who(e.issuer)} to {who(e.receiver)} · {next(e.state, e.expiresAt)}</>}
+              meta={<>From {who(e.issuer)} to {who(e.receiver)} · {delivered ? "delivery confirmed with the code" : next(e.state, e.expiresAt)}{withCode && !delivered ? " · carries a delivery code" : ""}</>}
               amount={<Amount value={e.amount} decimals={tk?.decimals ?? 18} symbol={tk?.symbol ?? ""} />}
-              status={<Pill tone={pill.tone}>{pill.word}</Pill>}
+              status={<span className="flex flex-wrap items-center justify-end gap-1.5">{delivered ? <Pill tone="good">Delivered</Pill> : withCode ? <Pill>Delivery code</Pill> : null}<Pill tone={pill.tone}>{pill.word}</Pill></span>}
             />
           )
         })}

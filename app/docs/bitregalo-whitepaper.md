@@ -213,15 +213,16 @@ The web app reads the network directly and sends each signed transaction straigh
 
 **Today.** Every workspace has a page that gives its contract addresses, its interface files and typed code examples. Anything can be read without a key. Actions are transactions a user signs in their own wallet from the developer's own site. Payment links need no code. To run on another network, one script deploys the contracts and one builds the app's configuration for it.
 
+**Delivery confirmation (protocol version 3, on the practice network since 6 October 2026).** When the buyer takes a listing or awards an offer into a held payment, the buyer's browser creates a long random delivery code and the contract stores only its fingerprint. The buyer gives the code to the person receiving the goods as a QR code or a link; the supplier never sees it before delivery. At the handover the supplier scans it: presenting the code releases the payment to the supplier on the spot and writes a permanent record of the handover with its time. The code can only ever send that payment to its supplier. The buyer can give a held payment more time, so an order can wait for a late delivery, and BitRegalo's keeper service returns held payments a few minutes after their deadline and presents codes for people who have no wallet. The version 2 public workspace stays as it was; version 3 is a new public workspace on the same network.
+
 **Planned, in this order.**
 
-1. **Delivery confirmation.** Today only the buyer's own wallet can release a held payment. A delivery code lets the person receiving the goods confirm delivery without a wallet, an app or an account. When the buyer orders, the app creates a long random code and the contract stores only its fingerprint. The buyer sends the code to the recipient as a QR code or a link, and the supplier never sees it before delivery. On delivery the supplier scans it. Presenting the code releases the payment to the supplier on the spot and writes a permanent record of the handover with its time, which is the supplier's proof of fulfilment. Presenting the code can only ever send the payment to the supplier. With it come two more parts: the buyer can extend the term so an order can wait for a late delivery, and a watcher service sends the return when a deadline passes, so the return needs nobody to act.
-2. **General records.** A record of any event an organisation wants to prove, such as a subscription, a sale made elsewhere or an approval, written by the organisation's own key.
-3. **Keys that act for a workspace.** A workspace authorises a key that its own server uses, so a system can write records and trigger its side of a commitment without a person at a wallet.
-4. **More kinds of commitment.** For example a refund window: the supplier is paid after a set time unless the buyer takes the payment back first.
-5. **An indexer, webhooks and a published SDK**, so a system is told when something happens and can call the protocol in a few lines.
-6. **Anchoring for private networks**, and one installation that serves several networks.
-7. **Implementations for Stellar and Hyperledger Fabric.**
+1. **General records.** A record of any event an organisation wants to prove, such as a subscription, a sale made elsewhere or an approval, written by the organisation's own key.
+2. **Keys that act for a workspace.** A workspace authorises a key that its own server uses, so a system can write records and trigger its side of a commitment without a person at a wallet.
+3. **More kinds of commitment.** For example a refund window: the supplier is paid after a set time unless the buyer takes the payment back first.
+4. **An indexer, webhooks and a published SDK**, so a system is told when something happens and can call the protocol in a few lines.
+5. **Anchoring for private networks**, and one installation that serves several networks.
+6. **Implementations for Stellar and Hyperledger Fabric.**
 8. **Signing in without a wallet**, with network fees paid by the sponsor.
 
 # Business model
@@ -248,7 +249,7 @@ There is no BitRegalo token. If BitRegalo ever issues one, it will be issued thr
 | Private EVM network | Deployed and exercised on a Hyperledger Besu test network. None in production |
 | Marketplace index | Live |
 | Gas sponsor and signing in without a wallet | Built, not in use |
-| Delivery code, term extension, deadline watcher | Designed, not built |
+| Delivery code, term extension, keeper (deadline watcher and delivery relay) | Protocol version 3, on the public test network since 6 October 2026, as a new public workspace on the same mother. Reviewed by one AI-assisted review; not audited by an independent firm |
 | General records, keys for servers, refund window | Designed, not built |
 | Indexer, webhooks, SDK | Not built |
 | Anchoring; several networks in one installation | Not built |
@@ -261,8 +262,8 @@ There is no BitRegalo token. If BitRegalo ever issues one, it will be issued thr
 - **A public network is public.** Amounts and addresses are visible to anyone.
 - **A private network is only as honest as its validators.** One party that controls all of them can rewrite the record. Independent validators and anchoring are what prevent it, and anchoring is not built.
 - **Keys are final.** BitRegalo cannot recover a lost wallet or reverse a signed action.
-- **Escrow today leans toward the buyer.** Only the buyer's own wallet can release. If the buyer does not release and the supplier does not hand back, the payment returns to the buyer after the deadline, so a buyer who has received the goods can decline to release and wait. The delivery code is the planned answer: the supplier hands over the goods only when the code is presented, and presenting it releases the payment. A recipient who takes the goods and refuses to show the code is still a risk the supplier carries.
-- **A return needs a trigger.** After the deadline someone has to send the transaction that returns a held payment. It does not happen by itself. A watcher service that sends it is planned.
+- **Escrow leans toward the buyer unless the supplier uses the delivery code.** On the practice network a held payment can carry a delivery code: the supplier hands over only when the code is presented, and presenting it releases the payment. Without a code, only the buyer's own wallet can release, and a buyer who has received the goods can decline to release and wait for the deadline. A recipient who takes the goods and refuses to show the code leaves the supplier in that position, and a code presented at the last moment can arrive after the deadline. A recipient who takes the goods and refuses to show the code is still a risk the supplier carries.
+- **A return needs a trigger.** After the deadline someone has to send the transaction that returns a held payment. It does not happen by itself. BitRegalo's keeper service sends it a few minutes after the deadline on the practice network; if the keeper is down, the payment waits until anyone sends the same call.
 - **Descriptions are separate from records.** A description in the marketplace index can be replaced by its owner. The record on the ledger cannot.
 - **Other ledgers mean other code.** An implementation for Stellar or Fabric is new software that needs its own testing and its own audit.
 - **Law differs by country.** An organisation that uses BitRegalo remains responsible for its own obligations. This paper is not legal or financial advice.

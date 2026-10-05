@@ -45,6 +45,7 @@ All are optional and read at build time. Put them in `.env.local`.
 | `NEXT_PUBLIC_NETWORK_NAME`, `NEXT_PUBLIC_NATIVE_SYMBOL`, `NEXT_PUBLIC_EXPLORER_URL`, `NEXT_PUBLIC_PRACTICE_NETWORK` | `lib/bitregalo/config.ts` | Describe a network that is not built in. See "Another network". |
 | `NEXT_PUBLIC_RPC_URL` | `lib/bitregalo/config.ts` | RPC endpoint. Defaults to a public BNB Smart Chain Testnet endpoint; set it to point the app at a local fork. |
 | `NEXT_PUBLIC_LOGS_RPC_URL`, `NEXT_PUBLIC_LOGS_FROM_BLOCK` | `lib/bitregalo/config.ts` | Where event queries (`eth_getLogs`) go and the block they start from. The app finds tokens an admin accepted by address from the workspace contract's `TokenConfigured` events. The default public testnet endpoint refuses such queries, so the built-in network names another one; with `NEXT_PUBLIC_RPC_URL` set, that node is asked, from block 0. |
+| `NEXT_PUBLIC_KEEPER_API` | `lib/bitregalo/config.ts` | BitRegalo's keeper for the network: it returns held payments after their deadline and presents delivery codes for people without a wallet (`/app/deliver`). Defaults to the keeper BitRegalo runs for the built-in network; without one, the delivery page needs a connected wallet. |
 | `NEXT_PUBLIC_NO_MULTICALL` | `lib/bitregalo/config.ts` | Set to `1` when the RPC is a local copy of a built-in network that has no Multicall3 contract (a fresh anvil node with chain id 97, say). Batched reads are then sent one by one; without it every list in the app stays empty there. |
 | `NEXT_PUBLIC_PUBLIC_WORKSPACE` | `lib/bitregalo/config.ts`, `next.config.ts` | Which workspace is the public BitRegalo network served at `/app`. Defaults to `publicTenantId` in the deployment record inside `lib/bitregalo/bitregalo.json`, or 0. |
 
@@ -65,16 +66,18 @@ NEXT_PUBLIC_PRACTICE_NETWORK=1 \
 npm run build
 ```
 
-The app is written for protocol version 2 of the contracts and serves no earlier version. The
+The app is written for protocol versions 2 and 3 of the contracts (version 3 adds delivery
+confirmation; the app asks each workspace which it runs) and serves no earlier version. The
 deployment record names the public workspace as `publicTenantId` and its contracts under
 `tenants.t<id>`; the app never assumes it is workspace 0. After regenerating the bundle, run
 `node scripts/check-abi.mjs`: it checks every contract call in the source against the bundle's
 ABIs (function name and number of arguments) and fails on a mismatch.
 
-`scripts/smoke-v2.mjs` runs the app's main flows against a network with funded test keys, with the
+`scripts/smoke.mjs` runs the app's main flows against a network with funded test keys, with the
 same call shapes the app uses. It reads the contracts from the bundle, so generate the bundle for
 the network you run it against first (it was written against a local anvil node with the
-contracts deployed: `node scripts/smoke-v2.mjs http://127.0.0.1:8551 97`). It needs the keys of
+contracts deployed: `node scripts/smoke.mjs http://127.0.0.1:8551 97`; set `KEEPER_API` to also try
+the keeper's delivery relay). It needs the keys of
 the workspace admin, a buyer and a supplier (`ADMIN_KEY`, `BUYER_KEY`, `SUPPLIER_KEY`; anvil's
 test keys by default), and it writes transactions, so use it on a local or practice network only.
 

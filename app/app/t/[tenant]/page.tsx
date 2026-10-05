@@ -3,7 +3,8 @@ import Link from "next/link"
 import { useAccount } from "wagmi"
 import type { Hex } from "viem"
 import { useTenant } from "@/lib/bitregalo/tenant"
-import { useOverview, useRfps, useEscrows, useSaleCount } from "@/lib/bitregalo/hooks"
+import { useDeliveries, useOverview, useRfps, useEscrows, useSaleCount } from "@/lib/bitregalo/hooks"
+import { hasFingerprint } from "@/lib/bitregalo/delivery"
 import { decodeLabel, useSettlementTokens, useWorkspaceTokens } from "@/lib/bitregalo/instances"
 import { useWorkspaceName } from "@/lib/bitregalo/names"
 import { Card, Addr, Pill, LedgerRow, Amount, PageHead, Empty, Facts, Fact, Section, timeLeft } from "@/components/app/ui"
@@ -19,6 +20,7 @@ export default function Overview() {
   const [rfpCount, offerCount, escrowCount, directCount, admin, feeBps, direct, escrow, minTerm, maxTerm] = (ov.data ?? []).map((r) => r.result)
   const rfps = useRfps(rfpCount as bigint | undefined)
   const escrows = useEscrows(escrowCount as bigint | undefined)
+  const deliveries = useDeliveries(escrows.ids.slice(0, 5))
   const { count: saleCount } = useSaleCount()
   const tokens = useSettlementTokens(t.instance, t.id)
   const own = useWorkspaceTokens(t.id, t.instance)
@@ -112,7 +114,7 @@ export default function Overview() {
                 key={String(escrows.ids[i])}
                 href={`${base}/escrows/${escrows.ids[i]}`}
                 title={<>Escrow #{String(escrows.ids[i])}</>}
-                meta={<>From <Addr a={e.issuer} /> to <Addr a={e.receiver} />{e.state === 1 && <> · {timeLeft(e.expiresAt) === "elapsed" ? "past its deadline, can go back to the buyer" : `deadline in ${timeLeft(e.expiresAt)}`}</>}</>}
+                meta={<>From <Addr a={e.issuer} /> to <Addr a={e.receiver} />{e.state === 1 && <> · {timeLeft(e.expiresAt) === "elapsed" ? "past its deadline, can go back to the buyer" : `deadline in ${timeLeft(e.expiresAt)}`}</>}{(() => { const d = deliveries.get(escrows.ids[i]); return d && d.deliveredAt > 0n ? " · delivery confirmed with the code" : hasFingerprint(d?.codeHash) ? " · carries a delivery code" : "" })()}</>}
                 amount={<Amount value={e.amount} decimals={tokenOf(e.token)?.decimals ?? 18} symbol={tokenOf(e.token)?.symbol ?? ""} />}
                 status={<Pill tone={e.state === 1 ? "accent" : e.state === 2 ? "good" : "muted"}>{ESCROW_STATE[e.state]}</Pill>}
               />

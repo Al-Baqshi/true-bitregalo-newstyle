@@ -13,6 +13,8 @@ import { defineChain, type Abi, type Address, type Chain } from "viem"
 type Stable = { symbol: string; name: string; address: Address }
 type NetworkEntry = {
   chain: Chain; rpcUrl: string; explorer: string; practice: boolean; stables: Stable[]; marketApi?: string
+  /** BitRegalo's keeper for this network: it returns held payments after their deadline and relays delivery codes. */
+  keeperApi?: string
   /** An endpoint that answers event queries (eth_getLogs), when the main one refuses them. */
   logsRpcUrl?: string
   /** No contract of the deployment is older than this block: event queries need not look further back. */
@@ -23,6 +25,7 @@ const NETWORKS: Record<number, NetworkEntry> = {
     chain: bscTestnet, rpcUrl: "https://data-seed-prebsc-1-s1.bnbchain.org:8545", explorer: "https://testnet.bscscan.com", practice: true,
     stables: [{ symbol: "USDT", name: "Tether USD (testnet)", address: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd" }],
     marketApi: "https://market-production-671e.up.railway.app",
+    keeperApi: "https://keeper-production-535b.up.railway.app",
     // The public endpoint above refuses eth_getLogs. The version 2 contracts were deployed after block 135,000,000.
     logsRpcUrl: "https://bsc-testnet-rpc.publicnode.com",
     logsFromBlock: 135_000_000n,
@@ -78,6 +81,12 @@ export const LOGS_FROM_BLOCK = process.env.NEXT_PUBLIC_LOGS_FROM_BLOCK
   : process.env.NEXT_PUBLIC_RPC_URL ? 0n : entry.logsFromBlock ?? 0n
 /** The marketplace index BitRegalo runs for this network, if any. NEXT_PUBLIC_MARKET_API overrides it. */
 export const DEFAULT_MARKET_API = entry.marketApi ?? ""
+/**
+ * The keeper for this network, if any: a service that returns held payments once their deadline has
+ * passed (a few minutes after it) and presents delivery codes for people without a wallet. Empty when
+ * the network has none; the delivery page then needs a connected wallet. NEXT_PUBLIC_KEEPER_API overrides it.
+ */
+export const KEEPER_API = (process.env.NEXT_PUBLIC_KEEPER_API ?? entry.keeperApi ?? "").replace(/\/$/, "")
 /** What the rest of the app may say about the network it is running on. */
 export const network = {
   id: entry.chain.id,
@@ -125,11 +134,13 @@ export const addresses = {
 }
 
 /**
- * The protocol version this app is written for. Every workspace it serves has payments, the
- * shop, redemption and a treasury. (The mother's own version numbers only say in which order
- * implementation sets were registered on one network.)
+ * The protocol versions this app is written for. Every workspace it serves has payments, the
+ * shop, redemption and a treasury (version 2); a version 3 workspace also has delivery
+ * confirmation. Each workspace says which it runs (`PROTOCOL_VERSION()`); the mother's own
+ * version numbers only say in which order implementation sets were registered on one network.
  */
-export const PROTOCOL_VERSION = 2
+export const PROTOCOL_VERSIONS = [2, 3] as const
+export const PROTOCOL_VERSION = 3
 
 /** Implementation sets from the deployments file, oldest first. Registration state lives on the mother. */
 export const versions = Object.entries(dep.versions)

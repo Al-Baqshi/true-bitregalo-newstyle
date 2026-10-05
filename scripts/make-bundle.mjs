@@ -7,8 +7,8 @@
  *   node scripts/make-bundle.mjs <path to bitregalo-contracts> <chain id>
  *
  * The path needs two things in it: `out/` (run `forge build` in the contracts repository first)
- * and `deployments/<chain id>.json`. The app talks to protocol version 2 only, so the contracts
- * must be version 2. The app serves one network per build:
+ * and `deployments/<chain id>.json`. The app talks to protocol versions 2 and 3 (version 3 adds
+ * delivery confirmation and takes nothing away). The app serves one network per build:
  * to point it at another network (a private one, say), generate the bundle for that network's
  * chain id and set the NEXT_PUBLIC_NETWORK_* variables described in README.md.
  */
@@ -47,10 +47,12 @@ if (bundle.deployments.chainId !== bundle.chainId) {
   console.error(`deployments/${chainId}.json says chain ${bundle.deployments.chainId}`)
   process.exit(1)
 }
-// The record says which protocol version it is; the app is written for version 2 and nothing else.
+// The record says which protocol version its newest contracts are. The app serves versions 2 and 3
+// with one interface file (version 3 adds calls and takes none away), and asks each workspace which
+// one it runs.
 const version = bundle.deployments.protocolVersion
-if (version !== undefined && Number(version) !== 2) {
-  console.error(`deployments/${chainId}.json is protocol version ${version}; this app works with version 2 only`)
+if (version !== undefined && ![2, 3].includes(Number(version))) {
+  console.error(`deployments/${chainId}.json is protocol version ${version}; this app works with versions 2 and 3`)
   process.exit(1)
 }
 const out = path.join(import.meta.dirname, "..", "lib/bitregalo/bitregalo.json")

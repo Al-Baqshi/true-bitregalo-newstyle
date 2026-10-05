@@ -4,6 +4,9 @@ import Link from "next/link"
 import { useAccount } from "wagmi"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import { useNow, useOffer, useTx, useErc20, useTokenCfg } from "@/lib/bitregalo/hooks"
+import { eventArgs } from "@/lib/bitregalo/instances"
+import { codeFingerprint, keepCode, newDeliveryCode, type DeliveryCode } from "@/lib/bitregalo/delivery"
+import { DeliveryCodeCard, DeliveryCodeChoice } from "@/components/app/delivery-code"
 import { abis } from "@/lib/bitregalo/config"
 import { categoryLabel, useEntry } from "@/lib/bitregalo/market"
 import { EditDetailsButton, EntryDescription, OwnerDetails } from "@/components/app/market/record-details"
@@ -41,6 +44,11 @@ export default function OfferDetail({ params }: { params: Promise<{ id: string }
   const cfg = useTokenCfg(paid ? offer!.token : undefined)
   const [editing, setEditing] = useState(false)
   const now = useNow()
+  // Delivery confirmation (protocol version 3): on by default when the payment will be held.
+  const [withCode, setWithCode] = useState(true)
+  const [code] = useState<DeliveryCode | null>(() => (typeof window === "undefined" ? null : newDeliveryCode()))
+  const [codeSaved, setCodeSaved] = useState(false)
+  const [opened, setOpened] = useState<{ id: bigint; code: DeliveryCode } | null>(null)
   // Title, description, category and place, signed by the supplier, from the marketplace index.
   const { data: entry } = useEntry(t.id, "listing", id)
   const back = { href: `${base}/listings`, label: "All listings" }
@@ -79,12 +87,21 @@ export default function OfferDetail({ params }: { params: Promise<{ id: string }
   const total = offer.amount + serviceFee
   const short = paid && feeKnown && erc.balance < total
   const place = placeOf(entry)
+  const useCode = offer.settlement === 2 && t.delivery && withCode && !!code
 
   async function confirm() {
     // Approve exactly the total shown, and name it as the most the contract may charge.
     // If the service fee went up since this page was opened, taking the listing is refused and nothing is charged.
     if (paid && erc.allowance < total) await send("Allow the vault to take the total", { address: offer!.token, abi: abis.erc20, functionName: "approve", args: [t.vault, total] })
-    await send("Take listing", { address: t.instance, abi: abis.instance, functionName: "confirmOffer", args: [id, paid ? total : 0n] })
+    if (useCode) {
+      // The fingerprint is keccak256 over the 32 bytes of the code, built here on the buyer's side.
+      const r = await send("Take listing", { address: t.instance, abi: abis.instance, functionName: "confirmOfferWithCode", args: [id, total, codeFingerprint(code!)] })
+      const escrowId = eventArgs<{ settlementId: bigint }>(r, abis.instance, "OfferConfirmed").settlementId
+      keepCode(t.vault, escrowId, code!)
+      setOpened({ id: escrowId, code: code! })
+    } else {
+      await send("Take listing", { address: t.instance, abi: abis.instance, functionName: "confirmOffer", args: [id, paid ? total : 0n] })
+    }
     refetch(); erc.refetch()
   }
   async function withdraw() {
@@ -130,7 +147,7 @@ export default function OfferDetail({ params }: { params: Promise<{ id: string }
 
       {canConfirm && (
         <Section title="Take this listing">
-          <Notice tone="accent" action={<Button disabled={isPending || !feeKnown || short} onClick={confirm}>{offer.settlement === 2 ? "Take it and fund the escrow" : offer.settlement === 1 ? "Take it and pay" : "Take this listing"}</Button>}>
+          <Notice tone="accent" action={<Button disabled={isPending || !feeKnown || short || (useCode && !codeSaved)} onClick={confirm}>{offer.settlement === 2 ? "Take it and fund the escrow" : offer.settlement === 1 ? "Take it and pay" : "Take this listing"}</Button>}>
             <p>
               {offer.settlement === 2 && <>Taking it moves <Amount value={offer.amount} decimals={erc.decimals} symbol={erc.symbol} />{fee && <> plus a {fee} service fee</>} from your wallet into the vault. You release it to the supplier when the work is delivered. If you never do, after {duration(offer.timeframe)} it can only go back to you.</>}
               {offer.settlement === 1 && <>Taking it pays the supplier <Amount value={offer.amount} decimals={erc.decimals} symbol={erc.symbol} /> straight away from your wallet{fee && <>, plus a {fee} service fee</>}.</>}
@@ -145,8 +162,21 @@ export default function OfferDetail({ params }: { params: Promise<{ id: string }
                 </p>
               </>
             )}
+            {offer.settlement === 2 && t.delivery && (
+              <div className="mt-4">
+                <DeliveryCodeChoice on={withCode} onChange={setWithCode} code={code} saved={codeSaved} onSaved={setCodeSaved} vault={t.vault} />
+              </div>
+            )}
           </Notice>
         </Section>
+      )}
+
+      {opened && (
+        <Notice tone="good" title={`The payment is held in escrow #${String(opened.id)}. Here is the delivery code.`} action={<Button asChild size="sm"><Link href={`${base}/escrows/${opened.id}`}>Open the escrow</Link></Button>}>
+          <div className="mt-3">
+            <DeliveryCodeCard workspace={t.id} id={opened.id} code={opened.code} />
+          </div>
+        </Notice>
       )}
 
       {expired && (

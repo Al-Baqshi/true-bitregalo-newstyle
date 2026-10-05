@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useAccount } from "wagmi"
-import { abis, addresses, chain, EXPLORER, explorerAddress, PROTOCOL_VERSION, RPC_URL } from "@/lib/bitregalo/config"
+import { abis, addresses, chain, EXPLORER, explorerAddress, KEEPER_API, RPC_URL } from "@/lib/bitregalo/config"
 import { useSettlementTokens } from "@/lib/bitregalo/instances"
 import { useInstanceRules } from "@/lib/bitregalo/instance-rules"
 import { MARKET_API, useMarketAvailable } from "@/lib/bitregalo/market"
@@ -11,7 +11,7 @@ import { Addr, Amount, Card, Empty, Notice, PageHead, RowsSkeleton, Section } fr
 import { Button } from "@/components/ui/button"
 import { CodeBlock, CopyButton, DownloadRow, ExplorerLink, Params, ValueRow, saveFile } from "./parts"
 import {
-  ABI_FILE, abiModule, marketSample, paySample, postSample, readSample, releaseSample, setupSample, takeSample,
+  ABI_FILE, abiModule, deliverySample, marketSample, paySample, postSample, readSample, releaseSample, setupSample, takeSample,
   type SampleContext,
 } from "./samples"
 
@@ -47,8 +47,11 @@ export function ConnectPlatform() {
     rpcUrl: RPC_URL,
     token: token ? { symbol: token.symbol, address: token.address, decimals: token.decimals } : undefined,
     pages,
+    delivery: t.delivery,
+    workspaceId: id,
+    keeperApi: KEEPER_API,
   }
-  const code = { setup: setupSample(ctx), read: readSample(ctx), post: postSample(ctx), take: takeSample(ctx), release: releaseSample(ctx), pay: paySample(ctx) }
+  const code = { setup: setupSample(ctx), read: readSample(ctx), post: postSample(ctx), take: takeSample(ctx), release: releaseSample(ctx), pay: paySample(ctx), delivery: deliverySample(ctx) }
 
   const here = t.isPublic ? "the network" : "this workspace"
   const tokenAddr = token?.address ?? "0x…"
@@ -111,7 +114,7 @@ export function ConnectPlatform() {
             ))}
           </dl>
           <p className="mt-6 max-w-[66ch] text-sm text-muted-foreground">
-            Not built yet: delivery confirmation with a code, general records written by your own key, keys that act for a workspace from a server, a refund-window commitment, an indexer with webhooks, and a published SDK. They are listed under{" "}
+            Not built yet: general records written by your own key, keys that act for a workspace from a server, a refund-window commitment, an indexer with webhooks, and a published SDK. They are listed under{" "}
             <a href="#next" className="text-gold underline decoration-1 underline-offset-4 hover:decoration-2">Coming next</a>.
           </p>
           {t.isPublic && (
@@ -152,7 +155,7 @@ export function ConnectPlatform() {
                 {t.treasury
                   ? <ValueRow label="Treasury" value={t.treasury} explorer={explorerAddress(t.treasury)} hint="The workspace's own treasury. It has its own owner, the admin at first." />
                   : <ValueRow label="Treasury" value="…" copy="" />}
-                <ValueRow label="Protocol version" value={String(PROTOCOL_VERSION)} mono={false} copy="" hint="Requests, listings, escrows, payments, the shop and the treasury. Every paying call carries the most the payer agrees to be charged." />
+                <ValueRow label="Protocol version" value={String(t.protocol)} mono={false} copy="" hint={t.delivery ? "Requests, listings, escrows with delivery confirmation, payments, the shop and the treasury. Every paying call carries the most the payer agrees to be charged." : "Requests, listings, escrows, payments, the shop and the treasury. Every paying call carries the most the payer agrees to be charged. Delivery confirmation needs a version 3 workspace."} />
               </dl>
               <p className="border-t border-border px-5 py-3.5 text-sm text-muted-foreground sm:px-6">
                 Shared by every workspace: the workspace registry <Addr a={addresses.mother} />, where <code className="t-mono">tenants(id)</code> gives any workspace&apos;s contracts and <code className="t-mono">adminOf(id)</code> its admin, and the token factory <Addr a={addresses.tokenFactory} />.
@@ -251,6 +254,15 @@ export function ConnectPlatform() {
 
             <Example title="Pay someone" body={<>A direct payment with a reference and a receipt, in one transaction after the approval. The last argument is the most the payer agrees to be charged: the amount plus the service fee.</>}>
               <CodeBlock name="pay-someone.ts" code={code.pay} />
+            </Example>
+
+            <Example
+              title="Confirm delivery with a code"
+              body={t.delivery
+                ? <>A held payment can carry the fingerprint of a secret made on the buyer&apos;s device. Whoever presents the secret at the handover releases the payment to the supplier and records the delivery; it can do nothing else. The buyer can also give the payment more time. The code must be 32 random bytes, kept on the buyer&apos;s side, one per held payment.</>
+                : <>Held payments in a protocol version 3 workspace can carry a delivery code that the person receiving the goods presents at the handover. {t.isPublic ? "The network's public workspace on version 3 has it." : "This workspace runs version 2 and does not; a workspace launched on version 3 does."}</>}
+            >
+              {t.delivery ? <CodeBlock name="confirm-delivery.ts" code={code.delivery} /> : <Notice title="Needs a version 3 workspace"><p>This workspace&apos;s held payments can only be released by the buyer&apos;s wallet.</p></Notice>}
             </Example>
           </div>
         </Section>
@@ -355,10 +367,9 @@ export function ConnectPlatform() {
       </Anchor>
 
       <Anchor id="next">
-        <Section title="Coming next" description="Planned, not available yet. The first six are in the order they are planned.">
+        <Section title="Coming next" description="Planned, not available yet. The first five are in the order they are planned.">
           <dl className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
             {[
-              { name: "Delivery confirmation with a code", body: "The person who receives an order confirms it with a QR code and no wallet. Presenting the code releases the held payment to the supplier and records the handover. With it: the buyer can extend the term, and a service sends the return when a deadline passes." },
               { name: "General records", body: "A record of any event your platform wants to prove (a subscription, a sale made elsewhere, an approval), written by your platform's own key." },
               { name: "Keys that act for a workspace", body: "A workspace authorises a key that your server uses, so your platform can write records and trigger its side of a commitment without a person at a wallet." },
               { name: "A refund-window commitment", body: "The supplier is paid after a set time unless the buyer takes the payment back first. Today's escrow goes back to the buyer when nobody releases it by the deadline." },

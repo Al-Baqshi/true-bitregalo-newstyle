@@ -67,23 +67,25 @@ Built and running on the practice network:
   (`scripts/make-bundle.mjs` plus `NEXT_PUBLIC_NETWORK_*`) and read its records. It was a test on
   one node: say "tested on Hyperledger Besu", never "in production" or "used by".
 
+- **Delivery confirmation** (protocol version 3, on the practice network since 6 Oct 2026 as a new
+  public workspace, number 1; the version 2 public workspace 0 stays as it was). Three parts:
+  - **Delivery code.** When the buyer takes a listing or awards an offer into a held payment, the
+    app creates a 32-byte random secret in the buyer's browser and the contract stores only its
+    fingerprint. The buyer saves the code before signing, then gets it as a QR code, a link or a
+    print (`/app/deliver#…`, the code in the fragment only) for the recipient; this browser keeps a
+    copy. At the handover the supplier scans it; the delivery page shows what will be released and
+    one button, and BitRegalo's keeper sends the transaction, so the recipient needs no wallet.
+    Presenting the code releases the payment to the supplier and records the handover with its
+    time. The code can only ever send that payment to its supplier. The supplier must never see it
+    before delivery; a recipient who refuses to show it leaves the supplier where version 2 did.
+  - **Buyer-approved extension of the term** ("Give it more time"), so an order can wait for a late
+    delivery instead of returning. At least an hour from now, at most the workspace's longest term.
+  - **The keeper**, a service that returns held payments a few minutes after their deadline and
+    relays delivery codes. A return still needs a trigger; the keeper is one that is always there.
+    Never write that a payment returns "automatically".
+
 Designed, not built (in the order planned for the next contract version):
 
-- **Delivery confirmation**, the supplier's side of escrow. Today only the buyer's own wallet can
-  release, so a buyer who has received the goods can decline to release and wait for the return.
-  Three parts:
-  - **Delivery code.** When the buyer orders, the app creates a long random secret and the contract
-    stores only its fingerprint with the escrow. The buyer sends the code to the recipient as a QR
-    code or link (it can be printed). On delivery the supplier scans it; presenting it releases the
-    held payment to the supplier on the spot and records the handover with its time, which is the
-    supplier's proof of fulfilment. The recipient needs no wallet, app or account. Presenting the
-    code can only ever send the payment to the supplier. The code must be long, random and carried
-    in the QR: a short typed PIN can be guessed against the stored fingerprint. The supplier must
-    never see it before delivery.
-  - **Buyer-approved extension of the term**, so an order can wait for a late delivery instead of
-    returning.
-  - **A deadline watcher**: a service that sends the return transaction when a term passes, so the
-    return needs nobody to act. Until it runs, never write that a payment returns "automatically".
 - **General records**: a record of any event a platform wants to prove (a subscription, a sale made
   elsewhere, an approval), written by the platform's own key.
 - **Platform-triggered commitments**: a key a workspace authorises to act for it from a server, and
@@ -178,7 +180,9 @@ Confirmed functionality in the app today (on the network and in every workspace)
 - Shop: sell utilities (tokens such as vouchers, credits, memberships) for a stablecoin; buyers redeem.
 - Payments: pay someone, payment links and QR codes ("Get paid"), receipts.
 - Requests (RFP): post, receive offers, award, settle. Listings (fixed-price offers a buyer takes).
-- Escrows: release, hand back, and after the deadline a return to the buyer that anyone can trigger.
+- Escrows: release, hand back, and after the deadline a return to the buyer that anyone can trigger
+  (the keeper does, a few minutes after the deadline). In a version 3 workspace: a delivery code
+  that the recipient presents at the handover (`/app/deliver`), and "give it more time".
 - Projects (grouping), Tokens (create, accept as payment), Treasury (workspace-owned funds).
 - Platform page for the operator: earnings by token, gas sponsorship, contract versions, ownership.
 - The app is written for protocol version 2 only (on BNB Smart Chain Testnet since 6 Oct 2026): every workspace it serves has
@@ -215,7 +219,7 @@ Wording rule (owner, 4 Oct 2026): never "money" in the site or the app. Say "pay
 Product vocabulary (use these words, with these meanings): BitRegalo network, Workspace,
 Organisation, Request, Offer (an answer to a request), Listing, Escrow, Buyer, Supplier, Release,
 Hand back, Returned, Marketplace, Country, Private wording, Project, Token, Treasury, Shop,
-Redeem, Payment link, Platform fee, Service fee, Practice network, Delivery code (planned),
+Redeem, Payment link, Platform fee, Service fee, Practice network, Delivery code, Keeper,
 Recipient (the person the goods are delivered to, who may be neither buyer nor supplier). The
 contract's own terms (issuer, receiver, cancel, RFP, RTS, tenant, instance) appear only in
 technical reference. Never call the recipient "the receiver": in the contracts that word means the

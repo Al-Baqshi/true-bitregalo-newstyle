@@ -14,16 +14,31 @@
     "instanceImpl": "0x3820A48cf923B8cBFC7094396704C082e8b047B4",
     "vaultImpl": "0x1Ba4B5B864ef9680960c79938701b797e690DB77",
     "treasuryImpl": "0x650Fb4519AF4045424C3b6134410cfCC7AF852D7"
+   },
+   "v1": {
+    "instanceImpl": "0xfFeaDAf6711c475324ef3bD1A6E6bbD31df19FfE",
+    "vaultImpl": "0xA3dbb07CC9Ec6d9FA7F3fCf634De6Ae03A6AAD97",
+    "treasuryImpl": "0x9d6a672B14980b5dABc6d42b6Cd3076535EAe0c9"
    }
   },
   "defaultFeeBps": 200,
-  "protocolVersion": 2,
-  "publicTenantId": 0,
+  "protocolVersion": 3,
+  "publicTenantId": 1,
   "tenants": {
    "t0": {
     "instance": "0xDa7CED626A61f594AE5bAA356eA35E5fa0A9aA91",
     "vault": "0x4eC99b7a27aF4EfE48ddcCE8D0479bdc35209317",
     "treasury": "0xBd81A4e481CA38222A509a2a72A6eFEb43106A89",
+    "admin": "0xF64c6dEf37de6CcC9Ea32fccaaE5ADd175E75A62",
+    "tokens": {
+     "0": "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
+     "1": "0x45feEF694EeF438606b28e808Ff5876097060fC3"
+    }
+   },
+   "t1": {
+    "instance": "0x9bF063D30C7D0419D44aa8A6f39275d7aaF08B58",
+    "vault": "0x2f89b63A4cF9F5004EA67a40Dd04a12E40EAF624",
+    "treasury": "0xfD965dF4a955aEa1a568aE1Df0676f571D50287D",
     "admin": "0xF64c6dEf37de6CcC9Ea32fccaaE5ADd175E75A62",
     "tokens": {
      "0": "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
@@ -953,6 +968,19 @@
    },
    {
     "type": "function",
+    "name": "MAX_TERM_CEILING",
+    "inputs": [],
+    "outputs": [
+     {
+      "name": "",
+      "type": "uint64",
+      "internalType": "uint64"
+     }
+    ],
+    "stateMutability": "view"
+   },
+   {
+    "type": "function",
     "name": "MIN_TERM_FLOOR",
     "inputs": [],
     "outputs": [
@@ -1015,6 +1043,34 @@
       "name": "maxTotal",
       "type": "uint256",
       "internalType": "uint256"
+     }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+   },
+   {
+    "type": "function",
+    "name": "acceptBidWithCode",
+    "inputs": [
+     {
+      "name": "rfpId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "bidId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "maxTotal",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "deliveryCodeHash",
+      "type": "bytes32",
+      "internalType": "bytes32"
      }
     ],
     "outputs": [],
@@ -1193,6 +1249,29 @@
       "name": "maxTotal",
       "type": "uint256",
       "internalType": "uint256"
+     }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+   },
+   {
+    "type": "function",
+    "name": "confirmOfferWithCode",
+    "inputs": [
+     {
+      "name": "offerId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "maxTotal",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "deliveryCodeHash",
+      "type": "bytes32",
+      "internalType": "bytes32"
      }
     ],
     "outputs": [],
@@ -3501,6 +3580,19 @@
    },
    {
     "type": "function",
+    "name": "MIN_EXTENSION",
+    "inputs": [],
+    "outputs": [
+     {
+      "name": "",
+      "type": "uint64",
+      "internalType": "uint64"
+     }
+    ],
+    "stateMutability": "view"
+   },
+   {
+    "type": "function",
     "name": "accruedFees",
     "inputs": [
      {
@@ -3688,6 +3780,55 @@
    },
    {
     "type": "function",
+    "name": "extendTerm",
+    "inputs": [
+     {
+      "name": "id",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "newExpiresAt",
+      "type": "uint64",
+      "internalType": "uint64"
+     }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+   },
+   {
+    "type": "function",
+    "name": "getDelivery",
+    "inputs": [
+     {
+      "name": "id",
+      "type": "uint256",
+      "internalType": "uint256"
+     }
+    ],
+    "outputs": [
+     {
+      "name": "",
+      "type": "tuple",
+      "internalType": "struct Types.Delivery",
+      "components": [
+       {
+        "name": "codeHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+       },
+       {
+        "name": "deliveredAt",
+        "type": "uint64",
+        "internalType": "uint64"
+       }
+      ]
+     }
+    ],
+    "stateMutability": "view"
+   },
+   {
+    "type": "function",
     "name": "getEscrow",
     "inputs": [
      {
@@ -3801,6 +3942,42 @@
    },
    {
     "type": "function",
+    "name": "releaseWithCode",
+    "inputs": [
+     {
+      "name": "id",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "code",
+      "type": "bytes32",
+      "internalType": "bytes32"
+     }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+   },
+   {
+    "type": "function",
+    "name": "setDeliveryCode",
+    "inputs": [
+     {
+      "name": "id",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "codeHash",
+      "type": "bytes32",
+      "internalType": "bytes32"
+     }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+   },
+   {
+    "type": "function",
     "name": "settleDirect",
     "inputs": [
      {
@@ -3907,6 +4084,50 @@
       "type": "uint256",
       "indexed": false,
       "internalType": "uint256"
+     }
+    ],
+    "anonymous": false
+   },
+   {
+    "type": "event",
+    "name": "DeliveryCodeSet",
+    "inputs": [
+     {
+      "name": "id",
+      "type": "uint256",
+      "indexed": true,
+      "internalType": "uint256"
+     },
+     {
+      "name": "codeHash",
+      "type": "bytes32",
+      "indexed": false,
+      "internalType": "bytes32"
+     }
+    ],
+    "anonymous": false
+   },
+   {
+    "type": "event",
+    "name": "DeliveryConfirmed",
+    "inputs": [
+     {
+      "name": "id",
+      "type": "uint256",
+      "indexed": true,
+      "internalType": "uint256"
+     },
+     {
+      "name": "presentedBy",
+      "type": "address",
+      "indexed": true,
+      "internalType": "address"
+     },
+     {
+      "name": "deliveredAt",
+      "type": "uint64",
+      "indexed": false,
+      "internalType": "uint64"
      }
     ],
     "anonymous": false
@@ -4135,6 +4356,31 @@
     "anonymous": false
    },
    {
+    "type": "event",
+    "name": "TermExtended",
+    "inputs": [
+     {
+      "name": "id",
+      "type": "uint256",
+      "indexed": true,
+      "internalType": "uint256"
+     },
+     {
+      "name": "previousExpiresAt",
+      "type": "uint64",
+      "indexed": false,
+      "internalType": "uint64"
+     },
+     {
+      "name": "newExpiresAt",
+      "type": "uint64",
+      "indexed": false,
+      "internalType": "uint64"
+     }
+    ],
+    "anonymous": false
+   },
+   {
     "type": "error",
     "name": "AlreadyInitialized",
     "inputs": []
@@ -4146,12 +4392,32 @@
    },
    {
     "type": "error",
+    "name": "DeliveryCodeAlreadySet",
+    "inputs": []
+   },
+   {
+    "type": "error",
+    "name": "DeliveryCodeReused",
+    "inputs": []
+   },
+   {
+    "type": "error",
     "name": "InvalidPayee",
     "inputs": []
    },
    {
     "type": "error",
+    "name": "InvalidTermBounds",
+    "inputs": []
+   },
+   {
+    "type": "error",
     "name": "InvalidToken",
+    "inputs": []
+   },
+   {
+    "type": "error",
+    "name": "NoDeliveryCode",
     "inputs": []
    },
    {
@@ -4227,7 +4493,17 @@
    },
    {
     "type": "error",
+    "name": "TermOutOfRange",
+    "inputs": []
+   },
+   {
+    "type": "error",
     "name": "TransferDeltaMismatch",
+    "inputs": []
+   },
+   {
+    "type": "error",
+    "name": "WrongDeliveryCode",
     "inputs": []
    },
    {

@@ -51,13 +51,27 @@ const monoExt = localFont({
 })
 
 // Icons come from the files beside this one (favicon.ico, icon.svg, apple-icon.png).
+// No share image is set: public/assets/social.png is an old 545 × 480 diagram, not a
+// card. Add `openGraph.images` when a 1200 × 630 image exists.
+const TITLE = "BitRegalo — Infrastructure for records and payment commitments"
+const DESCRIPTION =
+  "BitRegalo is infrastructure a platform connects to, so that its records cannot be edited afterwards by anyone, its own developers included, and its payment commitments execute exactly as agreed. Each organisation gets its own contracts. It runs on a public test network and has not been independently audited."
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://bitregalo.com"),
   title: {
-    default: "BitRegalo — Decentralised infrastructure for work and payments",
+    default: TITLE,
     template: "%s · BitRegalo",
   },
-  description:
-    "Decentralised infrastructure for work and payments. Escrow, requests, listings and workspaces on public contracts: people and organisations agree on work and a price, and a contract enforces the deal. Nobody in the middle holds the payment.",
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "BitRegalo",
+    title: TITLE,
+    description: DESCRIPTION,
+    locale: "en_NZ",
+  },
 }
 
 export const viewport: Viewport = {

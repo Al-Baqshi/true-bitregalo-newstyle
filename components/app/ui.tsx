@@ -233,16 +233,6 @@ export function LedgerRow({
   )
 }
 
-/** Older three-cell row, kept for pages not yet moved to `LedgerRow`. */
-export function Row({ children, href, label }: { children: React.ReactNode; href?: string; label?: string }) {
-  return (
-    <div className={cn("relative grid grid-cols-[auto_1fr_auto] items-center gap-4 border-b border-border py-3.5 last:border-0", href && "-mx-3 rounded-lg px-3 transition-colors hover:bg-secondary/60")}>
-      {href && <Link href={href} aria-label={label ?? "Open"} className="absolute inset-0 rounded-lg outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring" />}
-      {children}
-    </div>
-  )
-}
-
 /** Nothing here yet: say what this place is for and offer the first step. */
 export function Empty({ title, body, action, className }: { title: string; body: React.ReactNode; action?: React.ReactNode; className?: string }) {
   return (

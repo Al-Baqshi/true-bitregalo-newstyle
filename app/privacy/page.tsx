@@ -1,153 +1,135 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { DocNotice, DocPage } from "@/components/site/doc-page"
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "Privacy Policy for BitRegalo platform services",
+  description: "What information the BitRegalo website, web app and marketplace index process",
 }
 
 export default function PrivacyPage() {
   return (
     <DocPage
       title={"Privacy Policy"}
-      updated={<>Last updated: {new Date().toLocaleDateString()}</>}
-      meta={"Compliant with the New Zealand Privacy Act 2020"}
+      updated={<>Last updated: 5 October 2026</>}
+      meta={"BitRegalo® Limited | New Zealand"}
     >
       <DocNotice title="Privacy Commitment">
         <p>
-          BitRegalo® Limited is committed to protecting your privacy in accordance with the New Zealand Privacy Act 2020 and the 13 Information Privacy Principles (IPPs). This policy explains how we collect, use, store, and disclose your personal information.
+          BitRegalo® Limited aims to handle personal information in line with the New Zealand Privacy Act 2020. This policy explains what information the website, the web app and the marketplace index process, and what they do not.
         </p>
       </DocNotice>
 
-      <h2 id="information-we-collect">1. Information We Collect</h2>
-      <h3>1.1 Account Information (All Users)</h3>
-      <ul>
-        <li>Email address</li>
-        <li>Wallet address (public blockchain address)</li>
-        <li>Username (optional)</li>
-        <li>Account creation date</li>
-      </ul>
-      <h3>1.2 Verification Information (Tier 2+ Users)</h3>
+      <h2 id="what-we-do-not-collect">1. What We Do Not Collect</h2>
       <p>
-        For users requiring identity verification (transactions ≥ NZD $1,000, service providers, enterprise clients):
+        BitRegalo has no accounts and no email sign-up. You use the app with your own wallet.
       </p>
       <ul>
-        <li>Government-issued photo ID (passport, driver&apos;s license, national ID)</li>
-        <li>Selfie with ID (for liveness verification)</li>
-        <li>Proof of address (utility bill, bank statement — service providers only)</li>
-        <li>Business registration documents (service providers, if applicable)</li>
-        <li>Tax identification number (service providers)</li>
-      </ul>
-      <h3>1.3 Transaction Information</h3>
-      <ul>
-        <li>Transaction hashes (public blockchain data)</li>
-        <li>Transaction amounts and timestamps</li>
-        <li>Escrow contract details</li>
-        <li>RFP and RTS submissions</li>
-      </ul>
-      <h3>1.4 Technical Information</h3>
-      <ul>
-        <li>IP address</li>
-        <li>Browser type and version</li>
-        <li>Device information (operating system, device type)</li>
-        <li>Usage data (pages visited, features used, time spent on Platform)</li>
-        <li>Log files and analytics data</li>
-      </ul>
-      <h3>1.5 Blockchain Data</h3>
-      <p>
-        Certain information is inherently public and immutable on the blockchain, including transaction hashes, wallet addresses, and smart contract interactions. This data is part of the public ledger and cannot be deleted or modified by BitRegalo.
-      </p>
-
-      <h2 id="purpose-of-collection-ipp-1">2. Purpose of Collection (IPP 1)</h2>
-      <p>
-        We collect personal information for the following lawful purposes:
-      </p>
-      <ul>
-        <li>To provide and maintain Platform services</li>
-        <li>To process transactions and verify digital assets</li>
-        <li>To authenticate users and prevent fraud</li>
-        <li>To comply with legal obligations (AML/CFT Act for high-value transactions)</li>
-        <li>To communicate with you about your account and Platform updates</li>
-        <li>To improve Platform features and user experience</li>
-        <li>To monitor and analyze usage patterns</li>
-        <li>To enforce our Terms of Service</li>
+        <li>We do not ask for your name, email address or a password to use the app</li>
+        <li>We do not collect identity documents. No identity verification is built into the app today (see <Link href="/kyc-policy">Identity checks</Link>)</li>
+        <li>We never hold your tokens or your wallet keys</li>
       </ul>
 
-      <h2 id="source-of-information-ipp-2">3. Source of Information (IPP 2)</h2>
+      <h2 id="public-network-data">2. Public Network Data</h2>
       <p>
-        We collect information from:
+        BitRegalo&apos;s contracts run on a public network. Everything written to a public network is public and anyone can read it. This includes:
       </p>
       <ul>
-        <li><strong>You directly:</strong> When you register, submit verification documents, or use Platform features</li>
-        <li><strong>Automated collection:</strong> Through cookies, log files, and analytics tools</li>
-        <li><strong>Third-party providers:</strong> Identity verification services (e.g., SumSub)</li>
-        <li><strong>Public blockchain:</strong> Transaction data that is publicly available</li>
+        <li>Wallet addresses</li>
+        <li>Amounts, tokens and times of transactions</li>
+        <li>Records of requests, offers, awards, listings, payments, sales and redemptions, and any reference attached to them</li>
       </ul>
-
-      <h2 id="use-of-information-ipp-10">4. Use of Information (IPP 10)</h2>
       <p>
-        We use your information only for the purposes for which it was collected:
+        This data is part of the public ledger. It cannot be edited or deleted by BitRegalo or by anyone else. The app reads it directly from the network. To do that, your browser and your wallet connect to network nodes run by third parties, which can see technical information such as your IP address.
+      </p>
+
+      <h2 id="what-your-browser-stores">3. What Your Browser Stores</h2>
+      <p>
+        The app keeps a small amount of information in your own browser&apos;s storage:
       </p>
       <ul>
-        <li>Account management and authentication</li>
-        <li>Transaction processing and escrow management</li>
-        <li>Identity verification (where required)</li>
-        <li>Customer support and communication</li>
-        <li>Platform improvement and development</li>
-        <li>Security monitoring and fraud prevention</li>
-        <li>Legal compliance and regulatory reporting</li>
+        <li>Names you give to workspaces</li>
+        <li>Preferences, such as light or dark theme and which explanations you have hidden</li>
+        <li>Which wallet you last connected</li>
+      </ul>
+      <p>
+        This stays on your device. You can remove it at any time by clearing the site&apos;s data in your browser settings.
+      </p>
+
+      <h2 id="marketplace-index">4. The Marketplace Index</h2>
+      <p>
+        The marketplace index is a service BitRegalo runs. It stores the description of a request or listing when the wallet that owns the record signs and publishes it:
+      </p>
+      <ul>
+        <li>Title and description</li>
+        <li>Category</li>
+        <li>Country and city</li>
+        <li>The wallet address that published it, and the times it was published and updated</li>
+      </ul>
+      <p>
+        The index keeps these beside details of the record that it reads from the public network. Everything in the index is published. Anyone can read and search it. The owner of a record can replace its description. Do not put personal information in a description unless you want it to be public.
+      </p>
+
+      <h2 id="contacting-us">5. Contacting Us</h2>
+      <p>
+        The site has no contact form. The <Link href="/contact">contact page</Link> gives an email address and a phone number. If you write to us or call us, we receive what you choose to tell us, such as your email address, your phone number and your message, and we use it to reply to you.
+      </p>
+
+      <h2 id="technical-information">6. Technical Information</h2>
+      <p>
+        Like most websites, the services that host this site and the marketplace index process technical information when your browser connects to them, such as IP address, browser type and device type. The site also uses Vercel Web Analytics to count visits to its pages.
+      </p>
+      <p>
+        The site does not use cookies to sign you in, because there is no sign-in.
+      </p>
+
+      <h2 id="how-we-use-information">7. How We Use Information</h2>
+      <ul>
+        <li>To show the site and run the app</li>
+        <li>To run the marketplace index</li>
+        <li>To reply when you contact us</li>
+        <li>To understand how the site is used and keep it working</li>
       </ul>
 
-      <h2 id="disclosure-of-information-ipp-11">5. Disclosure of Information (IPP 11)</h2>
+      <h2 id="disclosure-of-information">8. Disclosure of Information</h2>
       <p>
         We do NOT sell, trade, or rent your personal information. We may disclose information only in the following circumstances:
       </p>
       <ul>
         <li>
-          <strong>Service Providers:</strong> Third-party vendors who perform services on our behalf (hosting, verification, analytics, customer support). These providers are contractually obligated to protect your data.
+          <strong>Service Providers:</strong> Third-party providers who perform services on our behalf, such as hosting and analytics.
         </li>
         <li>
-          <strong>Legal Requirements:</strong> When required by law, court order, or government authority (e.g., AML/CFT reporting obligations).
+          <strong>Legal Requirements:</strong> When required by law, court order, or government authority.
         </li>
         <li>
           <strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets.
         </li>
         <li>
-          <strong>With Your Consent:</strong> When you explicitly authorize disclosure.
+          <strong>With Your Consent:</strong> When you explicitly authorise disclosure.
         </li>
         <li>
           <strong>Protection of Rights:</strong> To protect the rights, property, or safety of BitRegalo, users, or the public.
         </li>
       </ul>
-
-      <h2 id="data-storage-and-security-ipp-5">6. Data Storage & Security (IPP 5)</h2>
       <p>
-        We implement appropriate technical and organizational measures to protect your information:
-      </p>
-      <ul>
-        <li>Encryption at rest and in transit (TLS 1.3, AES-256)</li>
-        <li>Secure data centers with physical access controls</li>
-        <li>Regular security audits and penetration testing</li>
-        <li>Access controls and authentication for employees</li>
-        <li>Incident response procedures for data breaches</li>
-      </ul>
-      <p>
-        However, no method of transmission or storage is 100% secure. We cannot guarantee absolute security.
+        Public network data and the marketplace index are public already, as described above.
       </p>
 
-      <h2 id="data-retention">7. Data Retention</h2>
+      <h2 id="storage-and-security">9. Storage & Security</h2>
       <p>
-        We retain your information as follows:
+        We take reasonable steps to protect the information we hold. However, no method of transmission or storage is 100% secure. We cannot guarantee absolute security. BitRegalo&apos;s contracts have not been independently audited.
       </p>
+
+      <h2 id="data-retention">10. Data Retention</h2>
       <ul>
-        <li><strong>Account information:</strong> Duration of account + 7 years after closure (AML/CFT Act Section 48)</li>
-        <li><strong>Verification documents:</strong> 7 years after account closure (AML/CFT Act Section 48)</li>
-        <li><strong>Transaction records:</strong> 7 years after transaction (legal requirement)</li>
-        <li><strong>Technical logs:</strong> 12 months (for security and analytics)</li>
-        <li><strong>Blockchain data:</strong> Permanent (cannot be deleted — public ledger)</li>
+        <li><strong>Public network data:</strong> Permanent. It cannot be deleted because it is part of a public ledger.</li>
+        <li><strong>Marketplace index:</strong> A description stays published in the index. Its owner can replace it.</li>
+        <li><strong>Browser storage:</strong> Until you clear it.</li>
+        <li><strong>Messages you send us:</strong> Kept with our business correspondence.</li>
       </ul>
 
-      <h2 id="your-rights-ipps-6-7-8">8. Your Rights (IPPs 6, 7, 8)</h2>
+      <h2 id="your-rights">11. Your Rights</h2>
       <p>
         Under the Privacy Act 2020, you have the following rights:
       </p>
@@ -162,7 +144,7 @@ export default function PrivacyPage() {
           <strong>Accuracy (IPP 8):</strong> We take reasonable steps to ensure information is accurate, up-to-date, and complete before use.
         </li>
         <li>
-          <strong>Deletion:</strong> You may request deletion of your personal information, subject to legal retention requirements (e.g., AML/CFT Act).
+          <strong>Deletion:</strong> You may request deletion of personal information we hold about you.
         </li>
         <li>
           <strong>Objection:</strong> You may object to certain processing of your information.
@@ -172,39 +154,23 @@ export default function PrivacyPage() {
         </li>
       </ul>
       <p>
-        To exercise these rights, contact us at privacy@bitregalo.com or through our support channels.
+        Data on the public network cannot be changed or deleted by us or by anyone else.
+      </p>
+      <p>
+        To exercise these rights, contact us at privacy@bitregalo.com.
       </p>
 
-      <h2 id="cookies-and-tracking-ipp-3">9. Cookies & Tracking (IPP 3)</h2>
+      <h2 id="international-data-transfers">12. International Data Transfers</h2>
       <p>
-        We use cookies and similar technologies to:
-      </p>
-      <ul>
-        <li>Remember your preferences and settings</li>
-        <li>Authenticate your session</li>
-        <li>Analyze Platform usage and performance</li>
-        <li>Improve user experience</li>
-      </ul>
-      <p>
-        You can control cookies through your browser settings. Disabling cookies may affect Platform functionality.
+        The public network, the marketplace index and the services that host this site may operate in countries other than New Zealand. Your information may be processed in those countries, which may have different data protection laws.
       </p>
 
-      <h2 id="international-data-transfers-ipp-12">10. International Data Transfers (IPP 12)</h2>
+      <h2 id="childrens-privacy">13. Children&apos;s Privacy</h2>
       <p>
-        Your information may be transferred to and processed in countries other than New Zealand. These countries may have different data protection laws. We ensure appropriate safeguards are in place, including:
-      </p>
-      <ul>
-        <li>Contractual clauses requiring equivalent privacy protection</li>
-        <li>Data processing agreements with service providers</li>
-        <li>Compliance with New Zealand&apos;s cross-border disclosure requirements</li>
-      </ul>
-
-      <h2 id="childrenandaposs-privacy">11. Children&apos;s Privacy</h2>
-      <p>
-        The Platform is not intended for individuals under 18 years of age. We do not knowingly collect personal information from children. If you become aware that a child has provided us with personal information, please contact us and we will delete it.
+        BitRegalo is not intended for individuals under 18 years of age. We do not knowingly collect personal information from children. If you become aware that a child has provided us with personal information, please contact us and we will delete it where we are able to.
       </p>
 
-      <h2 id="data-breaches">12. Data Breaches</h2>
+      <h2 id="data-breaches">14. Data Breaches</h2>
       <p>
         In the event of a privacy breach that poses a risk of serious harm, we will:
       </p>
@@ -215,17 +181,17 @@ export default function PrivacyPage() {
         <li>Investigate the cause and implement corrective measures</li>
       </ul>
 
-      <h2 id="third-party-links">13. Third-Party Links</h2>
+      <h2 id="third-party-links">15. Third-Party Services and Links</h2>
       <p>
-        The Platform may contain links to third-party websites or services. We are not responsible for the privacy practices of these third parties. We encourage you to read their privacy policies.
+        Your wallet, the network and its block explorers are run by third parties, and the site may link to other third-party websites or services. We are not responsible for the privacy practices of these third parties. We encourage you to read their privacy policies.
       </p>
 
-      <h2 id="changes-to-this-policy">14. Changes to This Policy</h2>
+      <h2 id="changes-to-this-policy">16. Changes to This Policy</h2>
       <p>
-        We may update this Privacy Policy from time to time. Material changes will be notified via email or Platform announcement. Your continued use of the Platform after changes constitutes acceptance of the updated policy.
+        We may update this Privacy Policy from time to time. Material changes will be posted on this page. Your continued use of the site and the app after changes constitutes acceptance of the updated policy.
       </p>
 
-      <h2 id="complaints">15. Complaints</h2>
+      <h2 id="complaints">17. Complaints</h2>
       <p>
         If you believe your privacy has been breached, you may:
       </p>
@@ -235,7 +201,7 @@ export default function PrivacyPage() {
         <li>Visit: www.privacy.org.nz or call 0800 803 734</li>
       </ul>
 
-      <h2 id="contact-information">16. Contact Information</h2>
+      <h2 id="contact-information">18. Contact Information</h2>
       <p>
         For privacy-related inquiries or to exercise your rights, please contact:
       </p>

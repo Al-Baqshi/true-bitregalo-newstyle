@@ -6,19 +6,19 @@ const COLUMNS: { title: string; links: { label: string; href: string; external?:
     title: "Explore",
     links: [
       { label: "How it works", href: "/#how" },
+      { label: "Ways to use it", href: "/#ways" },
+      { label: "For platforms", href: "/app/connect" },
       { label: "Building blocks", href: "/#building-blocks" },
-      { label: "For organisations", href: "/#organisations" },
-      { label: "Marketplace", href: "/app/market" },
       { label: "Open the app", href: "/app" },
     ],
   },
   {
     title: "Protocol",
     links: [
+      { label: "Whitepaper", href: "/whitepaper" },
       { label: "Escrow", href: "/protocols/escrow" },
       { label: "Requests", href: "/protocols/rfp" },
       { label: "Listings", href: "/protocols/rts" },
-      { label: "Whitepaper", href: "/whitepaper" },
     ],
   },
   {
@@ -33,8 +33,8 @@ const COLUMNS: { title: string; links: { label: string; href: string; external?:
     links: [
       { label: "Terms of service", href: "/terms" },
       { label: "Privacy policy", href: "/privacy" },
-      { label: "KYC policy", href: "/kyc-policy" },
-      { label: "Token terms", href: "/token-terms" },
+      { label: "Identity checks", href: "/kyc-policy" },
+      { label: "Tokens", href: "/token-terms" },
     ],
   },
 ]
@@ -49,7 +49,7 @@ export function Footer() {
               <Logo className="h-[1.3rem] w-auto" title="" aria-hidden />
             </Link>
             <p className="mt-4 max-w-[34ch] text-sm text-muted-foreground">
-              Decentralised infrastructure for work and payments: escrow, requests, listings and workspaces on public contracts. Nobody else can move a held payment, including BitRegalo.
+              Infrastructure a platform connects to, so its records cannot be edited afterwards and its payment commitments execute as agreed. Today on a public test network, and not independently audited.
             </p>
           </div>
           {COLUMNS.map((c) => (

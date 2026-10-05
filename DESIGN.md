@@ -4,7 +4,7 @@ How BitRegalo looks and why. Code is the source of truth (`app/globals.css`, `co
 
 ## The idea
 
-A statement, not a dashboard. People come to BitRegalo to move payments they care about, often for the first time on a blockchain. Every screen should read like a well-kept financial statement: a clear title, plain words, exact figures aligned on the right, and the state of every record said in a word. Expression lives in a few precise details (the flared headline face, the gold of "held" money, the escrow demo on the landing page), never in decoration.
+A statement, not a dashboard. BitRegalo is infrastructure a platform connects to, so that its records cannot be edited afterwards and its payment commitments execute as agreed; the web app is the reference implementation and BitRegalo's own public workspace, not the whole product. People arrive to check a record or to move a payment they care about, often for the first time on a blockchain. Every screen should read like a well-kept financial statement: a clear title, plain words, exact figures aligned on the right, and the state of every record said in a word. Expression lives in a few precise details (the flared headline face, the gold of a "held" payment, the escrow demo on the landing page), never in decoration.
 
 ## Themes
 
@@ -58,12 +58,13 @@ One family, **Commissioner** (variable, self-hosted in `app/fonts`). Its flare a
 
 ## Layout and navigation
 
-There are two places a person can be, and both use the same layout so it only has to be learned once (and carries straight into the mobile app). The model is defined once in `components/app/nav.ts`.
+There are three ways to use BitRegalo, always named in this order: connect a platform, run a workspace, use the BitRegalo network. Inside the app that makes two places a person can be, and both use the same layout so it only has to be learned once (and carries straight into the mobile app). Each place has a "Connect a platform" page. The model is defined once in `components/app/nav.ts`.
 
-- **The BitRegalo network** (`/app`): open to everyone. Home; Marketplace (browse by country, requests, listings); Payments (sent and received, escrows, my activity); For organisations (workspaces, connect a platform). It runs on BitRegalo's own public workspace, so its pages are the workspace pages served at `/app`.
+- **The BitRegalo network** (`/app`): open to everyone. Home; Marketplace (browse by country, requests, listings); Payments (sent and received, escrows, my activity); Platforms and organisations (connect a platform, workspaces). It is BitRegalo's own public workspace, so its pages are the workspace pages served at `/app`. Its home page stays task-first (what would you like to do?), with a link to "Connect a platform" in the page head and the three ways at the foot.
 - **An organisation's workspace** (`/app/t/{id}`): Overview; Market (shop, requests, listings); Payments (sent and received, escrows, treasury, tokens); Set up (projects, settings, connect a platform). The sidebar names the workspace and links back to the network.
-- On a desktop both are a left sidebar. On a phone they are bottom tabs (Home or Overview, Market, **New**, Payments, More), with the pages of the current tab as a row of tabs under the top bar. **New** lists what can be started here: send money, get paid, hold money for someone, ask for something, offer something (and, in a workspace, sell, create a token, start a project).
-- The top bar's place switcher shows where you are (BitRegalo network, or the workspace's name) and moves between the network and every organisation workspace.
+- On a desktop both are a left sidebar. On a phone they are bottom tabs (Home or Overview, Market, **New**, Payments, More), with the pages of the current tab as a row of tabs under the top bar. **New** lists what can be started here: send a payment, get paid, hold a payment for someone, ask for something, offer something (and, in a workspace, sell, create a token, start a project).
+- The top bar's place switcher shows where you are (BitRegalo network, or the workspace's name) and moves between the network and every organisation workspace. It also links to "Connect a platform" for the place you are in.
+- The foot of every app page says where the app runs today, that it is a practice network whose tokens have no value, and that the contracts have not been independently audited.
 - Pages that need a newer contract version are hidden from the navigation of older workspaces.
 - Page content sits in a single column up to 56rem wide. Sections are separated by space first; a `Card` is used only when a set of records or a form needs a surface. Cards are never nested.
 
@@ -100,4 +101,4 @@ Motion explains state and confirms input; it is never decoration.
 
 ## Voice
 
-Plain, direct and calm, in British/NZ spelling and sentence case. Say what happens to the payment and who can move it. Never write "money"; say payment, USDT or tokens. Use the product's words (workspace, request, listing, escrow, treasury, token) and never internal ones (tenant, instance, RFP state numbers). Label demonstrations as examples; never invent customers, figures or claims.
+Plain, direct and calm, in British/NZ spelling and sentence case. Say what happens to the payment and who can move it. Never write "money"; say payment, USDT or tokens. Use the product's words (record, commitment, workspace, request, listing, escrow, treasury, token) and never internal ones (tenant, instance, RFP, RTS, state numbers). Where the product is explained, say the two things plainly: records nobody can edit, and commitments that execute as agreed. BitRegalo is not tied to one network: write "today on BNB Smart Chain Testnet, a practice network" (in code, the `chain.name` from `lib/bitregalo/config`), never that it simply runs on one chain. A held payment never returns "automatically": after the deadline someone has to trigger the return. Say what is built as built and what is planned as planned. Label demonstrations as examples; never invent customers, figures or claims.

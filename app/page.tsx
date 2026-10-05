@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/navbar"
 import { Hero, HowItWorks, Trust, UseCases, Protocol, FinalCta } from "@/components/landing/sections"
 import { BuildingBlocks } from "@/components/landing/building-blocks"
-import { TwoWays } from "@/components/landing/two-ways"
+import { ThreeWays } from "@/components/landing/three-ways"
 import { LegalDisclaimer } from "@/components/legal-disclaimer"
 import { Footer } from "@/components/footer"
 
@@ -12,9 +12,9 @@ export default function Home() {
       <main id="main">
         <Hero />
         <HowItWorks />
-        <BuildingBlocks />
-        <TwoWays />
+        <ThreeWays />
         <Trust />
+        <BuildingBlocks />
         <UseCases />
         <Protocol />
         <FinalCta />

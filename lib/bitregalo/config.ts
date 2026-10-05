@@ -2,12 +2,35 @@ import { bscTestnet } from "wagmi/chains"
 import { createConfig, http } from "wagmi"
 import { injected } from "wagmi/connectors"
 import bundle from "./bitregalo.json"
-import type { Abi, Address } from "viem"
+import type { Abi, Address, Chain } from "viem"
 
-export const chain = bscTestnet
+/**
+ * The networks this app knows how to talk to. The protocol is not tied to one network: a
+ * network is an entry here plus a deployments bundle generated for it (`bitregalo.json`
+ * carries the chain id it was built from). The app serves one network per build today;
+ * nothing below this block names a network.
+ */
+type NetworkEntry = { chain: Chain; rpcUrl: string; explorer: string; practice: boolean }
+const NETWORKS: Record<number, NetworkEntry> = {
+  97: { chain: bscTestnet, rpcUrl: "https://data-seed-prebsc-1-s1.bnbchain.org:8545", explorer: "https://testnet.bscscan.com", practice: true },
+}
+const entry = NETWORKS[bundle.chainId]
+if (!entry) throw new Error(`No network entry for chain ${bundle.chainId}: add it to NETWORKS in lib/bitregalo/config.ts`)
+
+export const chain = entry.chain
 /** Overridable at build time so the same app can point at a local fork for testing. */
-export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://data-seed-prebsc-1-s1.bnbchain.org:8545"
-export const EXPLORER = "https://testnet.bscscan.com"
+export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || entry.rpcUrl
+export const EXPLORER = entry.explorer
+/** What the rest of the app may say about the network it is running on. */
+export const network = {
+  id: entry.chain.id,
+  name: entry.chain.name,
+  /** The coin that pays network fees here, e.g. tBNB. */
+  nativeSymbol: entry.chain.nativeCurrency.symbol,
+  /** A practice network: tokens have no value. */
+  practice: entry.practice,
+  explorer: entry.explorer,
+} as const
 
 const dep = bundle.deployments
 export const addresses = {

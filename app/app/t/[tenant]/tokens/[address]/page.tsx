@@ -147,7 +147,7 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
               </Card>
             )}
             {showAllowRedeem && (
-              <Card title="Redeeming" description={`Holders cannot redeem ${sym} yet. Opening a sale switches this on automatically, or switch it on here.`}>
+              <Card title="Redeeming" description={`Holders cannot redeem ${sym} yet. Opening a sale switches it on as well, or switch it on here.`}>
                 <Button variant="secondary" disabled={isPending} onClick={() => send(`Make ${sym} redeemable`, { address: t.instance, abi: abis.instance, functionName: "setRedeemable", args: [token, true] }).then(refresh)}>Allow redeeming</Button>
               </Card>
             )}

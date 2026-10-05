@@ -3,7 +3,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useAccount, useReadContract } from "wagmi"
-import { ArrowLeft, Building2, Check, ChevronsUpDown, CircleHelp, Ellipsis, Globe2, LayoutGrid, Plus, TrendingUp } from "lucide-react"
+import { ArrowLeft, Building2, Cable, Check, ChevronsUpDown, CircleHelp, Ellipsis, Globe2, LayoutGrid, Plus, TrendingUp } from "lucide-react"
 import { ConnectButton } from "./connect-button"
 import { NETWORK, NEW_ACTIONS, WORKSPACE, locate, type NavGroup, type NavItem } from "./nav"
 import { Logo, LogoMark } from "@/components/brand/logo"
@@ -76,7 +76,7 @@ function TopBar({ here, actions }: { here: Here; actions: typeof NEW_ACTIONS }) 
         </Link>
         <PlaceSwitcher here={here} />
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-          <span className="mr-1 hidden items-center gap-2 rounded-md bg-secondary px-2.5 py-1 text-xs font-[560] text-muted-foreground xl:inline-flex" title={`${chain.name}: practice tokens with no value`}>
+          <span className="mr-1 hidden items-center gap-2 rounded-md bg-secondary px-2.5 py-1 text-xs font-[560] text-muted-foreground xl:inline-flex" title={`${chain.name}, a practice network: tokens here have no value, and the contracts have not been independently audited`}>
             <span className="size-1.5 rounded-full bg-success" aria-hidden />
             Practice network
           </span>
@@ -89,7 +89,7 @@ function TopBar({ here, actions }: { here: Here; actions: typeof NEW_ACTIONS }) 
   )
 }
 
-/** Where you are, and the way to anywhere else: the public network or one of the organisation workspaces. */
+/** Where you are, and the way to anywhere else: the public network, an organisation workspace, or the page for connecting a platform. */
 function PlaceSwitcher({ here }: { here: Here }) {
   const { address } = useAccount()
   const ws = useInstances()
@@ -109,7 +109,7 @@ function PlaceSwitcher({ here }: { here: Here }) {
             <Globe2 className="mt-0.5" />
             <span className="min-w-0 flex-1">
               <span className="block font-[560]">BitRegalo network</span>
-              <span className="block text-xs text-muted-foreground">Open to everyone: send, escrow, ask and offer</span>
+              <span className="block text-xs text-muted-foreground">BitRegalo&apos;s own public workspace, open to everyone</span>
             </span>
             {here.kind === "network" && <Check className="size-4 !text-gold" />}
           </Link>
@@ -134,6 +134,7 @@ function PlaceSwitcher({ here }: { here: Here }) {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild><Link href="/app/workspaces"><LayoutGrid />All workspaces</Link></DropdownMenuItem>
         <DropdownMenuItem asChild><Link href="/app/launch"><Plus />Create a workspace for an organisation</Link></DropdownMenuItem>
+        <DropdownMenuItem asChild><Link href={`${here.base}/connect`}><Cable />Connect a platform you already run</Link></DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -308,9 +309,9 @@ function MoreLinks({ links }: { links: { href: string; label: string; icon: NavI
       <div className="mt-4 border-t border-border pt-4">
         <p className="mb-2 text-sm font-[560]">Appearance</p>
         <ThemeChoice />
-        <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="size-1.5 rounded-full bg-success" aria-hidden />
-          Practice network ({chain.name}). The tokens here have no value.
+        <p className="mt-4 flex items-baseline gap-2 text-sm text-muted-foreground">
+          <span className="size-1.5 shrink-0 -translate-y-0.5 rounded-full bg-success" aria-hidden />
+          Practice network ({chain.name}). The tokens here have no value, and the contracts have not been independently audited.
         </p>
       </div>
     </>
@@ -320,8 +321,10 @@ function MoreLinks({ links }: { links: { href: string; label: string; icon: NavI
 function ChainFooter() {
   return (
     <footer className="mt-16 border-t border-border pt-5 text-xs leading-relaxed text-subtle">
-      <p className="max-w-[60ch]">
-        Everything here is read live from {chain.name}, and every action is a transaction you sign. Contracts:{" "}
+      <p className="max-w-[68ch]">
+        This is BitRegalo&apos;s reference app. It runs today on {chain.name}, a practice network: tokens here have no value, and
+        the contracts have not been independently audited. Everything is read live from the chain, and every action is a
+        transaction you sign. Contracts:{" "}
         <a className="t-mono underline decoration-border-strong/60 underline-offset-[3px] hover:text-foreground" href={explorerAddress(addresses.mother)} target="_blank" rel="noreferrer">registry {short(addresses.mother)}</a>
         {", "}
         <a className="t-mono underline decoration-border-strong/60 underline-offset-[3px] hover:text-foreground" href={explorerAddress(addresses.treasury)} target="_blank" rel="noreferrer">platform treasury {short(addresses.treasury)}</a>.

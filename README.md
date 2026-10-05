@@ -1,279 +1,92 @@
-# BitRegalo — The Global Gifting Marketplace
+# BitRegalo web
 
-Landing page and legal framework for BitRegalo, a decentralized marketplace for gifting, services, and escrow — powered by blockchain technology.
+BitRegalo's public site (bitregalo.com) and the reference web app (`/app`), in one Next.js project.
 
-**Live:** [bitregalo.com](https://bitregalo.com)  
-**Repo:** [github.com/Al-Baqshi/true-bitregalo-newstyle](https://github.com/Al-Baqshi/true-bitregalo-newstyle)
+## What BitRegalo is
 
----
+BitRegalo is infrastructure for decentralising the part of a system that has to be trusted: its financial actions and its sensitive records. A platform that already takes payments (a marketplace, an enterprise, a bank, a startup) connects to it so that its records cannot be edited afterwards by anyone, its own developers included, and its payment commitments (a held payment, a refund) execute exactly as agreed when they are triggered. Each organisation gets its own contracts, called a workspace. The protocol is not tied to one network: EVM is first, with BNB Smart Chain Testnet as the only deployment today. The web app in this repository is the reference implementation and BitRegalo's own public workspace. It is not the whole product.
 
-## Quick Start (First Time)
+Status: a public test network only. The contracts have not been independently audited, nothing runs on a main network, and BitRegalo has no token. An SDK, API keys and webhooks are planned, not built.
 
-```bash
-# 1. Clone the repo
-git clone https://github.com/Al-Baqshi/true-bitregalo-newstyle.git
-cd true-bitregalo-newstyle
+## Source-of-truth documents
 
-# 2. Install dependencies
-yarn install
+Read these before changing copy or behaviour. If two of them disagree, fix both.
 
-# 3. Start the dev server
-yarn dev
-```
+| Document | What it settles |
+| --- | --- |
+| `PRODUCT.md` | The vision, what is built and what is only designed, the users, the wording rules and the product vocabulary. |
+| `DESIGN.md` | The design system and the voice: themes, type, layout, components, motion. |
+| `app/docs/bitregalo-whitepaper.md` | The whitepaper (version 5), rendered at `/whitepaper`. The same vision for outside readers. |
+| `docs/market-api.md` | The interface of the marketplace index, shared with `bitregalo-platform`. |
+| `docs/admin-api.md` | The interface of the owner's admin overview. |
+| `docs/PROTOCOL.md` in the `bitregalo-contracts` repository | The engineering reference: the protocol's rules and how the product's words map to the contracts. |
 
-Open **http://localhost:3000** in your browser.
+## Run it
 
-That's it. No environment variables needed — this is a static site with no backend.
-
----
-
-## Running the Project
-
-### Local Development (Day-to-Day)
+Use npm. The lockfile is `package-lock.json`.
 
 ```bash
-yarn dev
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # production build
+npm run start    # serve the production build
+npx tsc --noEmit -p .   # type check
 ```
 
-- Runs at **http://localhost:3000**
-- Hot reload enabled (changes appear instantly)
-- Use this for all development work
+`npm run lint` is defined, but ESLint is not among the dependencies yet, so it does not run as the project stands.
 
-### Production Build (Testing Before Deploy)
+## Environment variables
 
-```bash
-# Build the production version
-yarn build
+All are optional and read at build time. Put them in `.env.local`.
 
-# Start the production server locally
-yarn start
-```
+| Variable | Read in | What it does |
+| --- | --- | --- |
+| `NEXT_PUBLIC_MARKET_API` | `lib/bitregalo/market.ts` | Base URL of the marketplace index. Without it the app shows on-chain records with no descriptions. |
+| `NEXT_PUBLIC_RPC_URL` | `lib/bitregalo/config.ts` | RPC endpoint. Defaults to a public BNB Smart Chain Testnet endpoint; set it to point the app at a local fork. |
+| `NEXT_PUBLIC_PUBLIC_WORKSPACE` | `lib/bitregalo/config.ts`, `next.config.ts` | Which workspace is the public BitRegalo network served at `/app`. Defaults to `publicWorkspace` in `lib/bitregalo/bitregalo.json`, or 0. |
 
-- Runs at **http://localhost:3000**
-- This is exactly what users see in production
-- Use this to test performance, SEO, and final output before pushing
-
-### Linting
-
-```bash
-yarn lint
-```
-
-- Runs ESLint across all files
-- Run this before committing to catch errors
-
----
-
-## Project Structure
+## Where things are
 
 ```
-true-bitregalo-newstyle/
-├── app/                          # Next.js App Router pages
-│   ├── page.tsx                  # Landing page (main entry)
-│   ├── layout.tsx                # Root layout + metadata
-│   ├── globals.css               # Design tokens + global styles
-│   ├── docs/                     # Internal documents
-│   │   ├── LEGAL-STRATEGY.md     # Legal positioning strategy
-│   │   └── V4 BitRegalo Whitepaper-20260113130914.md
-│   ├── privacy/page.tsx          # Privacy Policy page
-│   ├── terms/page.tsx            # Terms of Service page
-│   ├── token-terms/page.tsx      # Token Terms page
-│   ├── kyc-policy/page.tsx       # KYC Policy page
-│   ├── whitepaper/page.tsx       # Whitepaper viewer page
-│   └── protocols/[slug]/page.tsx # Protocol detail pages (escrow, rfp, rts)
-│
-├── components/                   # React components
-│   ├── navbar.tsx                # Navigation bar
-│   ├── hero-section.tsx          # Hero with app mockup
-│   ├── trust-bar.tsx             # Stats section
-│   ├── how-it-works.tsx          # 4-step process
-│   ├── app-download.tsx          # App download with phone mockups
-│   ├── features-section.tsx      # Platform features carousel
-│   ├── use-cases-section.tsx     # Use cases grid
-│   ├── developer-portal.tsx      # SDK/API code examples
-│   ├── tokenomics-section.tsx    # BTR & Regalo token info
-│   ├── enterprise-section.tsx    # Enterprise solutions
-│   ├── cta-section.tsx           # Call to action
-│   ├── legal-disclaimer.tsx      # Legal notice section
-│   ├── footer.tsx                # Footer with links
-│   └── ui/                       # shadcn/ui components
-│
-├── public/                       # Static assets
-│   ├── assets/                   # Images, SVGs
-│   └── BrandLogo copy.svg        # BitRegalo logo
-│
-├── lib/                          # Utility functions
-├── package.json                  # Dependencies
-├── next.config.ts                # Next.js configuration
-├── tsconfig.json                 # TypeScript configuration
-└── README.md                     # This file
+app/
+  page.tsx              landing page (sections in components/landing)
+  layout.tsx            fonts, metadata, theme
+  globals.css           design tokens and type roles
+  protocols/[slug]/     protocol reference pages: escrow, rfp (requests), rts (listings)
+  whitepaper/           renders app/docs/bitregalo-whitepaper.md
+  contact/ terms/ privacy/ kyc-policy/ token-terms/
+  api/whitepaper/       the whitepaper as Markdown
+  docs/                 the whitepaper source and LEGAL-STRATEGY.md
+  fonts/                Commissioner and Geist Mono, self-hosted
+  app/                  the reference web app
+    (network)/          the BitRegalo network, served at /app
+    t/[tenant]/         an organisation's workspace, served at /app/t/{id}
+    workspaces/ launch/ create/ help/ operator/ admin/
+components/
+  landing/              landing page sections and demonstrations
+  site/                 the document page layout shared by the reading pages
+  app/                  the web app: shell, navigation model (nav.ts), UI parts, wizards, connect, market, admin
+  brand/ ui/            the logo; buttons, sheets and menus
+  navbar.tsx footer.tsx legal-disclaimer.tsx
+lib/bitregalo/          chain configuration, hooks, and bitregalo.json (addresses and ABIs of the deployment)
+docs/                   market-api.md, admin-api.md
+public/                 the brand logo and images
 ```
 
----
+The contracts' addresses and interface files come from `lib/bitregalo/bitregalo.json`, a copy of the deployment published by `bitregalo-contracts`.
 
-## Pages & Routes
+## Branches and deployment
 
-| Route | Page | Description |
-|-------|------|-------------|
-| `/` | Landing Page | Main marketing page with all sections |
-| `/privacy` | Privacy Policy | NZ Privacy Act 2020 compliant |
-| `/terms` | Terms of Service | Platform usage agreement |
-| `/token-terms` | Token Terms | BTR/Regalo utility token terms |
-| `/kyc-policy` | KYC Policy | Tiered verification requirements |
-| `/whitepaper` | Whitepaper | V4 BitRegalo Whitepaper viewer |
-| `/protocols/escrow` | Escrow Protocol | Escrow smart contract details |
-| `/protocols/rfp` | RFP Protocol | Request for Proposal details |
-| `/protocols/rts` | RTS Protocol | Request to Supply details |
+| Branch | Environment | Built by |
+| --- | --- | --- |
+| `main` | Production, bitregalo.com | Vercel |
+| `app` | Staging, app.bitregalo.com | Railway |
 
----
+## Related repositories
 
-## Tech Stack
+- `bitregalo-contracts`: the Solidity contracts, their tests and deployments, and the protocol reference (`docs/PROTOCOL.md`).
+- `bitregalo-platform`: the services around the contracts (the marketplace index, the gas sponsor, the owner's admin overview). None of them holds tokens.
 
-- **Framework:** Next.js 16 (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS 4
-- **Components:** Radix UI (shadcn/ui)
-- **Icons:** Lucide React
-- **Fonts:** Geist (sans), JetBrains Mono (code)
-- **Analytics:** Vercel Analytics
-- **Package Manager:** Yarn
+## Licence
 
----
-
-## Design Tokens
-
-Colors are defined in `app/globals.css` as CSS custom properties:
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--background` | `oklch(0.145 0 0)` | Page background (dark) |
-| `--foreground` | `oklch(0.985 0 0)` | Primary text |
-| `--accent` | `oklch(0.75 0.14 70)` | Gold/amber accent |
-| `--card` | `oklch(0.17 0 0)` | Card backgrounds |
-| `--muted-foreground` | `oklch(0.65 0 0)` | Secondary text |
-| `--border` | `oklch(0.26 0 0)` | Border color |
-
----
-
-## Deployment
-
-### Current Setup
-
-The site is deployed via **Vercel** (or your CI/CD pipeline) connected to the `main` branch.
-
-**Every push to `main` triggers an automatic deployment.**
-
-### Deploying (Production)
-
-```bash
-# 1. Make sure your changes are committed
-git add .
-git commit -m "Your changes"
-
-# 2. Push to main
-git push origin main
-
-# 3. Deployment happens automatically
-```
-
-### Preview Deployments
-
-If using Vercel, every pull request gets a preview URL automatically.
-
-### Manual Deployment (if needed)
-
-```bash
-# Build for production
-yarn build
-
-# Export static files (if using static hosting)
-# Add to next.config.ts: output: 'export'
-# Then run: yarn build
-# Files will be in /out directory
-```
-
----
-
-## Legal Documents
-
-The site includes comprehensive legal documentation:
-
-| Document | Route | Purpose |
-|----------|-------|---------|
-| Terms of Service | `/terms` | Platform usage agreement |
-| Privacy Policy | `/privacy` | Data handling (Privacy Act 2020) |
-| Token Terms | `/token-terms` | BTR/Regalo utility token terms |
-| KYC Policy | `/kyc-policy` | Tiered verification requirements |
-| Legal Strategy | `app/docs/LEGAL-STRATEGY.md` | Internal positioning document |
-
-**Key Legal Positioning:**
-- BitRegalo = technology platform (NOT financial service)
-- Tokens = utility credits (NOT securities)
-- KYC = tiered (no KYC for gifts < NZD $1,000)
-- Jurisdiction = New Zealand
-
----
-
-## Common Tasks
-
-### Adding a New Page
-
-1. Create `app/your-page/page.tsx`
-2. Export a default component
-3. Add route to `components/navbar.tsx` and `components/footer.tsx`
-
-### Adding a New Section to Landing Page
-
-1. Create `components/your-section.tsx`
-2. Import and add to `app/page.tsx` in the correct order
-3. Add navigation link in `components/navbar.tsx` if needed
-
-### Updating the Logo
-
-Replace `public/BrandLogo copy.svg` with your new logo file (keep the same filename).
-
-### Changing Colors
-
-Edit the CSS custom properties in `app/globals.css` under `:root` and `.dark`.
-
----
-
-## Troubleshooting
-
-### "yarn: command not found"
-```bash
-npm install -g yarn
-```
-
-### Port 3000 already in use
-```bash
-yarn dev -p 3001
-```
-
-### Build fails with TypeScript errors
-```bash
-# Check for type errors
-npx tsc --noEmit
-
-# Fix any errors shown, then rebuild
-yarn build
-```
-
-### Dependencies out of date
-```bash
-yarn install --force
-```
-
----
-
-## Support
-
-- **Website:** [bitregalo.com](https://bitregalo.com)
-- **GitHub:** [github.com/Al-Baqshi/true-bitregalo-newstyle](https://github.com/Al-Baqshi/true-bitregalo-newstyle)
-- **Email:** support@bitregalo.com
-
----
-
-## License
-
-© 2026 BitRegalo® Limited. All rights reserved.  
+© 2026 BitRegalo® Limited, New Zealand. All rights reserved.

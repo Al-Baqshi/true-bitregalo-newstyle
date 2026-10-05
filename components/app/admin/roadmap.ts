@@ -16,6 +16,10 @@ export type RoadmapItem = {
 }
 export type Phase = { n: number; title: string; status: Status; items: RoadmapItem[] }
 
+/*
+ * Phases 1 and 2 are what is built and running on the practice network. Phases 3 to 9 are
+ * the "Designed, not built" list in PRODUCT.md, in the same order. Keep the two in step.
+ */
 export const PHASES: Phase[] = [
   {
     n: 1,
@@ -30,7 +34,7 @@ export const PHASES: Phase[] = [
   },
   {
     n: 2,
-    title: "App",
+    title: "Reference app",
     status: "Done",
     items: [
       { title: "Step-by-step wizards", status: "Done" },
@@ -38,48 +42,77 @@ export const PHASES: Phase[] = [
       { title: "Payments", status: "Done" },
       { title: "The BitRegalo network and organisation workspaces", status: "Done" },
       { title: "Marketplace by country", status: "Done" },
+      { title: "Practice-token faucet", status: "Done" },
+      { title: "Connect a platform page for every workspace", status: "Done", note: "Addresses, interface files, code examples" },
+      { title: "Protocol pages", status: "Done" },
       { title: "Light and dark redesign", status: "Done" },
     ],
   },
   {
     n: 3,
-    title: "Embedded wallet and sponsored gas in the app",
-    status: "In progress",
+    title: "General records",
+    status: "Next",
     items: [
-      { title: "Practice-token faucet", status: "Done" },
-      { title: "Embedded wallet", status: "Next", note: "Not started" },
-      { title: "Sponsored gas", status: "Next", note: "Not started" },
+      { title: "A record of any event a platform wants to prove", status: "Next", note: "A subscription, a sale made elsewhere, an approval. Designed, not built" },
+      { title: "Written by the platform's own key", status: "Next", note: "Designed, not built" },
     ],
   },
   {
     n: 4,
-    title: "Indexer, API, SDK and hosted checkout",
+    title: "Keys that act for a workspace",
+    status: "Next",
+    items: [
+      { title: "A key a workspace authorises for its own server", status: "Next", note: "Designed, not built" },
+      { title: "Commitments a platform triggers without a person at a wallet", status: "Next", note: "Designed, not built" },
+    ],
+  },
+  {
+    n: 5,
+    title: "More kinds of commitment",
+    status: "Next",
+    items: [
+      { title: "Refund window", status: "Next", note: "The supplier is paid after a set time unless the buyer takes the payment back first. Designed, not built" },
+    ],
+  },
+  {
+    n: 6,
+    title: "Indexer, webhooks and SDK",
     status: "In progress",
     items: [
       { title: "Marketplace index", status: "Done", note: "Live" },
       { title: "Super admin API", status: "In progress" },
       { title: "General indexer", status: "Next", note: "Not started" },
+      { title: "Server-side API with keys", status: "Next", note: "Not started" },
       { title: "Webhooks", status: "Next", note: "Not started" },
-      { title: "SDK", status: "Next", note: "Not started" },
-      { title: "Hosted checkout", status: "Next", note: "Not started" },
+      { title: "Published SDK", status: "Next", note: "Not started" },
     ],
   },
   {
-    n: 5,
-    title: "Documentation site",
-    status: "In progress",
-    items: [
-      { title: "Protocol pages", status: "Done" },
-      { title: "Developer docs (Connect pages)", status: "In progress" },
-    ],
-  },
-  {
-    n: 6,
-    title: "Audit and mainnet",
+    n: 7,
+    title: "A second network",
     status: "Next",
     items: [
-      { title: "Security audit", status: "Next", note: "Not started" },
-      { title: "Mainnet", status: "Next", note: "Not started" },
+      { title: "App and services that handle more than one network", status: "Next", note: "One deployment exists; the code assumes a single network" },
+      { title: "A second deployment", status: "Next", note: "Not started" },
+    ],
+  },
+  {
+    n: 8,
+    title: "Audit and main network",
+    status: "Next",
+    items: [
+      { title: "Independent security audit", status: "Next", note: "Not started" },
+      { title: "Main network", status: "Next", note: "Follows the audit" },
+    ],
+  },
+  {
+    n: 9,
+    title: "Sign-in without a wallet",
+    status: "In progress",
+    items: [
+      { title: "Paymaster and gas sponsor", status: "Done", note: "Deployed; the app does not use them yet" },
+      { title: "Embedded wallet", status: "Next", note: "Not started" },
+      { title: "Sponsored network fees in the app", status: "Next", note: "Not started" },
     ],
   },
 ]
@@ -98,5 +131,6 @@ export const OPEN_ITEMS: RoadmapItem[] = [
     live: "launch-fee-tusd",
   },
   { title: "KYC bridge to kyc.baqshi.com", status: "Next", note: "Planned." },
+  { title: "Hosted checkout", status: "Waiting for you", note: "Was on the earlier plan. It is not in the current list of designed work: decide whether it stays." },
   { title: "Crowdfunding contract", status: "Waiting for you", note: "Proposed. Needs legal advice before any work starts." },
 ]

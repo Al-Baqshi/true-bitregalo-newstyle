@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useAccount, useReadContract, useReadContracts } from "wagmi"
 import { parseUnits, type Address } from "viem"
 import { useTx } from "@/lib/bitregalo/hooks"
-import { abis, addresses, versions, PUBLIC_WORKSPACE_ID, STABLES } from "@/lib/bitregalo/config"
+import { abis, addresses, versions, PUBLIC_WORKSPACE_ID, STABLES, network } from "@/lib/bitregalo/config"
 import { Addr, Amount, Card, Fact, Facts, Field, LedgerRow, Notice, PageHead, Pill, Section, Stat, Stats, inputCls } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -127,7 +127,7 @@ export default function Platform() {
     <div className="space-y-12">
       <PageHead
         title="Platform and earnings"
-        intro="BitRegalo's own view: the fees the platform has collected, the gas it sponsors, and its contract versions. Anyone can look. Only the owner's wallet can change anything."
+        intro="BitRegalo's own view: the fees the platform has collected, the deposit set aside for sponsoring network fees, and its contract versions. Anyone can look. Only the owner's wallet can change anything."
       />
 
       <Notice tone="muted">
@@ -204,7 +204,7 @@ export default function Platform() {
         <Stat label="Workspaces" value={count(tenantCount)} hint="launched so far" />
         <Stat label="Tokens created" value={count(tokenCount)} hint="through the token maker" />
         <Stat label="Platform fee" value={feeBps !== undefined ? `${Number(feeBps) / 100}%` : "…"} hint="of each payment, new workspaces" />
-        <Stat label="Sponsored gas" value={gasDeposit !== undefined ? <Amount value={gasDeposit} symbol="tBNB" /> : "…"} hint="on deposit for users' network fees" />
+        <Stat label="Sponsored gas" value={gasDeposit !== undefined ? <Amount value={gasDeposit} symbol={network.nativeSymbol} /> : "…"} hint="on deposit; not in use yet" />
       </Stats>
 
       <Section title="In the fee vault" description="Every fee lands in one fee vault. This is what it holds now: what the platform has earned and not yet withdrawn.">
@@ -301,12 +301,12 @@ export default function Platform() {
       </Section>
 
       <Section
-        title="Gas the platform sponsors"
-        description="When sign-in without a wallet is switched on, BitRegalo pays users' network fees from this deposit, and the service fee is what pays it back. Today people pay their own network fees from their wallet, so the deposit is untouched."
+        title="Deposit for sponsored network fees"
+        description="When sign-in without a wallet is switched on, BitRegalo will pay people's network fees from this deposit. That is not in use yet: today each person pays their own network fee from their wallet, so the deposit is untouched."
       >
         <Card>
           <Facts columns={2}>
-            <Fact label="On deposit">{gasDeposit !== undefined ? <Amount value={gasDeposit} symbol="tBNB" /> : "…"}</Fact>
+            <Fact label="On deposit">{gasDeposit !== undefined ? <Amount value={gasDeposit} symbol={network.nativeSymbol} /> : "…"}</Fact>
             <Fact label="Paymaster contract"><Addr a={addresses.paymaster} /></Fact>
           </Facts>
         </Card>

@@ -1,14 +1,14 @@
 # BitRegalo marketplace index: API contract (v1)
 
-Shared contract between the Go service (bitregalo-platform, new command `cmd/market`) and the web app (true-bitregalo-newstyle). Both sides implement exactly this. Change it only through the lead.
+The interface of the marketplace index: the service that keeps the descriptions of requests and listings. It is the shared contract between the Go service (bitregalo-platform, command `cmd/market`) and the web app (true-bitregalo-newstyle), and both sides implement exactly this. A connected platform can use it too: reading is public, and writing needs the signature of the wallet that owns the record.
 
 ## Why it exists
-On-chain records (requests = RFPs, listings = offers) store only a 32-byte label or a fingerprint. A marketplace by country needs a title, a description, a category, a country and a city. That metadata lives here, off-chain, and is **signed by the wallet that owns the on-chain record**, so nobody can attach text to someone else's request or listing. Money and state stay on-chain; this index never holds funds and never decides anything.
+A request ("I need this") and a listing ("I offer this") are records on chain, and a record stores only a 32-byte label or a fingerprint. (In the contracts a request is an RFP and a listing is an offer.) A marketplace by country needs a title, a description, a category, a country and a city. That metadata lives here, off-chain, and is **signed by the wallet that owns the on-chain record**, so nobody can attach text to someone else's request or listing. Payments and state stay on-chain; this index never holds tokens and never decides anything. A description can be replaced by its owner; the record on chain cannot.
 
 ## Terms
-- `chainId`: number. BSC Testnet is `97`.
-- `workspace`: the tenant id in the mother registry (`mother.tenants(id)` returns `{instance, vault, admin, version}`). The public BitRegalo network is also a workspace (its id is configured in the app).
-- `kind`: `"request"` (an RFP: `instance.getRfp(id)`, owner field `requester`) or `"listing"` (an offer: `instance.getOffer(id)`, owner field `supplier`).
+- `chainId`: number. BNB Smart Chain Testnet (BSC Testnet), the practice network BitRegalo runs on today, is `97`.
+- `workspace`: the number of a workspace (an organisation's own contracts) in the registry. In the contracts this is the tenant id in the mother registry: `mother.tenants(id)` returns `{instance, vault, admin, version}`. The public BitRegalo network is also a workspace (its id is configured in the app).
+- `kind`: `"request"` (someone asks for something and suppliers answer; in the contracts an RFP: `instance.getRfp(id)`, owner field `requester`) or `"listing"` (a supplier's fixed-price offer that a buyer takes; in the contracts an offer: `instance.getOffer(id)`, owner field `supplier`).
 - `recordId`: the on-chain id (uint, starts at 1).
 - `country`: ISO 3166-1 alpha-2, upper case (`NZ`, `AU`, `US`…). Required.
 - `city`: free text, optional, ≤ 80 characters.
@@ -73,3 +73,6 @@ Addresses are returned checksummed.
 
 ## Limits
 Body ≤ 16 KB. Simple per-IP rate limit on writes (e.g. 30/minute). Reads are public.
+
+## Maintainers
+The Go service and the web app both depend on this file. Change it only through the lead, and change both sides together.

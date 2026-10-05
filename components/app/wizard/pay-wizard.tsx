@@ -87,7 +87,7 @@ export function PayWizard({ prefill = {} }: { prefill?: PayPrefill }) {
               {projects.list.filter((p) => p.active).map((p) => <option key={String(p.id)} value={String(p.id)}>#{String(p.id)} · {p.label ?? "Private project"}</option>)}
             </select>
           </Label>
-          <Note>A direct payment is final. It reaches the recipient in the same transaction; there is no escrow to release or cancel. For goods you have not received yet, ask the seller for an escrow listing instead.</Note>
+          <Note>A direct payment is final. It reaches the recipient in the same transaction; there is no escrow to release or cancel. For goods you have not received yet, ask the supplier for an escrow listing instead.</Note>
         </div>
       ),
     },

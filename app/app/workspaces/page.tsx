@@ -37,7 +37,7 @@ export default function Workspaces() {
     <div className="space-y-12">
       <PageHead
         title="Workspaces"
-        intro="A workspace is an organisation's own BitRegalo: its own contracts, rules and fees, the currencies it accepts, its tokens, shop and treasury. Everything done inside it is recorded under that workspace, run by its admin."
+        intro="A workspace is an organisation's own set of BitRegalo contracts: its records and rules, a vault for held payments and a treasury its admin owns. Everything done inside it is recorded under that workspace, through this app or the organisation's own platform."
         action={<Button asChild><Link href="/app/launch">Create a workspace</Link></Button>}
       />
 
@@ -76,23 +76,31 @@ export default function Workspaces() {
         })}
       </Card>
 
-      <Section title="Workspace or network?">
-        <dl className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
+      <Section title="Which way fits?" description="The three ways to use BitRegalo, in order.">
+        <dl className="grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <dt className="t-subheading">Use the BitRegalo network</dt>
+            <dt className="t-subheading">Connect a platform</dt>
             <dd className="mt-1 text-sm text-muted-foreground">
-              For people and businesses on their own: send payments, hold them in escrow, ask for things and offer them, in USDT, in a
-              marketplace by country. Nothing to set up.
+              When you already run a product that takes payments. It keeps its own site and customers, and uses a workspace for the
+              records and commitments that must not depend on trusting it.
             </dd>
-            <dd className="mt-2"><Button asChild variant="link" className="text-sm"><Link href="/app">Go to the network<ArrowRight /></Link></Button></dd>
+            <dd className="mt-2"><Button asChild variant="link" className="text-sm"><Link href="/app/connect">How to connect<ArrowRight /></Link></Button></dd>
           </div>
           <div>
             <dt className="t-subheading">Create a workspace</dt>
             <dd className="mt-1 text-sm text-muted-foreground">
-              When an organisation needs its own rules, fees or currency (a local stablecoin, for example), its own tokens or shop, or
+              When an organisation needs its own rules or currency (a local stablecoin, for example), its own tokens or shop, or
               wants its records kept together under its own name. You become its admin.
             </dd>
             <dd className="mt-2"><Button asChild variant="link" className="text-sm"><Link href="/app/help#model">How workspaces work<ArrowRight /></Link></Button></dd>
+          </div>
+          <div>
+            <dt className="t-subheading">Use the BitRegalo network</dt>
+            <dd className="mt-1 text-sm text-muted-foreground">
+              For people and businesses with no organisation behind them, and for trying every part: send payments, hold them in
+              escrow, ask for things and offer them, in USDT, in a marketplace by country. Nothing to set up.
+            </dd>
+            <dd className="mt-2"><Button asChild variant="link" className="text-sm"><Link href="/app">Go to the network<ArrowRight /></Link></Button></dd>
           </div>
         </dl>
       </Section>

@@ -1,9 +1,9 @@
 # BitRegalo super admin API (v1)
 
-A read-only API for the platform owner's super admin page. It adds what the chain cannot show: sign-in accounts (baqshi-auth) and identity verification statistics (kyc.baqshi.com). It is served by the marketplace service (bitregalo-platform `cmd/market`, https://market-production-671e.up.railway.app) under `/v1/admin/`. Everything on-chain is read by the web page directly; this API never returns contract data the page can read itself.
+A read-only API for the platform owner's super admin page. It adds what the chain cannot show: sign-in accounts (baqshi-auth), identity verification statistics (kyc.baqshi.com), and counts of the requests and listings described in the marketplace index. It is served by the marketplace service (bitregalo-platform `cmd/market`, https://market-production-671e.up.railway.app) under `/v1/admin/`. Everything on-chain is read by the web page directly; this API never returns contract data the page can read itself.
 
 ## Who may call it
-Only the wallet that owns the BitRegalo registry (`mother.owner()` on chain 97). Every request carries three headers:
+Only the wallet that owns the BitRegalo registry, the contract that launches workspaces (in the contracts: the mother, `mother.owner()` on chain 97). Every request carries three headers:
 
 - `X-Admin-Address`: the wallet address.
 - `X-Admin-Issued-At`: RFC 3339 UTC to the second, e.g. `2026-10-04T01:23:45Z`; accepted within 10 minutes of server time.
@@ -49,7 +49,9 @@ The server recovers the signer, requires it to equal `X-Admin-Address` (case-ins
 ```
 When a source is not configured or not reachable, its object is `{ "configured": false, "reason": "<plain sentence>" }` (or `"reachable": false` with a reason) and the rest still returns `200`. `recent` holds at most 20 items and never includes e-mail addresses, names or any other personal data beyond the wallet address and dates.
 
-## Configuration (Railway service `market`)
+## Maintainers
+
+### Configuration (Railway service `market`)
 - `ADMIN_AUTH_URL` (e.g. the bitregalo auth service URL), `ADMIN_AUTH_ROOT_KEY` (an `sk_` root key of the console application), `ADMIN_AUTH_REALM` (default `bitregalo`).
 - `ADMIN_KYC_URL` (default `https://kyc.baqshi.com`), `ADMIN_KYC_KEY` (the KYC service's `BAQSHI_ADMIN_KEY`).
 Secrets are never logged or returned.

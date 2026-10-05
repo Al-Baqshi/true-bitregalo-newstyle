@@ -11,6 +11,9 @@
 export type SampleContext = {
   /** "Workspace 3" or "The BitRegalo network (workspace 0)". */
   label: string
+  /** The network the workspace's contracts are on today, from the app's config. */
+  chainName: string
+  chainId: number
   records: string
   vault: string
   version: number
@@ -48,7 +51,7 @@ export function setupSample(c: SampleContext): string {
 import { bscTestnet } from "viem/chains"
 import "viem/window"
 
-// ${c.label} on BNB Smart Chain Testnet (chain id 97)
+// ${c.label}, today on ${c.chainName} (chain id ${c.chainId})
 // Records contract: requests and listings${c.version >= 1 ? ", payments" : ""}
 export const RECORDS: Address = "${c.records}"
 // Vault: holds payments in escrow
@@ -255,14 +258,14 @@ console.log("${c.pages}/payments/" + paid.args.paymentId)
 `
 }
 
-/** The read-only marketplace index, filtered to one workspace. */
-export function marketSample(api: string, workspaceId: string): string {
+/** Reading the marketplace index, filtered to one workspace. */
+export function marketSample(api: string, workspaceId: string, chainId: number): string {
   return `curl -G "${api}/v1/entries" \\
-  -d chainId=97 -d workspace=${workspaceId} -d kind=request -d country=NZ -d limit=10
+  -d chainId=${chainId} -d workspace=${workspaceId} -d kind=request -d country=NZ -d limit=10
 
 # {
 #   "entries": [
-#     { "chainId": 97, "workspace": ${workspaceId}, "kind": "request", "recordId": 12,
+#     { "chainId": ${chainId}, "workspace": ${workspaceId}, "kind": "request", "recordId": 12,
 #       "title": "Scaffolding for 12 weeks", "description": "…", "category": "construction",
 #       "country": "NZ", "city": "Auckland", "poster": "0x…", "settlement": 2,
 #       "token": "0x…", "amount": "0", "deadline": 1790000000, "state": 1,

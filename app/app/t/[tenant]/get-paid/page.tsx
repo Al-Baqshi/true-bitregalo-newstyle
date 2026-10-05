@@ -7,6 +7,7 @@ import { isAddress } from "viem"
 import QRCode from "qrcode"
 import { toast } from "sonner"
 import { Copy, Check } from "lucide-react"
+import { chain } from "@/lib/bitregalo/config"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import { useSettlementTokens, useProjects, labelBytes } from "@/lib/bitregalo/instances"
 import { useInstanceRules } from "@/lib/bitregalo/instance-rules"
@@ -113,7 +114,7 @@ function GetPaidInner() {
                 <Button onClick={copy} aria-live="polite">{copied ? <Check /> : <Copy />}{copied ? "Copied" : "Copy link"}</Button>
                 <Button asChild variant="secondary"><Link href={link.replace(window.location.origin, "")}>Preview</Link></Button>
               </div>
-              <p className="text-xs text-subtle">Print the QR code for a counter, or send the link in a message. The payer needs a wallet with {chosen!.symbol} on BNB Smart Chain Testnet.</p>
+              <p className="text-xs text-subtle">Print the QR code for a counter, or send the link in a message. The payer needs a wallet with {chosen!.symbol} on {chain.name}.</p>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">

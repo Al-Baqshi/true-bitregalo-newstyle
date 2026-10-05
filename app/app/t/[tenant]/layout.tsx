@@ -1,7 +1,9 @@
+import { notFound } from "next/navigation"
 import { TenantProvider } from "@/lib/bitregalo/tenant"
 
 export default async function TenantLayout({ children, params }: { children: React.ReactNode; params: Promise<{ tenant: string }> }) {
   const { tenant } = await params
-  const id = /^\d+$/.test(tenant) ? BigInt(tenant) : 0n
-  return <TenantProvider id={id}>{children}</TenantProvider>
+  // A workspace is a number. Anything else is not a page, rather than workspace 0.
+  if (!/^\d+$/.test(tenant)) notFound()
+  return <TenantProvider id={BigInt(tenant)}>{children}</TenantProvider>
 }

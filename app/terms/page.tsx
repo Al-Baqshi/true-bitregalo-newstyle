@@ -1,152 +1,119 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { DocNotice, DocPage } from "@/components/site/doc-page"
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "Terms of Service for BitRegalo platform and utility tokens",
+  description: "Terms of Service for the BitRegalo website, web app and public contracts",
 }
 
 export default function TermsPage() {
   return (
     <DocPage
       title={"Terms of Service"}
-      updated={<>Last updated: {new Date().toLocaleDateString()}</>}
+      updated={<>Last updated: 5 October 2026</>}
       meta={"BitRegalo® Limited | New Zealand"}
     >
       <DocNotice title="Important Notice">
         <p>
-          These Terms govern your use of the BitRegalo platform, a technology service providing marketplace infrastructure and utility tokens. BitRegalo is NOT a financial institution, reporting entity, or issuer of financial products. BTR and Regalo tokens are utility credits for platform access only.
+          These Terms cover your use of the BitRegalo website, web app and public contracts. BitRegalo® Limited is a technology company providing decentralised infrastructure for records and payment commitments. It is not a financial institution or a payment service. BitRegalo runs only on a public test network, where tokens have no value. It has not been independently audited. BitRegalo has not issued a token and is not offering one.
         </p>
       </DocNotice>
 
       <h2 id="acceptance-of-terms">1. Acceptance of Terms</h2>
       <p>
-        By accessing or using BitRegalo (&quot;the Platform&quot;), you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to these Terms, do not use the Platform. These Terms constitute a legally binding agreement between you and BitRegalo® Limited.
+        By accessing or using the BitRegalo website, web app or public contracts (&quot;the Platform&quot;), you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to these Terms, do not use the Platform. These Terms constitute a legally binding agreement between you and BitRegalo® Limited.
       </p>
 
-      <h2 id="platform-description">2. Platform Description</h2>
+      <h2 id="platform-description">2. What BitRegalo Is</h2>
       <p>
-        BitRegalo is a decentralized technology platform that provides:
+        BitRegalo is infrastructure. It is software and a set of public contracts that provide:
       </p>
       <ul>
-        <li>Marketplace infrastructure for gift and service exchanges</li>
-        <li>Smart contract deployment tools (Smart Contract as a Service)</li>
-        <li>Conditional payment processing via escrow smart contracts</li>
-        <li>Request for Proposal (RFP) and Request to Supply (RTS) protocols</li>
-        <li>Utility tokens (BTR and Regalo) for platform access</li>
+        <li>Records that nobody can edit or delete once they are written</li>
+        <li>Payment commitments with fixed outcomes: a payment held in escrow, or a payment settled directly</li>
+        <li>Requests and listings, with offers, awards and the records of each</li>
+        <li>Workspaces: each organisation gets its own contracts</li>
+        <li>A web app, which is a reference implementation of the contracts</li>
+        <li>A marketplace index that stores descriptions a wallet owner signs and publishes</li>
       </ul>
       <p>
-        <strong>Important:</strong> BitRegalo provides technology services only. We do not provide financial services, investment advice, or operate as a reporting entity under the AML/CFT Act 2009.
+        <strong>Important:</strong> BitRegalo provides technology only. Nothing on this site or in the app is financial, legal, tax or investment advice.
       </p>
 
-      <h2 id="utility-tokens-btr-and-regalo">3. Utility Tokens (BTR & Regalo)</h2>
-      <p>
-        BTR and Regalo tokens are <strong>prepaid utility credits</strong> that provide access to Platform services. By acquiring or using tokens, you acknowledge and agree:
-      </p>
+      <h2 id="test-network-and-status">3. Test Network and Status</h2>
       <ul>
-        <li>Tokens are utility instruments, NOT securities, financial products, or investment contracts</li>
-        <li>Tokens provide access to Platform features (escrow, RFP, marketplace) only</li>
-        <li>No expectation of profit, dividend, or investment return is created</li>
-        <li>Token value may fluctuate based on market conditions; you bear all risk of loss</li>
-        <li>BitRegalo makes no guarantees regarding token value, liquidity, or future utility</li>
-        <li>Tokens are non-refundable once used for Platform services</li>
-        <li>You are solely responsible for securing your tokens and wallet credentials</li>
-      </ul>
-      <p>
-        Tokens do not represent equity, ownership, or any claim against BitRegalo® Limited.
-      </p>
-
-      <h2 id="user-classification-and-verification">4. User Classification & Verification</h2>
-      <p>
-        The Platform classifies users into different categories with varying verification requirements:
-      </p>
-      <h3>4.1 Gifters (Buyers)</h3>
-      <p>
-        Users who purchase gifts or services through the Platform.
-      </p>
-      <ul>
-        <li><strong>Transactions under NZD $1,000:</strong> No identity verification required</li>
-        <li><strong>Transactions NZD $1,000 or above:</strong> Basic identity verification required</li>
-        <li>Basic verification: Email confirmation and government-issued ID</li>
-      </ul>
-      <h3>4.2 Service Providers</h3>
-      <p>
-        Users who offer services or products through the Platform.
-      </p>
-      <ul>
-        <li><strong>Full identity verification required</strong> (KYC/CDD)</li>
-        <li>Required documents: Government-issued ID, proof of address, business registration (if applicable)</li>
-        <li>Service providers are responsible for tax reporting on income received</li>
-        <li>Service providers establish a &quot;business relationship&quot; with BitRegalo</li>
-      </ul>
-      <h3>4.3 Enterprise Clients</h3>
-      <p>
-        Organizations using Platform services for business operations.
-      </p>
-      <ul>
-        <li><strong>Enhanced due diligence required</strong></li>
-        <li>Corporate documents, beneficial ownership information, compliance certifications</li>
-        <li>Ongoing monitoring and periodic re-verification</li>
+        <li>BitRegalo runs only on a public test network (BNB Smart Chain Testnet). Tokens on that network have no value.</li>
+        <li>The contracts have not been independently audited.</li>
+        <li>The software is still being developed and may change.</li>
       </ul>
 
-      <h2 id="escrow-and-conditional-payments">5. Escrow & Conditional Payments</h2>
+      <h2 id="tokens">4. Tokens</h2>
       <p>
-        The Platform provides escrow smart contracts for conditional payment processing:
+        BitRegalo has not issued a token and is not offering one. Earlier documents that described BTR or Regalo tokens are superseded.
       </p>
-      <ul>
-        <li>Funds are held in smart contracts, not BitRegalo accounts</li>
-        <li>Release conditions are automated and executed by code, not human discretion</li>
-        <li>BitRegalo does not act as a licensed escrow agent or financial intermediary</li>
-        <li>Escrow is a Platform feature, not a financial service</li>
-        <li>Users are responsible for verifying transaction details before confirming</li>
-        <li>Disputes are resolved through Platform mediation, not legal arbitration</li>
-      </ul>
       <p>
-        BitRegalo is not liable for losses resulting from smart contract failures, user error, or disputes between parties.
+        An organisation may issue its own utility tokens (vouchers, credits, memberships) inside its workspace. Those tokens belong to the organisation that issues them, not to BitRegalo, and that organisation is responsible for them. See <Link href="/token-terms">Tokens</Link>.
       </p>
 
-      <h2 id="user-responsibilities">6. User Responsibilities</h2>
+      <h2 id="wallets-and-custody">5. Wallets and Custody</h2>
+      <p>
+        BitRegalo has no accounts and no email sign-up. You use the Platform with your own wallet, and every action is a transaction you sign.
+      </p>
+      <ul>
+        <li>BitRegalo never holds your tokens or your keys</li>
+        <li>You are solely responsible for safeguarding your wallet and private keys</li>
+        <li>You are responsible for everything signed with your wallet</li>
+        <li>BitRegalo cannot recover a lost wallet or lost tokens, and cannot reverse a signed transaction</li>
+      </ul>
+
+      <h2 id="escrow-and-held-payments">6. Escrow and Held Payments</h2>
+      <p>
+        A payment placed in escrow is held by a public contract, not by BitRegalo. It has fixed outcomes:
+      </p>
+      <ul>
+        <li>The buyer can release it to the supplier</li>
+        <li>The supplier can hand it back to the buyer</li>
+        <li>After the deadline it can be returned to the buyer, once someone sends the transaction that triggers the return</li>
+      </ul>
+      <p>
+        None of these happens by itself. Each one is a transaction that a person signs. Transactions on a public network are final and cannot be reversed. You are responsible for checking the details of a transaction before you sign it.
+      </p>
+      <p>
+        BitRegalo is not a party to the payment and does not decide its outcome. BitRegalo is not liable for losses resulting from smart contract failures, user error, or disputes between parties.
+      </p>
+
+      <h2 id="fees">7. Fees</h2>
+      <p>
+        The contracts charge the following fees:
+      </p>
+      <ul>
+        <li>A platform fee, which is a percentage of a payment</li>
+        <li>A service fee, which is a flat amount per payment</li>
+        <li>A launch fee when an organisation creates a workspace</li>
+        <li>A fee when an organisation creates a token</li>
+      </ul>
+      <p>
+        On the test network these fees are paid in test tokens, which have no value.
+      </p>
+
+      <h2 id="user-responsibilities">8. Your Responsibilities</h2>
       <p>
         You agree to use the Platform only for lawful purposes and in compliance with all applicable laws. You agree NOT to:
       </p>
       <ul>
         <li>Use the Platform for money laundering, terrorist financing, or illegal activities</li>
-        <li>Circumvent verification requirements or provide false information</li>
-        <li>Engage in fraudulent transactions or misrepresent goods/services</li>
-        <li>Violate intellectual property rights or privacy of others</li>
-        <li>Attempt to manipulate token prices or engage in market abuse</li>
-        <li>Use the Platform in sanctioned countries or by sanctioned individuals</li>
+        <li>Provide false or misleading information, including in anything you publish to the marketplace index</li>
+        <li>Engage in fraudulent transactions or misrepresent goods or services</li>
+        <li>Violate the intellectual property rights or privacy of others</li>
+        <li>Violate sanctions, export controls, or trade restrictions</li>
+        <li>Attempt to exploit vulnerabilities in the contracts</li>
+        <li>Harass, threaten, or defame other users</li>
         <li>Interfere with Platform operations or security measures</li>
       </ul>
-
-      <h2 id="account-registration-and-security">7. Account Registration & Security</h2>
       <p>
-        To access certain Platform features, you must register an account. You agree to:
+        Anything you publish to the marketplace index is signed by your wallet and is public. You are responsible for what you publish.
       </p>
-      <ul>
-        <li>Provide accurate, current, and complete information</li>
-        <li>Maintain the security of your account credentials and private keys</li>
-        <li>Accept responsibility for all activities under your account</li>
-        <li>Notify us immediately of any unauthorized access or security breaches</li>
-        <li>Comply with verification requirements for your user classification</li>
-      </ul>
-      <p>
-        You are solely responsible for safeguarding your wallet, private keys, and tokens. BitRegalo cannot recover lost tokens or reverse unauthorized transactions.
-      </p>
-
-      <h2 id="prohibited-activities">8. Prohibited Activities</h2>
-      <p>
-        The following activities are strictly prohibited and may result in account termination:
-      </p>
-      <ul>
-        <li>Money laundering or structuring transactions to avoid reporting thresholds</li>
-        <li>Providing false or misleading identity information</li>
-        <li>Using the Platform for illegal goods, services, or activities</li>
-        <li>Engaging in deceptive practices or fraud</li>
-        <li>Violating sanctions, export controls, or trade restrictions</li>
-        <li>Attempting to exploit smart contract vulnerabilities</li>
-        <li>Harassing, threatening, or defaming other users</li>
-      </ul>
 
       <h2 id="intellectual-property">9. Intellectual Property</h2>
       <p>
@@ -160,16 +127,16 @@ export default function TermsPage() {
       <ul>
         <li>IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT</li>
         <li>WARRANTIES THAT THE PLATFORM WILL BE UNINTERRUPTED, SECURE, OR ERROR-FREE</li>
-        <li>WARRANTIES REGARDING TOKEN VALUE, LIQUIDITY, OR FUTURE UTILITY</li>
+        <li>WARRANTIES REGARDING THE VALUE, LIQUIDITY, OR FUTURE USE OF ANY TOKEN</li>
         <li>WARRANTIES THAT THE PLATFORM WILL MEET YOUR REQUIREMENTS OR EXPECTATIONS</li>
       </ul>
       <p>
-        Blockchain technology involves inherent risks including technical failures, regulatory changes, and market volatility. You use the Platform at your own risk.
+        Blockchain technology involves inherent risks including technical failures, regulatory changes, and market volatility. The contracts have not been independently audited. You use the Platform at your own risk.
       </p>
 
       <h2 id="limitation-of-liability">11. Limitation of Liability</h2>
       <p>
-        TO THE MAXIMUM EXTENT PERMITTED BY LAW, BITREGALO AND ITS AFFILIATES, OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, REVENUES, DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES, RESULTING FROM: (A) YOUR USE OR INABILITY TO USE THE PLATFORM; (B) ANY TRANSACTIONS CONDUCTED THROUGH THE PLATFORM; (C) ANY LOSS OR THEFT OF TOKENS OR DIGITAL ASSETS; (D) ANY UNAUTHORIZED ACCESS TO YOUR ACCOUNT; (E) ANY SMART CONTRACT FAILURES OR BUGS; (F) ANY REGULATORY CHANGES AFFECTING THE PLATFORM OR TOKENS.
+        TO THE MAXIMUM EXTENT PERMITTED BY LAW, BITREGALO AND ITS AFFILIATES, OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, REVENUES, DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES, RESULTING FROM: (A) YOUR USE OR INABILITY TO USE THE PLATFORM; (B) ANY TRANSACTIONS CONDUCTED THROUGH THE PLATFORM; (C) ANY LOSS OR THEFT OF TOKENS OR DIGITAL ASSETS; (D) ANY UNAUTHORISED ACCESS TO YOUR WALLET; (E) ANY SMART CONTRACT FAILURES OR BUGS; (F) ANY REGULATORY CHANGES AFFECTING THE PLATFORM OR TOKENS.
       </p>
       <p>
         IN NO EVENT SHALL BITREGALO&apos;S TOTAL LIABILITY EXCEED THE AMOUNT YOU PAID TO BITREGALO IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM.
@@ -177,30 +144,22 @@ export default function TermsPage() {
 
       <h2 id="indemnification">12. Indemnification</h2>
       <p>
-        You agree to defend, indemnify, and hold harmless BitRegalo and its officers, directors, employees, and agents from any claims, liabilities, damages, losses, and expenses (including reasonable legal fees) arising from: (a) your use of the Platform; (b) your violation of these Terms; (c) your violation of any rights of another party; (d) any illegal or unauthorized activities conducted through your account.
+        You agree to defend, indemnify, and hold harmless BitRegalo and its officers, directors, employees, and agents from any claims, liabilities, damages, losses, and expenses (including reasonable legal fees) arising from: (a) your use of the Platform; (b) your violation of these Terms; (c) your violation of any rights of another party; (d) any illegal or unauthorised activities conducted with your wallet.
       </p>
 
-      <h2 id="dispute-resolution">13. Dispute Resolution</h2>
+      <h2 id="dispute-resolution">13. Disputes Between Users</h2>
       <p>
-        Disputes between users regarding transactions shall be resolved through:
-      </p>
-      <ul>
-        <li>Direct negotiation between parties</li>
-        <li>Platform-mediated resolution (if requested)</li>
-        <li>Escrow smart contract automated release (if conditions met)</li>
-      </ul>
-      <p>
-        BitRegalo is not a party to disputes between users and has no obligation to resolve disputes. Platform mediation is provided as a courtesy and is not legally binding.
+        A dispute between a buyer and a supplier is for the two of them to resolve. BitRegalo is not a party to disputes between users and has no obligation to resolve them. BitRegalo does not offer a mediation or arbitration service. The only outcomes for a held payment are the ones described in section 6.
       </p>
 
-      <h2 id="termination">14. Termination</h2>
+      <h2 id="termination">14. Suspension of Access</h2>
       <p>
-        We may terminate or suspend your account and access to the Platform immediately, without prior notice, for any reason, including breach of these Terms, suspicious activity, or regulatory requirements. Upon termination, your right to use the Platform ceases. Unused tokens may be forfeited at our discretion.
+        We may suspend or restrict access to the website and the web app immediately, without prior notice, for any reason, including breach of these Terms, suspicious activity, or regulatory requirements. Records already written to the public network are not changed by this.
       </p>
 
       <h2 id="modifications-to-terms">15. Modifications to Terms</h2>
       <p>
-        We reserve the right to modify these Terms at any time. Material changes will be notified via email or Platform announcement. Your continued use of the Platform after modifications constitutes acceptance of the updated Terms. If you do not agree to the modified Terms, you must discontinue use of the Platform.
+        We reserve the right to modify these Terms at any time. Material changes will be posted on this site. Your continued use of the Platform after modifications constitutes acceptance of the updated Terms. If you do not agree to the modified Terms, you must discontinue use of the Platform.
       </p>
 
       <h2 id="governing-law-and-jurisdiction">16. Governing Law & Jurisdiction</h2>
@@ -208,18 +167,9 @@ export default function TermsPage() {
         These Terms are governed by the laws of New Zealand. Any disputes arising from these Terms or your use of the Platform shall be subject to the exclusive jurisdiction of the courts of New Zealand. You consent to the personal jurisdiction of such courts.
       </p>
 
-      <h2 id="regulatory-compliance">17. Regulatory Compliance</h2>
+      <h2 id="law-and-your-obligations">17. Law and Your Obligations</h2>
       <p>
-        BitRegalo operates in compliance with applicable New Zealand laws:
-      </p>
-      <ul>
-        <li><strong>AML/CFT Act 2009:</strong> BitRegalo is not a reporting entity but implements voluntary CDD for high-risk scenarios</li>
-        <li><strong>FMC Act 2013:</strong> Tokens are utility credits, not financial products</li>
-        <li><strong>Privacy Act 2020:</strong> Data handling complies with Information Privacy Principles</li>
-        <li><strong>Fair Trading Act 1986:</strong> No misleading conduct or false representations</li>
-      </ul>
-      <p>
-        Users are responsible for compliance with laws in their own jurisdictions.
+        BitRegalo® Limited is a New Zealand company and intends to operate in line with the New Zealand law that applies to it. Law differs by country. Users, and organisations that run a workspace, are responsible for compliance with the laws that apply to them in their own jurisdictions.
       </p>
 
       <h2 id="severability">18. Severability</h2>
@@ -234,7 +184,7 @@ export default function TermsPage() {
 
       <h2 id="contact-information">20. Contact Information</h2>
       <p>
-        For questions about these Terms, please contact BitRegalo® Limited through our official website or support channels.
+        For questions about these Terms, please contact BitRegalo® Limited through the <Link href="/contact">contact page</Link> on our website.
       </p>
       <p>
         <strong>BitRegalo® Limited</strong><br />

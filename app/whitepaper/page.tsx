@@ -7,19 +7,18 @@ import remarkGfm from "remark-gfm"
 import { DocPage, DocTable, PrintButton, type TocItem } from "@/components/site/doc-page"
 
 /*
- * The whitepaper is kept as Markdown (exported from the original Word document) and
- * rendered on the server. The export's own table of contents, blank headings and
- * horizontal rules are formatting left over from Word; the words are rendered as
- * written. Each top-level chapter becomes a section with an id, so the page's
- * contents list links straight to it.
+ * The whitepaper is kept as Markdown in app/docs and rendered on the server. Each
+ * top-level heading becomes a section with an id, so the page's contents list links
+ * straight to it. PRODUCT.md (Vision) is the internal source of truth; this document
+ * says the same thing for outside readers. Change them together.
  */
 
 export const metadata: Metadata = {
   title: "Whitepaper",
-  description: "The BitRegalo whitepaper: the design and purpose of the platform, and the escrow, RFP and RTS protocols it is built on.",
+  description: "The BitRegalo whitepaper: infrastructure that lets a platform keep records nobody can edit and make payment commitments that execute as agreed. What is built, what is planned, and the rules the protocol keeps.",
 }
 
-const FILE = path.join(process.cwd(), "app/docs/V4 BitRegalo Whitepaper-20260113130914.md")
+const FILE = path.join(process.cwd(), "app/docs/bitregalo-whitepaper.md")
 const BR = "{{br}}"
 
 type Section = { id: string; title: string; body: string; levels: number[] }
@@ -41,9 +40,9 @@ function cleanHeading(text: string) {
 function prepare(raw: string): { sections: Section[]; toc: TocItem[] } {
   const lines = raw.split(/\r?\n/)
 
-  // The body starts at the first chapter heading after Word's own table of contents.
+  // The body starts at the first chapter heading (after a "Table of Contents" line, if the file has one).
   const tocLine = lines.findIndex((l) => l.trim() === "Table of Contents")
-  let start = lines.findIndex((l, i) => i > Math.max(tocLine, 0) && /^#\s+\S/.test(l))
+  let start = lines.findIndex((l, i) => i > tocLine && /^#\s+\S/.test(l))
   if (start < 0) start = 0
 
   const sections: Section[] = []
@@ -158,7 +157,7 @@ export default async function WhitepaperPage() {
   const { sections, toc } = prepare(raw)
 
   return (
-    <DocPage title="BitRegalo Whitepaper" meta="Version 4 · By Al Baqshi Mohammed" toc={toc} action={<PrintButton />}>
+    <DocPage title="BitRegalo Whitepaper" meta="Version 5 · 5 October 2026 · By Al Baqshi Mohammed" toc={toc} action={<PrintButton />}>
       {sections.map((s) => (
         <Fragment key={s.id}>
           <h2 id={s.id}>{s.title}</h2>

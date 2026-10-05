@@ -2,7 +2,7 @@
 import { useState } from "react"
 import { RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Chip, money, moveCls } from "./demo-parts"
+import { Chip, fmt, moveCls } from "./demo-parts"
 
 /*
  * The mechanism, shown rather than described: one escrow, and the only three things
@@ -36,7 +36,7 @@ const COPY: Record<State, { status: string; where: string; line: string }> = {
   expired: {
     status: "Returned",
     where: "Back with the buyer",
-    line: "The deadline passed with no decision. From then on the payment can only go back to the buyer, and anyone can trigger that return.",
+    line: "The deadline passed with no decision, and someone triggered the return. Anyone can. The payment could only go back to the buyer.",
   },
 }
 
@@ -64,7 +64,7 @@ export function EscrowPanel({ deal }: { deal: Deal }) {
       </div>
 
       <p className="mt-3 flex items-baseline gap-2">
-        <span className="t-num text-[2.5rem] font-[620] leading-none tracking-tight sm:text-5xl">{money(deal.amount)}</span>
+        <span className="t-num text-[2.5rem] font-[620] leading-none tracking-tight sm:text-5xl">{fmt(deal.amount)}</span>
         <span className="text-base font-[560] text-muted-foreground">USDT</span>
       </p>
       <p className="mt-1.5 text-sm text-muted-foreground">{c.where}</p>
@@ -93,7 +93,7 @@ export function EscrowPanel({ deal }: { deal: Deal }) {
         {state === "held" ? (
           <div className="mt-3 grid grid-cols-3 gap-2">
             <button type="button" className={moveCls} onClick={() => setState("released")}>Release</button>
-            <button type="button" className={moveCls} onClick={() => setState("expired")}><span className="sm:hidden">Expire</span><span className="hidden sm:inline">Let it expire</span></button>
+            <button type="button" className={moveCls} onClick={() => setState("expired")}><span className="sm:hidden">Deadline</span><span className="hidden sm:inline">Deadline passes</span></button>
             <button type="button" className={moveCls} onClick={() => setState("handedBack")}>Hand back</button>
           </div>
         ) : (

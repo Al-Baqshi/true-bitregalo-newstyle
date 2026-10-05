@@ -5,6 +5,11 @@
 > Written 2 Oct 2026 from the repository, the live app copy and the owner's design brief, without a
 > separate interview (the owner asked for the work to carry on). Items marked *(inferred)* were not
 > confirmed in words and should be corrected here if wrong.
+>
+> **5 Oct 2026: the owner corrected the vision.** BitRegalo is infrastructure that platforms connect
+> to, not a consumer payments app. The Vision section below is the source of truth; the whitepaper
+> (`app/docs/bitregalo-whitepaper.md`) and the protocol reference in the contracts repo
+> (`docs/PROTOCOL.md`) say the same thing for outside readers and for engineers.
 
 ## Platform
 
@@ -13,56 +18,114 @@ web
 A native mobile app is planned by the owner. The web app must already work well on a phone, and its
 navigation is organised so the same structure can carry over to that app.
 
+## Vision
+
+BitRegalo is infrastructure for decentralising the part of a system that has to be trusted: its
+financial actions and its sensitive records. A platform that already takes payments, a bank, an
+enterprise or a startup connects to BitRegalo so that the records it keeps and the promises it
+makes are held by public contracts that nobody can edit afterwards, the platform's own developers
+included.
+
+It gives a connected platform two things:
+
+- **Proof.** A record of what happened (an award, a sale, a payment, a redemption) written once,
+  readable by anyone, changeable by no one.
+- **Guaranteed commitments.** A promise about a payment (hold it until the work is done, hand it
+  back, return it after the deadline) locked in a contract, so it executes exactly as agreed when it
+  is triggered. A refund is a refund.
+
+Each organisation gets its own contracts, called a workspace. The protocol is not tied to one
+network. EVM is the first, with BNB Smart Chain as the reference deployment; private chains and
+other networks follow, and BitRegalo may run a network of its own when customers or volume call for
+it. Platforms reach BitRegalo through an SDK and an API. The web app at `/app` is the reference
+implementation and BitRegalo's own public workspace. It is not the whole product.
+
+Industries (construction, marketplaces, nonprofits, subscriptions, trade) are examples of use. They
+are never the product.
+
+### What is built and what is designed
+
+Say only what is built as built. Everything in the second list is described as planned.
+
+Built and running on the practice network:
+
+- Workspaces: an organisation's own contracts (records and rules, a vault, a treasury its admin owns).
+- Commitments: escrow with three fixed outcomes, and direct settlement, both through the vault.
+- Records: every request, offer, award, listing, payment, sale and redemption is a permanent record
+  with its parties, amounts and an optional reference. Nothing stored can be deleted.
+- Tokens an organisation issues and sells for a stablecoin, and that holders redeem.
+- A marketplace index for descriptions, signed by the record's owner.
+- A page per workspace that gives a developer the addresses, interface files and code examples to
+  read records and let users sign actions from another site.
+
+Designed, not built:
+
+- **General records**: a record of any event a platform wants to prove (a subscription, a sale made
+  elsewhere, an approval), written by the platform's own key.
+- **Platform-triggered commitments**: a key a workspace authorises to act for it from a server, and
+  commitment types such as a refund window.
+- **A server-side API with keys, webhooks and an indexer**, and a published **SDK**.
+- **A second network.** One deployment exists; the code assumes a single network.
+- An independent audit, mainnet, and signing in without a wallet.
+
 ## Users
 
-- **People in organisations who pay, get paid, or commission work**: a builder paying subcontractors,
-  a charity releasing a grant, a business selling vouchers or memberships, a freelancer invoicing a
-  client. Many have never used a blockchain. They arrive wanting to do one thing (pay someone, get
-  paid, post a request, sell something) and need to see where their payment is at every moment.
+- **Platforms that connect**: product owners and developers at payment platforms, marketplaces,
+  enterprises, banks and startups. They keep their own product and connect BitRegalo for the records
+  and commitments that must not depend on trusting them. They read the whitepaper, the protocol
+  reference and the "Connect a platform" page first. This is the customer BitRegalo is built for.
 - **Workspace admins**: the person who launches an organisation's workspace, sets its rules and fees,
   and runs its shop, treasury and tokens.
-- **Suppliers and buyers invited into someone else's workspace**: they answer requests, take listings,
-  pay links and redeem what they bought.
+- **Buyers and suppliers inside a workspace or on the network**: they pay, get paid, answer requests,
+  take listings and redeem what they bought. Many have never used a blockchain and need to see where
+  their payment is at every moment.
 - **The platform operator** (BitRegalo itself): watches platform earnings, gas sponsorship and
   contract versions.
-- **Evaluators** *(inferred)*: finance, legal and technical people deciding whether to trust the
-  protocol. They read the landing page, the protocol pages and the whitepaper.
+- **Evaluators**: investors and finance, legal and technical people deciding whether to trust the
+  protocol. They read the landing page, the whitepaper and the protocol pages, and they check claims
+  against the chain.
 
 ## Product Purpose
 
-BitRegalo is decentralised infrastructure for commerce: it turns a promise about a payment into a
-rule a public contract enforces. It offers four building blocks, all on the same contracts:
+BitRegalo turns a record or a promise about a payment into something a public contract keeps, so it
+no longer depends on trusting whoever runs the system. The building blocks, all on the same
+contracts:
 
+- **Records**: who asked, who answered, who was chosen, what was paid, sold or redeemed, and when.
+  Written once. Nothing can be edited or deleted afterwards.
 - **Escrow**: a payment held until the work is done. The buyer can only release it, the supplier can
   only hand it back, and after the deadline it can only return to the buyer.
-- **Requests (RFP)**: "I need this." Suppliers answer with a price and a time; the buyer chooses
-  one and settles by escrow, by direct payment, or just records the choice.
-- **Listings (RTS)**: "I offer this." A fixed price and delivery time, open to anyone or to one
-  named buyer.
-- **Workspaces (entities)**: an organisation's own copy of the infrastructure, with its own
-  contracts, rules, fees, accepted currencies, tokens, shop and treasury.
+- **Requests** and **listings**: "I need this" and "I offer this", settled by escrow, by direct
+  payment, or just recorded.
+- **Workspaces**: an organisation's own copy of the infrastructure, with its own contracts, rules,
+  fees, accepted currencies, tokens, shop and treasury.
 
-There are two ways to use it:
+There are three ways to use it, in this order of importance:
 
-1. **The BitRegalo network**, for anyone, anywhere. Send USDT or a gift to someone, hold a payment in
-   escrow for someone, ask for things and offer them in a marketplace browsed by country. USDT is
-   the everyday currency between people (tUSD on the practice network). It runs on BitRegalo's own
-   public workspace.
-2. **Workspaces for organisations.** An organisation (for example an NGO platform, or a
-   construction marketplace) runs its own workspace: its own contracts and rules, its own currencies
-   (such as a local stablecoin) and its own tokens. Everything done inside it is recorded under it.
+1. **Connect a platform.** An existing product reads BitRegalo's records and has its users sign
+   BitRegalo actions from inside its own site, app or back office. Today this is done with the public
+   interface files and code examples; an SDK and a server-side API are planned.
+2. **Run a workspace.** An organisation launches its own contracts and uses them through the web app
+   or its own platform. Everything done inside it is recorded under it.
+3. **Use the BitRegalo network.** BitRegalo's own public workspace, open to anyone, and the place to
+   try every part of the protocol: pay someone, hold a payment in escrow, ask for things and offer
+   them in a marketplace browsed by country.
 
-Success is a first-time visitor understanding this within seconds, and a first-time user sending
-a payment, holding a payment in escrow, or posting a request without needing to understand blockchains.
+Success is an evaluator understanding in a minute what BitRegalo makes impossible to fake, and a
+developer connecting a first record or a first held payment in an afternoon.
 
 ## Positioning
 
-- **Non-custodial escrow with fixed outcomes.** Nobody else, including BitRegalo and the workspace
-  admin, can move a held payment anywhere but to the supplier or back to the buyer.
-- **Each organisation runs its own contracts.** A workspace is a pair of contracts (records + vault)
-  plus a treasury owned by its admin, not an account on someone else's ledger.
-- **A global marketplace by country, on public rails.** Requests and listings are public records;
-  their descriptions, country and category are signed by the poster's wallet.
+- **Records nobody can edit, including BitRegalo and the platform that wrote them.** The proof does
+  not depend on trusting the system that produced it.
+- **Commitments with fixed outcomes.** Nobody, including BitRegalo and the workspace admin, can move
+  a held payment anywhere but to the supplier or back to the buyer.
+- **Each organisation runs its own contracts.** A workspace is a set of contracts (records and rules,
+  a vault, a treasury its admin owns), not an account on someone else's ledger.
+- **Infrastructure, not a payment service.** BitRegalo never holds anyone's tokens and no BitRegalo
+  server is in a payment's path.
+- **Not tied to one network.** EVM first; the same protocol is meant to run on private chains and
+  other networks.
 
 ## Operating Context
 
@@ -118,9 +181,9 @@ Redeem, Payment link, Platform fee, Service fee, Practice network. The contract'
 Constraints:
 
 - **Legal framing is part of the product.** BitRegalo® Limited (New Zealand) presents itself as a
-  technology platform providing decentralised escrow infrastructure, not a financial institution or
-  payment service. There is no BitRegalo token and no offering. Copy must not add claims that
-  contradict the legal notice, the terms, or the KYC policy.
+  technology company providing decentralised infrastructure for records and payment commitments, not
+  a financial institution or payment service. There is no BitRegalo token and no offering. Copy must
+  not add claims that contradict the legal notice, the terms, or the KYC policy.
 - No real customers, volumes, testimonials, audits or certifications exist to cite. Do not invent them.
 - All chain data is read live; pages must tolerate loading, empty and wrong-network states.
 
@@ -139,8 +202,8 @@ Constraints:
 
 - A working deployment on BNB Smart Chain Testnet, with contract addresses and ABIs in
   `lib/bitregalo/bitregalo.json`, and every record viewable on the public explorer.
-- Protocol descriptions (`app/protocols/[slug]`), a whitepaper (`app/whitepaper`), and legal pages
-  (terms, privacy, KYC policy, token terms).
+- Protocol descriptions (`app/protocols/[slug]`), the whitepaper (`app/whitepaper`, version 5 of
+  5 Oct 2026), and legal pages (terms, privacy, identity checks).
 - No customer logos, case studies, press, usage numbers or audit reports. Demonstrations on the
   marketing pages are illustrative and must be labelled as examples.
 

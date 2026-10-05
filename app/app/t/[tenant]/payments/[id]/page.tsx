@@ -8,7 +8,7 @@ import { useTenant } from "@/lib/bitregalo/tenant"
 import { usePayment } from "@/lib/bitregalo/hooks"
 import { decodeLabel, useSettlementTokens, useProjects } from "@/lib/bitregalo/instances"
 import { useInstanceRules } from "@/lib/bitregalo/instance-rules"
-import { addresses, short } from "@/lib/bitregalo/config"
+import { addresses, chain, short } from "@/lib/bitregalo/config"
 import { Card, Addr, Amount, PageHead, Pill, Facts, Fact, Empty, RowsSkeleton } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
 import { OlderContract } from "@/components/app/older-contract"
@@ -65,7 +65,7 @@ export default function Receipt({ params }: { params: Promise<{ id: string }> })
       <PageHead
         back={back}
         title={`Payment #${raw}`}
-        intro="A receipt anyone with the link can check. It is recorded on BNB Smart Chain Testnet, where nobody can change it."
+        intro={`A receipt anyone with the link can check. It is a public record, today on ${chain.name}, and nobody can change it.`}
         action={<Button onClick={copy}>{copied ? <Check /> : <Copy />}{copied ? "Copied" : "Copy receipt link"}</Button>}
       />
 

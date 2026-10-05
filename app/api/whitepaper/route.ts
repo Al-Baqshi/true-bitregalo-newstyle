@@ -4,14 +4,11 @@ import path from "path"
 
 export async function GET() {
   try {
-    const whitepaperPath = path.join(
-      process.cwd(),
-      "app/docs/V4 BitRegalo Whitepaper-20260113130914.md"
-    )
+    const whitepaperPath = path.join(process.cwd(), "app/docs/bitregalo-whitepaper.md")
     const content = fs.readFileSync(whitepaperPath, "utf-8")
     return new NextResponse(content, {
       headers: {
-        "Content-Type": "text/plain; charset=utf-8",
+        "Content-Type": "text/markdown; charset=utf-8",
       },
     })
   } catch (error) {

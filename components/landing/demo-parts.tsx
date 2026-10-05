@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
  * load the app's component library (and its wallet code) just to draw a status chip. */
 
 /** 12500 → "12,500.00". Written out by hand so the server and the browser agree. */
-export function money(n: number) {
+export function fmt(n: number) {
   const [i, f] = n.toFixed(2).split(".")
   return i.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "." + f
 }
@@ -26,6 +26,6 @@ export function Chip({ tone, children }: { tone: keyof typeof TONES; children: R
   )
 }
 
-/** The demonstrations' own buttons: quiet outlines, so the page's one primary action stays the app. */
+/** The demonstrations' own buttons: quiet outlines, so the page's one primary action stays the hero's. */
 export const moveCls =
   "flex min-h-11 w-full items-center justify-center rounded-lg border border-border-strong px-2 text-sm font-[560] outline-none transition-[background-color,transform] duration-150 ease-out hover:bg-secondary active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"

@@ -3,7 +3,7 @@ import { useRef, useState, type KeyboardEvent } from "react"
 import { ArrowRight, RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BUYER, EscrowPanel, FIRST_DEAL, type Deal } from "./escrow-demo"
-import { Chip, money, moveCls } from "./demo-parts"
+import { Chip, fmt, moveCls } from "./demo-parts"
 
 /*
  * Three building blocks, each doing its one job, in the first screen of the site.
@@ -13,7 +13,8 @@ import { Chip, money, moveCls } from "./demo-parts"
  *   Listing  "I offer this": a fixed price and time, taken as it stands.
  *
  * A chosen offer or a taken listing hands its amount to the escrow tab, so the three
- * read as one story: agree on the work, then hold the payment until it is done.
+ * read as one story: agree on the work, then hold the payment until it is done. Each
+ * step is a record; the captions say which.
  * Every name and amount is made up, and the caption says so.
  */
 type Tab = "escrow" | "request" | "listing"
@@ -25,7 +26,7 @@ const TABS: { key: Tab; label: string }[] = [
 const CAPTION: Record<Tab, string> = {
   escrow:
     "An example with made-up names. The buyer can only release; the supplier can only hand back; after the deadline the payment can only return to the buyer, and anyone can trigger that. Nobody can send it anywhere else, including BitRegalo.",
-  request: "An example with made-up names. The request, every offer and the buyer's choice are public records.",
+  request: "An example with made-up names. The request, every offer and the buyer's choice are public records. None of them can be edited afterwards.",
   listing: "An example with made-up names. A listing can be open to anyone, as here, or made for one named buyer.",
 }
 
@@ -127,7 +128,7 @@ function RequestPanel({ onEscrow }: { onEscrow: (d: Deal) => void }) {
                 <p className={cn("truncate text-sm font-[560] transition-colors duration-300", lost ? "text-subtle" : "text-foreground")}>{o.name}</p>
                 <p className="text-xs text-muted-foreground">Done in {o.days} days</p>
               </div>
-              <span className={cn("t-num text-sm font-[560] transition-colors duration-300", lost ? "text-subtle" : "text-foreground")}>{money(o.amount)}</span>
+              <span className={cn("t-num text-sm font-[560] transition-colors duration-300", lost ? "text-subtle" : "text-foreground")}>{fmt(o.amount)}</span>
               <span className="flex w-[5.75rem] shrink-0 justify-end">
                 {pick === null ? (
                   <button type="button" className={cn(moveCls, "px-3")} onClick={() => setChosen(i)} aria-label={`Choose ${o.name}`}>Choose</button>
@@ -145,7 +146,7 @@ function RequestPanel({ onEscrow }: { onEscrow: (d: Deal) => void }) {
       <div className="mt-4">
         <p className="min-h-15 max-w-[46ch] text-sm text-foreground" role="status" aria-live="polite">
           {pick
-            ? `${BUYER} chose ${pick.name}. The choice is on the record, and ${money(pick.amount)} USDT goes into escrow before the work starts.`
+            ? `${BUYER} chose ${pick.name}. The choice is on the record, and ${fmt(pick.amount)} USDT goes into escrow before the work starts.`
             : "Three suppliers answered with a price and a time. The buyer chooses one."}
         </p>
         {pick && (
@@ -177,7 +178,7 @@ function ListingPanel({ onEscrow }: { onEscrow: (d: Deal) => void }) {
       <p className="flare mt-3 text-2xl font-[620] leading-tight">{LISTING.title}</p>
 
       <p className="mt-4 flex items-baseline gap-2">
-        <span className="t-num text-[2.5rem] font-[620] leading-none tracking-tight sm:text-5xl">{money(LISTING.amount)}</span>
+        <span className="t-num text-[2.5rem] font-[620] leading-none tracking-tight sm:text-5xl">{fmt(LISTING.amount)}</span>
         <span className="text-base font-[560] text-muted-foreground">USDT</span>
       </p>
       <p className="mt-1.5 text-sm text-muted-foreground">A fixed price, set by the supplier</p>
@@ -191,7 +192,7 @@ function ListingPanel({ onEscrow }: { onEscrow: (d: Deal) => void }) {
       <div className="mt-4">
         <p className="min-h-15 max-w-[46ch] text-sm text-foreground" role="status" aria-live="polite">
           {taken
-            ? `${BUYER} took it at the listed price. ${money(LISTING.amount)} USDT now waits in escrow until the report is delivered.`
+            ? `${BUYER} took it at the listed price. ${fmt(LISTING.amount)} USDT now waits in escrow until the report is delivered.`
             : "The supplier set the price and the time. Any buyer can take it as it stands, with no back and forth."}
         </p>
         {taken ? (

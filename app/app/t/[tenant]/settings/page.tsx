@@ -114,7 +114,7 @@ export default function AdminPage() {
                   <input className={cn(inputCls, "t-mono")} value={token} onChange={(ev) => setToken(ev.target.value)} placeholder="0x…" autoComplete="off" spellCheck={false} />
                 </Field>
               </div>
-              <Field label="Service fee per payment" hint="A flat amount in this token, added to each payment and paid by the buyer. It goes to BitRegalo to cover network costs. 0 is allowed.">
+              <Field label="Service fee per payment" hint="A flat amount in this token, added to each payment and paid by the buyer. It goes to BitRegalo. Network fees are separate: each person pays their own. 0 is allowed.">
                 <input className={cn(inputCls, "t-num max-w-48")} type="number" inputMode="decimal" min="0" step="any" value={fee} onChange={(ev) => setFee(ev.target.value)} />
               </Field>
               <div>

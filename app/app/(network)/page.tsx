@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useAccount, useReadContract } from "wagmi"
-import { ArrowRight, Check } from "lucide-react"
+import { ArrowRight, Cable, Check } from "lucide-react"
 import { abis, addresses, PUBLIC_WORKSPACE_ID } from "@/lib/bitregalo/config"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import { useSettlementTokens } from "@/lib/bitregalo/instances"
@@ -10,6 +10,7 @@ import { categoryLabel, countryName, guessCountry, listEntries, marketAvailable,
 import { NEW_ACTIONS } from "@/components/app/nav"
 import { Addr, Amount, Card, Empty, LedgerRow, PageHead, RowsSkeleton, Section } from "@/components/app/ui"
 import { ConnectButton } from "@/components/app/connect-button"
+import { ThreeWays } from "@/components/app/explain"
 import { FaucetButton } from "@/components/app/faucet"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -44,7 +45,8 @@ export default function NetworkHome() {
     <div className="space-y-12">
       <PageHead
         title="BitRegalo network"
-        intro="Open to everyone, anywhere. Payments, escrows, requests and listings here are settled by BitRegalo's public contracts, and people pay each other in USDT (tUSD on this practice network)."
+        intro="BitRegalo's reference app and its own public workspace, open to everyone. What happens here is kept by public contracts: records nobody can edit afterwards, and held payments that execute exactly as agreed. People pay each other in USDT (tUSD on this practice network)."
+        action={<Button asChild variant="secondary"><Link href={`${t.base}/connect`}><Cable />Connect a platform</Link></Button>}
       />
 
       <Section title="What would you like to do?">
@@ -79,13 +81,13 @@ export default function NetworkHome() {
               <span className="t-subheading flex-1 text-muted-foreground group-hover:text-foreground">Not sure yet?</span>
               <ArrowRight className="size-4 shrink-0 text-subtle transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden />
             </span>
-            <span className="mt-1.5 text-sm text-muted-foreground">See how the network and organisation workspaces work, in plain words.</span>
+            <span className="mt-1.5 text-sm text-muted-foreground">See what BitRegalo is and the three ways to use it, in plain words.</span>
           </Link>
         </div>
       </Section>
 
       {settingUp && (
-        <Section title="First time here? Three steps" description="This is a practice network. Its tokens are free and have no value, so you can try everything.">
+        <Section title="First time here? Three steps" description="This is a practice network. Its tokens are free and have no value, so you can try everything. The contracts have not been independently audited.">
           <ol className="overflow-hidden rounded-xl border border-border bg-card">
             <SetupStep n={1} done={isConnected} title="Connect a wallet" body="A wallet such as MetaMask is how you sign in and approve each step. BitRegalo never holds your keys." action={!isConnected && <ConnectButton />} />
             <SetupStep n={2} done={funded} title="Take some practice tokens" body="1,000 tUSD a day from the faucet. It has no value; it is there to try things with." action={isConnected && !funded && <FaucetButton size="default" variant="default" label="Get 1,000 tUSD" onDone={() => balance.refetch()} />} />
@@ -117,23 +119,13 @@ export default function NetworkHome() {
 
       <section className="border-t border-border pt-12">
         <Section
-          title="For organisations"
-          action={
-            <>
-              <Button asChild variant="secondary"><Link href="/app/workspaces">See workspaces</Link></Button>
-              <Button asChild variant="ghost"><Link href="/app/launch">Create a workspace</Link></Button>
-            </>
-          }
+          title="Three ways to use BitRegalo"
+          description="This app is the reference implementation, not the whole product. BitRegalo is infrastructure a platform connects to, so its records cannot be edited afterwards and its payment commitments execute as agreed."
+          action={<Button asChild variant="secondary"><Link href="/app/launch">Create a workspace</Link></Button>}
         >
-          <div className="max-w-[66ch] space-y-3 text-base text-muted-foreground">
-            <p>
-              An organisation can run its own <span className="font-[560] text-foreground">workspace</span>: its own contracts, rules and fees, the
-              currencies it accepts (a local stablecoin, for example), its own tokens, shop and treasury. Everything done in a workspace is
-              recorded under that workspace, apart from the network.
-            </p>
-            <p>Two examples of what that could look like:</p>
-          </div>
-          <dl className="mt-5 grid gap-x-10 gap-y-5 sm:grid-cols-2">
+          <ThreeWays onNetwork />
+          <p className="mt-8 max-w-[66ch] text-base text-muted-foreground">Two examples of what a connected platform or a workspace could look like:</p>
+          <dl className="mt-4 grid gap-x-10 gap-y-5 sm:grid-cols-2">
             <div>
               <dt className="t-subheading">An aid platform</dt>
               <dd className="mt-1 text-sm text-muted-foreground">

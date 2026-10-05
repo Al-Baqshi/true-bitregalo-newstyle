@@ -11,7 +11,7 @@ const WAYS = [
     label: "Email",
     href: "mailto:ceo@bitregalo.com",
     value: "ceo@bitregalo.com",
-    note: "Best for questions about the protocols, the app, or a project you want to run through escrow.",
+    note: "Best for a platform you want to connect, a workspace you want to launch, or a question about the protocol.",
   },
   {
     label: "Phone",

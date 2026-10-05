@@ -5,25 +5,23 @@ import { ArrowDown, ArrowRight } from "lucide-react"
 /*
  * The four building blocks, drawn the way they fit together rather than as four
  * equal tiles: a request or a listing decides who does the work and for how much,
- * an escrow holds the payment until it is done, and a workspace (the dashed boundary)
- * holds all of it for one organisation. The BitRegalo network is BitRegalo's own
- * workspace, open to everyone.
+ * an escrow holds the payment until it is done, every step is written as a record
+ * nobody can edit, and a workspace (the dashed boundary) holds all of it for one
+ * organisation. The BitRegalo network is BitRegalo's own workspace, open to everyone.
+ * The contract's own names for these (RFP, RTS) stay in the protocol reference.
  */
-const HOLDS = ["Its own contracts", "Rules and fees", "Currencies it accepts, such as a local stablecoin", "Tokens", "Shop", "Treasury"]
+const HOLDS = ["Its own contracts", "Rules and fees", "Tokens it accepts, such as a local stablecoin", "Tokens it issues", "Shop", "Treasury"]
 
 const OUTCOMES = [
-  { name: "Release", text: "the buyer pays the supplier." },
-  { name: "Hand back", text: "the supplier returns it to the buyer." },
-  { name: "Deadline passes", text: "it can only go back to the buyer." },
+  { name: "Released", text: "the buyer pays the supplier." },
+  { name: "Handed back", text: "the supplier gives it back to the buyer." },
+  { name: "Returned", text: "after the deadline it can only go back to the buyer, and anyone can trigger that." },
 ]
 
-function Block({ name, aside, used, children, className = "" }: { name: string; aside?: string; used: string; children: ReactNode; className?: string }) {
+function Block({ name, used, children, className = "" }: { name: string; used: string; children: ReactNode; className?: string }) {
   return (
     <div className={`rounded-xl border border-border bg-card p-5 sm:p-6 ${className}`}>
-      <h3 className="t-heading">
-        {name}
-        {aside && <span className="font-[450] text-muted-foreground"> {aside}</span>}
-      </h3>
+      <h3 className="t-heading">{name}</h3>
       <div className="mt-2 text-base text-muted-foreground">{children}</div>
       <p className="mt-4 border-t border-border pt-3 text-sm text-muted-foreground">
         <span className="font-[560] text-foreground">Used by </span>
@@ -53,7 +51,7 @@ export function BuildingBlocks() {
         <div className="max-w-3xl">
           <h2 className="t-headline">Four building blocks, one set of public contracts</h2>
           <p className="t-lede mt-5">
-            Each does one job, and they fit together. A request or a listing settles who does the work and for how much. An escrow holds the payment until it is done. A workspace holds all of it for one organisation.
+            Each does one job, and they fit together. A request or a listing settles who does the work and for how much. An escrow holds the payment until it is done. Every step is a record nobody can edit, and a workspace holds all of it for one organisation.
           </p>
         </div>
 
@@ -61,7 +59,7 @@ export function BuildingBlocks() {
           <div className="px-2 pt-2 sm:px-0 sm:pt-0">
             <h3 className="flare text-2xl font-[620] tracking-tight">Workspace</h3>
             <p className="mt-2 max-w-[68ch] text-base text-muted-foreground">
-              An organisation&apos;s own copy of the infrastructure. Everything done inside it is recorded under it. Used by organisations that run a platform, a programme or a supply chain.
+              An organisation&apos;s own contracts. Everything done inside it is recorded under it. Used by organisations that run a platform, a programme or a supply chain.
             </p>
             <ul className="mt-4 flex flex-wrap gap-2" aria-label="What a workspace has of its own">
               {HOLDS.map((h) => (
@@ -71,11 +69,11 @@ export function BuildingBlocks() {
           </div>
 
           <div className="mt-6 grid gap-3 sm:gap-4 lg:mt-8 lg:grid-cols-[minmax(0,1fr)_7rem_minmax(0,1fr)] lg:grid-rows-2 lg:gap-x-0">
-            <Block name="Requests" aside="(RFP)" used="buyers who want to compare prices, from a household job to a building package." className="lg:col-start-1 lg:row-start-1">
+            <Block name="Requests" used="buyers who want to compare prices, from a household job to a building package." className="lg:col-start-1 lg:row-start-1">
               <p>&ldquo;I need this.&rdquo; Suppliers answer with a price and a time, and the buyer chooses one offer.</p>
             </Block>
             <Joint label="Offer chosen" className="lg:col-start-2 lg:row-start-1 lg:px-3" />
-            <Block name="Listings" aside="(RTS)" used="suppliers who sell a set job or product." className="lg:col-start-1 lg:row-start-2">
+            <Block name="Listings" used="suppliers who sell a set job or product." className="lg:col-start-1 lg:row-start-2">
               <p>&ldquo;I offer this.&rdquo; A fixed price and delivery time, open to anyone or to one named buyer.</p>
             </Block>
             <Joint label="Listing taken" className="lg:col-start-2 lg:row-start-2 lg:px-3" />
@@ -94,13 +92,17 @@ export function BuildingBlocks() {
                   </div>
                 ))}
               </dl>
-              <p className="mt-4 text-sm">A request or a listing can also be paid straight away, or just recorded, with no payment at all.</p>
+              <p className="mt-4 text-sm">A request or a listing can also be paid directly, or recorded only, with no payment at all.</p>
             </Block>
           </div>
 
+          <Block name="Records" used="anyone who has to show later what happened: a supplier who lost a tender, a customer owed a refund, an auditor." className="mt-3 sm:mt-4">
+            <p>Every step above is written once: who asked, who answered, who was chosen, what was paid, sold or redeemed, and when. Anyone can read it. Nobody can edit or delete it, including the organisation that wrote it and BitRegalo.</p>
+          </Block>
+
           <p className="mt-6 px-2 pb-1 text-base text-muted-foreground sm:px-0 lg:mt-8">
-            <span className="font-[560] text-foreground">The BitRegalo network</span> is BitRegalo&apos;s own workspace, open to everyone.{" "}
-            <Link href="#organisations" className="text-gold underline decoration-1 underline-offset-4 hover:decoration-2">An organisation can run its own.</Link>
+            <span className="font-[560] text-foreground">The BitRegalo network</span> is BitRegalo&apos;s own public workspace, open to everyone.{" "}
+            <Link href="#workspace" className="text-gold underline decoration-1 underline-offset-4 hover:decoration-2">An organisation can run its own.</Link>
           </p>
         </div>
       </div>

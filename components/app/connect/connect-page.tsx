@@ -16,10 +16,12 @@ import {
 } from "./samples"
 
 /**
- * How an organisation uses its workspace from its own platform. A workspace is a set of
- * public contracts, so any site, app or back office can read its records and let its users
- * sign the same actions this app offers. This page gives the addresses, the ABIs, working
- * code with the addresses filled in, the links that need no code, and the marketplace API.
+ * How a platform connects to BitRegalo. The platform keeps its own product; a workspace's
+ * public contracts hold the records and payment commitments that must not depend on
+ * trusting it. The page says what is possible today (read everything without a key, have
+ * users sign actions from their own wallets, payment links, the marketplace index) and
+ * what is planned, then gives the addresses, the ABIs, working code with the addresses
+ * filled in, the links that need no code, and the marketplace API.
  */
 export function ConnectPlatform() {
   const t = useTenant()
@@ -39,6 +41,8 @@ export function ConnectPlatform() {
   const token = tokens.accepted[0]
   const ctx: SampleContext = {
     label: t.isPublic ? `The BitRegalo network (workspace ${id})` : `Workspace ${id}`,
+    chainName: chain.name,
+    chainId: chain.id,
     records: t.instance,
     vault: t.vault,
     version: Number(t.version),
@@ -54,7 +58,7 @@ export function ConnectPlatform() {
   const feeText = rules.loaded ? `${rules.feeBps / 100}%` : null
 
   const files = [
-    { title: "Records contract", body: "Requests, offers, listings, payments and the shop. The contracts call it the instance.", file: "bitregalo-records.abi.json", abi: abis.instance },
+    { title: "Records contract", body: "The workspace's records and rules: requests, offers, listings, payments and the shop.", file: "bitregalo-records.abi.json", abi: abis.instance },
     { title: "Vault", body: "Holds payments in escrow and settles direct payments: release, hand back, return.", file: "bitregalo-vault.abi.json", abi: abis.vault },
     { title: "Workspace treasury", body: "Holds the workspace's own tokens, such as shop stock. Only the admin can move them out. Version 1 and later.", file: "bitregalo-workspace-treasury.abi.json", abi: abis.workspaceTreasury },
     { title: "ERC-20 token", body: "Balances and approvals for any token, USDT included.", file: "erc20.abi.json", abi: abis.erc20 },
@@ -65,14 +69,20 @@ export function ConnectPlatform() {
     <div className="space-y-14">
       <PageHead
         title="Connect a platform"
-        intro={t.isPublic
-          ? "Use the BitRegalo network from your own website, app or back office. Everything on this page is public: there is nothing to apply for."
-          : "Use this workspace from your own website, app or back office. Everything on this page is public: there is nothing to apply for."}
+        intro={
+          <>
+            Your platform keeps its own product, its customers and its interface. BitRegalo holds the part that must not depend on
+            trusting your platform: records nobody can edit afterwards, your own developers included, and payment commitments that
+            execute exactly as agreed. {t.isPublic
+              ? "This page connects you to the BitRegalo network, BitRegalo's own public workspace."
+              : "This page connects you to this workspace."}
+          </>
+        }
       />
 
       <nav aria-label="On this page" className="-mt-6 flex flex-wrap gap-x-5 gap-y-1 text-sm">
         {[
-          ["contracts", "Contracts"], ["abis", "ABIs"], ["code", "Code examples"],
+          ["today", "Possible today"], ["contracts", "Contracts"], ["abis", "ABIs"], ["code", "Code examples"],
           ["links", "Links"], ["market-api", "Marketplace API"], ["next", "Coming next"],
         ].map(([href, label]) => (
           <a key={href} href={`#${href}`} className="inline-flex min-h-9 items-center text-muted-foreground underline decoration-border-strong decoration-1 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground pointer-coarse:min-h-11">
@@ -81,32 +91,51 @@ export function ConnectPlatform() {
         ))}
       </nav>
 
-      <Section title="What you can connect">
-        <p className="max-w-[66ch] text-base">
-          {t.isPublic
-            ? "The BitRegalo network is BitRegalo's own public workspace: a set of public contracts on BNB Smart Chain. "
-            : "Your workspace is a set of public contracts on BNB Smart Chain. "}
-          Your own site or app can read its records (requests, listings, escrows{v1 ? " and payments" : ""}) and let your users sign the same actions this app offers, from their own wallets. You need no permission from BitRegalo to do this. Payments and escrows still go through {t.isPublic ? "the network's" : "the workspace's"} rules and fees, whichever site they start from.
-        </p>
-        {t.isPublic && (
-          <p className="mt-3 max-w-[66ch] text-sm text-muted-foreground">
-            An organisation that wants its own rules, fees and tokens runs its own workspace, and each workspace has this page with its own addresses.{" "}
-            <Link href="/app/workspaces" className="text-gold underline decoration-1 underline-offset-4 hover:decoration-2">See the workspaces</Link>.
+      <Anchor id="today">
+        <Section title="What is possible today">
+          <p className="max-w-[66ch] text-base">
+            {t.isPublic
+              ? `The BitRegalo network is BitRegalo's own public workspace: a set of public contracts, today on ${chain.name}, a practice network. `
+              : `This workspace is a set of public contracts, today on ${chain.name}, a practice network. `}
+            You need no account, no key and no permission from BitRegalo to use them. Payments and escrows go through {t.isPublic ? "the network's" : "the workspace's"} rules and fees, whichever site they start from.
           </p>
-        )}
-      </Section>
+          <dl className="mt-6 grid gap-x-10 gap-y-6 sm:grid-cols-2">
+            {[
+              { name: "Read everything without a key", body: `Every record in ${here} (requests, offers, listings, escrows${v1 ? ", payments" : ""}) can be read straight from the contracts by any site or server, at no cost.` },
+              { name: "Have your users sign on your site", body: `Your site or app asks each user's own wallet to sign the same actions this app offers: post a request, take a listing, fund or release an escrow${v1 ? ", pay someone" : ""}. Your platform never holds their tokens.` },
+              { name: "Send payment links", body: v1 ? "Links and QR codes that open the right screen in this app with the details filled in: a payment to a wallet, or a job paid by escrow. No code needed." : "A link that opens the right screen in this app with a job filled in, paid by escrow. No code needed. Links for a payment to a wallet need contract version 1." },
+              { name: "Use the marketplace index", body: "The titles, descriptions, categories and countries of public requests and listings. Reading is public; writing a description needs a signature from the wallet that owns the record." },
+            ].map((x) => (
+              <div key={x.name}>
+                <dt className="t-subheading">{x.name}</dt>
+                <dd className="mt-1 text-sm text-muted-foreground">{x.body}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-6 max-w-[66ch] text-sm text-muted-foreground">
+            Not built yet: general records written by your own key, keys that act for a workspace from a server, a refund-window commitment, an indexer with webhooks, and a published SDK. They are listed under{" "}
+            <a href="#next" className="text-gold underline decoration-1 underline-offset-4 hover:decoration-2">Coming next</a>.
+          </p>
+          {t.isPublic && (
+            <p className="mt-3 max-w-[66ch] text-sm text-muted-foreground">
+              An organisation that wants its own rules, fees and tokens runs its own workspace, and each workspace has this page with its own addresses.{" "}
+              <Link href="/app/workspaces" className="text-gold underline decoration-1 underline-offset-4 hover:decoration-2">See the workspaces</Link>.
+            </p>
+          )}
+        </Section>
+      </Anchor>
 
       <Anchor id="contracts">
         <Section
           title={t.isPublic ? "The network's contracts" : "Your workspace's contracts"}
-          description="Everything your code needs to find it. This is a practice network: tokens here have no value."
+          description="Everything your code needs to find it. This is a practice network: tokens here have no value, and the contracts have not been independently audited."
         >
           <div className="space-y-6">
             <Card flush title="Network">
               <dl>
                 <ValueRow label="Network" value={chain.name} mono={false} copy="" />
                 <ValueRow label="Chain id" value={String(chain.id)} />
-                <ValueRow label="RPC URL" value={RPC_URL} hint="A public endpoint. For steady traffic, use your own RPC provider for BNB Smart Chain Testnet." />
+                <ValueRow label="RPC URL" value={RPC_URL} hint="A public endpoint. For steady traffic, use your own RPC provider for this network." />
                 <ValueRow label="Explorer" mono={false} copy={EXPLORER}>
                   <a href={EXPLORER} target="_blank" rel="noreferrer" className="text-gold underline decoration-1 underline-offset-4 hover:decoration-2">{EXPLORER.replace(/^https:\/\//, "")}</a>
                 </ValueRow>
@@ -306,7 +335,7 @@ export function ConnectPlatform() {
       <Anchor id="market-api">
         <Section
           title="Marketplace API"
-          description="The titles, descriptions, categories and countries of public requests and listings. Read-only and public: no key needed."
+          description="The titles, descriptions, categories and countries of public requests and listings. Reading is public and needs no key. Writing an entry needs a signature from the wallet that owns the record on chain."
         >
           {!marketOn ? (
             <Notice title="The marketplace index is not connected here">
@@ -320,9 +349,10 @@ export function ConnectPlatform() {
                 </dl>
                 <ul className="border-t border-border">
                   {[
-                    { path: `GET /v1/entries?chainId=97&workspace=${id}`, body: <>Requests and listings, newest first. Narrow it with <Q>kind</Q> (request or listing), <Q>country</Q> (such as NZ), <Q>category</Q>, <Q>q</Q> (words to search for), <Q>poster</Q> (a wallet), <Q>limit</Q> (1 to 100) and <Q>cursor</Q> (the <Q>next</Q> value of the previous page).</> },
-                    { path: `GET /v1/entries/97/${id}/{kind}/{number}`, body: <>One request or listing: <Q>kind</Q> is request or listing, <Q>number</Q> its number on chain.</> },
-                    { path: `GET /v1/countries?chainId=97&workspace=${id}`, body: <>How many requests and listings each country has.</> },
+                    { path: `GET /v1/entries?chainId=${chain.id}&workspace=${id}`, body: <>Requests and listings, newest first. Narrow it with <Q>kind</Q> (request or listing), <Q>country</Q> (such as NZ), <Q>category</Q>, <Q>q</Q> (words to search for), <Q>poster</Q> (a wallet), <Q>limit</Q> (1 to 100) and <Q>cursor</Q> (the <Q>next</Q> value of the previous page).</> },
+                    { path: `GET /v1/entries/${chain.id}/${id}/{kind}/{number}`, body: <>One request or listing: <Q>kind</Q> is request or listing, <Q>number</Q> its number on chain.</> },
+                    { path: `PUT /v1/entries/${chain.id}/${id}/{kind}/{number}`, body: <>Writes or replaces the details of one request or listing. The body carries a signature from the wallet that owns the record on chain; anything else is refused.</> },
+                    { path: `GET /v1/countries?chainId=${chain.id}&workspace=${id}`, body: <>How many requests and listings each country has.</> },
                     { path: "GET /healthz", body: <>Whether the index is up.</> },
                   ].map((e) => (
                     <li key={e.path} className="border-b border-border px-5 py-3 last:border-b-0 sm:px-6">
@@ -332,9 +362,9 @@ export function ConnectPlatform() {
                   ))}
                 </ul>
               </Card>
-              <CodeBlock name="Example request" code={marketSample(env.api || "https://…", id)} />
+              <CodeBlock name="Example request" code={marketSample(env.api || "https://…", id, chain.id)} />
               <p className="max-w-[66ch] text-sm text-muted-foreground">
-                Writing the details of a request or listing (<Q>PUT</Q> on the same address as one entry) needs a signature from the wallet that owns it on chain, so only its poster can describe it. Call the API from your server; a browser on another website is turned away unless BitRegalo adds that website to the index&apos;s allowed list.
+                Only the poster of a request or listing can describe it: the <Q>PUT</Q> is accepted only with a signature from the wallet that owns the record on chain. A description can be replaced by its owner later; the record on chain cannot. Call the API from your server; a browser on another website is turned away unless BitRegalo adds that website to the index&apos;s allowed list.
               </p>
             </div>
           )}
@@ -342,12 +372,15 @@ export function ConnectPlatform() {
       </Anchor>
 
       <Anchor id="next">
-        <Section title="Coming next" description="Planned, not available yet.">
+        <Section title="Coming next" description="Planned, not available yet. The first five are in the order they are planned.">
           <dl className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
             {[
-              { name: "API keys", body: "Keys for your servers, for access beyond the public reads." },
-              { name: "Webhooks", body: "Your server is told when a request, an escrow or a payment happens in your workspace." },
-              { name: "An SDK package", body: "These examples as a ready-made TypeScript library." },
+              { name: "General records", body: "A record of any event your platform wants to prove (a subscription, a sale made elsewhere, an approval), written by your platform's own key." },
+              { name: "Keys that act for a workspace", body: "A workspace authorises a key that your server uses, so your platform can write records and trigger its side of a commitment without a person at a wallet." },
+              { name: "A refund-window commitment", body: "The supplier is paid after a set time unless the buyer takes the payment back first. Today's escrow goes back to the buyer when nobody releases it by the deadline." },
+              { name: "An indexer with webhooks", body: "Your server is told when a request, an escrow or a payment happens in your workspace, without reading the chain itself." },
+              { name: "A published SDK", body: "These examples as a ready-made library, so calling the protocol takes a few lines." },
+              { name: "Signing in without a wallet", body: "For your users who have no wallet, with their network fees paid by BitRegalo's sponsor. Today each person pays their own network fee." },
               { name: "Hosted checkout", body: "Send your customers to a BitRegalo payment page that brings them back to your site." },
               { name: "Identity checks (KYC)", body: "For workspaces that need to know who their users are." },
             ].map((x) => (

@@ -8,13 +8,17 @@ import { ThemeChoice, ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 
-/* The site's sections in the order a visitor meets them, then the marketplace and the documents. */
+/*
+ * What an evaluator looks for, in order: how it works, the three ways to use it, how a
+ * platform connects (a page of the app), then the documents. The marketplace is a feature
+ * of the BitRegalo network, so it is reached from the app, not from here.
+ */
 const LINKS = [
   { label: "How it works", href: "/#how" },
-  { label: "Building blocks", href: "/#building-blocks" },
-  { label: "For organisations", href: "/#organisations" },
-  { label: "Marketplace", href: "/app/market" },
+  { label: "Ways to use it", href: "/#ways" },
+  { label: "For platforms", href: "/app/connect" },
   { label: "Protocol", href: "/protocols/escrow", section: "/protocols" },
+  { label: "Whitepaper", href: "/whitepaper" },
   { label: "Contact", href: "/contact" },
 ]
 
@@ -42,7 +46,8 @@ export function Navbar() {
         </nav>
         <div className="ml-auto flex items-center gap-1.5">
           <ThemeToggle className="hidden lg:flex" />
-          <Button asChild size="sm"><Link href="/app">Open the app</Link></Button>
+          {/* An outline, so a page's own main action stays the one primary button in view. */}
+          <Button asChild size="sm" variant="outline"><Link href="/app">Open the app</Link></Button>
           <Sheet open={open} onOpenChange={setOpen}>
             <button onClick={() => setOpen(true)} aria-label="Menu" className="flex size-11 items-center justify-center rounded-lg outline-none transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:hidden">
               <Menu className="size-5" />

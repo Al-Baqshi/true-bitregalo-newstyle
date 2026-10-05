@@ -5,9 +5,17 @@ import { notFound } from "next/navigation"
 import { DocPage, DocTable } from "@/components/site/doc-page"
 
 /*
- * The three protocol references. Each one is the same document shape: a summary,
- * the lifecycle as a numbered sequence, who may call what, a worked example, the
- * guarantees, and the links to the other two.
+ * The three protocol references: escrow, requests and listings. Each one is the same
+ * document shape: a summary, the flow as a numbered sequence, how it settles, who may
+ * call what, a worked example, what makes it hold, and the links to the other two.
+ *
+ * The prose uses the product's words (buyer, supplier, released, handed back, returned).
+ * The contract's own terms (issuer, receiver, cancel, expire, Rfp, Offer) appear only
+ * where a call or a state is named, as reference. The full mapping is in the contracts
+ * repository, docs/PROTOCOL.md, section 4.
+ *
+ * One thing never to write here: that a held payment goes back by itself. After the
+ * deadline someone has to send the transaction that returns it, and anyone can.
  */
 
 interface Row {
@@ -15,186 +23,233 @@ interface Row {
   value: ReactNode
 }
 
-interface State {
+interface Action {
   from: string
-  who: string
+  who: ReactNode
   call: ReactNode
-  to: string
+  to: ReactNode
 }
 
 interface ProtocolDef {
+  /** The product's word, as the landing page and the footer name it. */
   title: string
-  shortName: string
   /** One phrase that places the protocol among the three. */
   descriptor: string
   intro: string
+  /** The contract's own names for the same things. */
+  reference: ReactNode
+  flow: { title: string; text: string }[]
+  /** The record's own calls, before any payment is held. Escrow has none. */
+  actions: Action[] | null
+  /** What the worked example shows. */
+  exampleNote: string
   /** The record the escrow is opened from, where there is one. */
   originRows: Row[] | null
   escrowRows: Row[]
-  states: State[]
-  flow: { title: string; text: string }[]
   facts: { title: string; text: string }[]
 }
 
 const protocols: Record<string, ProtocolDef> = {
   escrow: {
-    title: "Escrow Protocol",
-    shortName: "Escrow",
-    descriptor: "the core primitive",
+    title: "Escrow protocol",
+    descriptor: "how a held payment works, and the only three things that can happen to it",
     intro:
-      "A term-bound, non-custodial escrow. The issuer (in the app, the buyer) can only release. The receiver (the supplier) can only cancel, which hands the payment back. When the term ends untouched, the escrow can only return to the issuer.",
-    originRows: null,
-    escrowRows: [
-      { label: "Escrow", value: "#4821 · locked" },
-      { label: "Issuer", value: <code>0x3d9f…8a2c</code> },
-      { label: "Receiver", value: <code>0x7e4b…c3f1</code> },
-      { label: "Opened", value: "2026-08-05 · 14:32 UTC" },
-      { label: "Term ends", value: "2026-09-04 · 14:32 UTC" },
-      { label: "Issuer can", value: <><code>release()</code> → settles to receiver</> },
-      { label: "Receiver can", value: <><code>cancel()</code> → returns to issuer</> },
-      { label: "On expiry", value: "returns to issuer; anyone can trigger it" },
-    ],
-    states: [
-      { from: "Locked, within the term", who: "The issuer (buyer)", call: <code>release(id)</code>, to: "Released: settled to the receiver" },
-      { from: "Locked, within the term", who: "The receiver (supplier)", call: <code>cancel(id)</code>, to: "Cancelled (handed back): returned to the issuer" },
-      { from: "Locked, term ended", who: "Anyone", call: <code>expire(id)</code>, to: "Expired: returned to the issuer, the only place it can go" },
-    ],
+      "A payment held by a public contract until a deadline, with its outcomes fixed in advance. The buyer can only release it to the supplier. The supplier can only hand it back to the buyer. After the deadline it can only be returned to the buyer, and anyone can trigger that.",
+    reference: (
+      <>
+        In the contracts the buyer is the <code>issuer</code>, the supplier is the <code>receiver</code>, and the three
+        outcomes are <code>release</code>, <code>cancel</code> and <code>expire</code> on the workspace&apos;s{" "}
+        <code>EscrowVault</code>. The states are <code>Active</code>, <code>Released</code>, <code>Cancelled</code> and{" "}
+        <code>Expired</code>.
+      </>
+    ),
     flow: [
-      { title: "Open", text: "The issuer opens an escrow, names the receiver, and sets the term." },
-      { title: "Lock", text: "The escrow locks on-chain: visible to both parties, spendable by neither." },
       {
-        title: "Two keys",
-        text: "The issuer can only release it forward. The receiver can only cancel it back. Neither can pull it toward themselves.",
+        title: "Open",
+        text: "An escrow opens when a buyer awards an offer on a request, or takes a listing, that is set to hold the payment. The buyer, the supplier, the amount and the deadline are fixed at that moment.",
+      },
+      {
+        title: "Hold",
+        text: "In the same transaction the buyer's payment moves into the workspace's vault. Both sides can see it there. Neither can spend it.",
+      },
+      {
+        title: "One action each",
+        text: "The buyer can only release it to the supplier. The supplier can only hand it back to the buyer. Neither can move it toward themselves.",
       },
       {
         title: "Settle",
-        text: "Released, cancelled, or expired: every path ends with the escrow settled to the receiver or returned to the issuer.",
+        text: "Before the deadline, the buyer releases or the supplier hands back. After the deadline neither can act, and anyone can trigger the return to the buyer. Every path ends with the payment with the supplier or back with the buyer.",
       },
+    ],
+    actions: null,
+    exampleNote: "What both sides see for as long as the payment is held. The figures are an example.",
+    originRows: null,
+    escrowRows: [
+      { label: "Escrow", value: <>#4821 · held (<code>Active</code>)</> },
+      { label: "Buyer (issuer)", value: <code>0x3d9f…8a2c</code> },
+      { label: "Supplier (receiver)", value: <code>0x7e4b…c3f1</code> },
+      { label: "Opened", value: "2026-08-05 · 14:32 UTC" },
+      { label: "Deadline", value: "2026-09-04 · 14:32 UTC" },
+      { label: "Buyer can", value: <><code>release()</code> → paid to the supplier</> },
+      { label: "Supplier can", value: <><code>cancel()</code> → handed back to the buyer</> },
+      { label: "After the deadline", value: <>anyone can call <code>expire()</code> → returned to the buyer</> },
     ],
     facts: [
       {
-        title: "One term, set up front",
-        text: "Every escrow has an opening time and an expiry. Between them, the rules cannot change.",
+        title: "A deadline set up front",
+        text: "Every escrow has an opening time and a deadline. Between them the rules cannot change, and nobody can extend or shorten the term.",
       },
       {
-        title: "Asymmetric keys",
-        text: "release() belongs to the issuer, cancel() to the receiver. There is no action that moves the escrow toward the caller.",
+        title: "Each side can only give",
+        text: "Release belongs to the buyer and hand-back to the supplier. No action moves a held payment toward the wallet that calls it.",
       },
       {
-        title: "Expiry with one way out",
-        text: "If nothing happens by the end of the term, the escrow can only return to the issuer. Anyone can trigger the return; no claims process, no intervention.",
+        title: "After the deadline, one way out",
+        text: "Once the deadline passes, the payment can only go back to the buyer. Someone has to send the transaction that returns it, and anyone can: the buyer, the supplier or a third party. Until someone does, it stays in the vault.",
       },
       {
-        title: "Non-custodial",
-        text: "The escrow lives in the smart contract. BitRegalo never takes custody, and no admin can move held funds: the platform can pause new escrows, but release, hand back and expiry always work.",
+        title: "Nobody else can move it",
+        text: "The payment sits in the workspace's vault, a public contract. BitRegalo never holds it, and neither BitRegalo nor the workspace admin can move it. They can pause new escrows. A release, a hand-back and a return always work.",
+      },
+      {
+        title: "A limit to know",
+        text: "If the buyer does not release and the supplier does not hand back, the payment goes back to the buyer once the return is triggered. A supplier who has already delivered depends on the buyer releasing. A commitment that pays the supplier after a set time unless the buyer objects is planned, not built.",
       },
     ],
   },
   rfp: {
-    title: "Request for Proposal",
-    shortName: "RFP",
-    descriptor: "tendering, on-chain",
+    title: "Requests protocol",
+    descriptor: "a buyer asks, suppliers answer with a price and a time, and one offer is chosen",
     intro:
-      "You publish what you need. Providers respond with a time frame and a proposal amount. The proposal you accept becomes the escrow, committed before any work begins.",
+      "A buyer posts what they need. Suppliers answer with a price and a time, and the buyer chooses one offer. The request, every offer and the choice are permanent records, and the chosen offer settles the way the request said it would: recorded only, paid directly, or held in escrow.",
+    reference: (
+      <>
+        The contracts call a request an <code>Rfp</code> (request for proposal), an offer a <code>Bid</code>, and the
+        buyer&apos;s choice an award (<code>acceptBid</code>). The buyer is the <code>requester</code> and the supplier
+        the <code>provider</code>. A request is <code>Open</code>, then <code>Awarded</code> or <code>Cancelled</code>.
+      </>
+    ),
+    flow: [
+      {
+        title: "Post",
+        text: "The buyer posts a request: a reference to what is needed, the time until which offers are accepted, the token it will be paid in, and how it settles.",
+      },
+      {
+        title: "Offer",
+        text: "Suppliers answer with a price and a time to deliver. An offer cannot be edited once it is made. Its supplier can only withdraw it, and only while the request is open.",
+      },
+      {
+        title: "Award",
+        text: "The buyer chooses one offer. The choice is recorded and no other offer can be chosen afterwards. In the same transaction the offer settles the way the request stated: nothing is paid, the supplier is paid directly, or the payment is held in escrow for the time the supplier offered.",
+      },
+      {
+        title: "Deliver",
+        text: "When the payment is held, the buyer releases it on delivery. A supplier who cannot deliver hands it back. If neither acts before the deadline, anyone can trigger the return to the buyer.",
+      },
+    ],
+    actions: [
+      { from: "Any time", who: "A buyer", call: <code>postRfp(…)</code>, to: <>A request is recorded as <code>Open</code></> },
+      { from: "Open, while offers are accepted", who: "A supplier", call: <code>bid(rfpId, amount, timeframe)</code>, to: "An offer is recorded" },
+      { from: "Open", who: "The supplier who made the offer", call: <code>withdrawBid(rfpId, bidId)</code>, to: "The offer is marked withdrawn. It stays on the record." },
+      { from: "Open", who: "The buyer", call: <code>acceptBid(rfpId, bidId)</code>, to: <><code>Awarded</code>: the choice is recorded and the offer settles</> },
+      { from: "Open", who: "The buyer", call: <code>cancelRfp(rfpId)</code>, to: <><code>Cancelled</code>: no offer can be chosen</> },
+    ],
+    exampleNote: "A request that settles by escrow, from the award to the held payment. The figures are an example.",
     originRows: [
-      { label: "Request", value: "#310 · scope + deadline published" },
-      { label: "Proposal", value: "6-week time frame · accepted 2026-08-05" },
+      { label: "Request", value: "#310 · offers accepted until 2026-08-01 · settles by escrow" },
+      { label: "Chosen offer", value: "12,500 USDT · delivered in 6 weeks · awarded 2026-08-05" },
     ],
     escrowRows: [
-      { label: "Escrow", value: "#4822 · opened from accepted proposal" },
-      { label: "Issuer", value: "you (the requester)" },
-      { label: "Receiver", value: "the accepted provider" },
-      { label: "Term ends", value: "2026-09-16 · end of proposed time frame" },
-      { label: "Delivered", value: <>you <code>release()</code> → settles to provider</> },
-      { label: "Not delivered", value: "term expires → can only return to you" },
-    ],
-    states: [
-      { from: "Locked, within the time frame", who: "You, the requester (buyer)", call: <code>release(id)</code>, to: "Released: settled to the provider" },
-      { from: "Locked, within the time frame", who: "The provider (supplier)", call: <code>cancel(id)</code>, to: "Cancelled (handed back): returned to you" },
-      { from: "Locked, time frame ended", who: "Anyone", call: <code>expire(id)</code>, to: "Expired: returned to you, the only place it can go" },
-    ],
-    flow: [
-      { title: "Request", text: "You publish what you need: scope and deadline. In construction terms, the tender goes out." },
-      { title: "Propose", text: "Providers respond with a time frame and a proposal amount, recorded on-chain." },
-      {
-        title: "Commit",
-        text: "You accept one proposal. Its amount and time frame lock into an escrow, and the provider starts work knowing the commitment is real.",
-      },
-      {
-        title: "Deliver & release",
-        text: "Delivered within the time frame and to your satisfaction: you release. Not delivered: you simply don't, and after expiry the escrow can only return to you.",
-      },
+      { label: "Escrow", value: "#4822 · opened by the award" },
+      { label: "Buyer (issuer)", value: "the buyer who posted the request" },
+      { label: "Supplier (receiver)", value: "the supplier whose offer was chosen" },
+      { label: "Deadline", value: "2026-09-16 · six weeks after the award" },
+      { label: "Delivered", value: <>the buyer calls <code>release()</code> → paid to the supplier</> },
+      { label: "Not delivered", value: <>after the deadline anyone can call <code>expire()</code> → returned to the buyer</> },
     ],
     facts: [
       {
-        title: "Tendering, auditable",
-        text: "Requests, proposals, and acceptance are recorded on-chain, so every bidder can verify the process was fair.",
+        title: "A tender anyone can check",
+        text: "The request, every offer and the award are records. A supplier who was not chosen can check that nothing was rearranged afterwards.",
       },
       {
-        title: "The proposal becomes the escrow",
-        text: "Acceptance is commitment: the proposed amount and time frame lock in before any work begins.",
+        title: "Offers cannot be edited",
+        text: "An offer stays as it was made. Its supplier can withdraw it and never change it, so the buyer awards exactly the terms they read.",
       },
       {
-        title: "A deadline with teeth",
-        text: "Miss the time frame and there is nothing to chase: the escrow can only expire back to the requester.",
+        title: "Wording can stay private",
+        text: "The record holds a fingerprint of the request's text, not the text itself. The wording can stay private, and its owner can still prove later what it said.",
       },
       {
-        title: "Built on the same escrow",
-        text: "An RFP is the escrow protocol with a tendering step in front. Same rules, same keys, same guarantees.",
+        title: "The same escrow underneath",
+        text: "A request that holds the payment uses the escrow protocol unchanged: the same three outcomes and the same limits on who can act.",
       },
     ],
   },
   rts: {
-    title: "Request to Supply",
-    shortName: "RTS",
-    descriptor: "supply, on-chain",
+    title: "Listings protocol",
+    descriptor: "a supplier offers something at a fixed price, and a buyer takes it as it stands",
     intro:
-      "The supplier states the time frame and escrow amount up front. Your confirmation opens the escrow. Delivery earns the release, and an undelivered order simply expires back to you.",
+      "A supplier lists what they offer at a fixed price and a time to deliver, open to anyone or to one named buyer. A buyer takes it as it stands. The listing and its taking are permanent records, and it settles the way the listing said it would: recorded only, paid directly, or held in escrow.",
+    reference: (
+      <>
+        The contracts call a listing an <code>Offer</code> and this flow request to supply (RTS). Taking a listing is{" "}
+        <code>confirmOffer</code>. A listing is <code>Listed</code>, then <code>Confirmed</code> or{" "}
+        <code>Withdrawn</code>.
+      </>
+    ),
+    flow: [
+      {
+        title: "List",
+        text: "The supplier lists a price, a time to deliver, the token, and how it settles. A listing can be open to any buyer or made for one named buyer.",
+      },
+      {
+        title: "Take",
+        text: "A buyer takes the listing as it stands. Its terms cannot be changed after it is listed, so there is nothing to renegotiate.",
+      },
+      {
+        title: "Settle",
+        text: "In the same transaction it settles the way the listing stated: nothing is paid, the supplier is paid directly, or the payment is held in escrow for the listed time.",
+      },
+      {
+        title: "Deliver",
+        text: "When the payment is held, the buyer releases it on delivery. A supplier who cannot deliver hands it back. If neither acts before the deadline, anyone can trigger the return to the buyer.",
+      },
+    ],
+    actions: [
+      { from: "Any time", who: "A supplier", call: <code>listOffer(…)</code>, to: <>A listing is recorded as <code>Listed</code></> },
+      { from: "Listed", who: "The supplier", call: <code>withdrawOffer(offerId)</code>, to: <><code>Withdrawn</code>: it can no longer be taken</> },
+      { from: "Listed", who: "A buyer, or the named buyer if there is one", call: <code>confirmOffer(offerId)</code>, to: <><code>Confirmed</code>: the buyer is recorded and the listing settles</> },
+    ],
+    exampleNote: "A listing that settles by escrow, from the moment it is taken to the held payment. The figures are an example.",
     originRows: [
-      { label: "Listing", value: "#77 · time frame + escrow amount stated up front" },
-      { label: "Confirmed", value: "2026-08-05 · by the buyer" },
+      { label: "Listing", value: "#77 · 1,200 USDT · delivered in 14 days · settles by escrow" },
+      { label: "Taken", value: "2026-08-05 · by the buyer" },
     ],
     escrowRows: [
-      { label: "Escrow", value: "#4823 · opened on confirmation" },
-      { label: "Issuer", value: "you (the buyer)" },
-      { label: "Receiver", value: "the supplier" },
-      { label: "Term ends", value: "2026-08-19 · end of listed time frame" },
-      { label: "On delivery", value: <>you <code>release()</code> → settles to supplier</> },
-      { label: "Not delivered", value: "term expires → can only return to you" },
-    ],
-    states: [
-      { from: "Locked, within the time frame", who: "You, the buyer", call: <code>release(id)</code>, to: "Released: settled to the supplier" },
-      { from: "Locked, within the time frame", who: "The supplier", call: <code>cancel(id)</code>, to: "Cancelled (handed back): returned to you" },
-      { from: "Locked, time frame ended", who: "Anyone", call: <code>expire(id)</code>, to: "Expired: returned to you, the only place it can go" },
-    ],
-    flow: [
-      { title: "List", text: "A supplier lists what they deliver, with the time frame and escrow amount stated up front." },
-      {
-        title: "Confirm",
-        text: "You confirm the listing. The stated amount locks into escrow for the stated time frame: that confirmation is the order.",
-      },
-      { title: "Deliver", text: "The supplier ships knowing the escrow is committed and cannot be pulled back mid-way." },
-      {
-        title: "Release or return",
-        text: "You release on delivery. If nothing arrives, the escrow expires and can only return to you. No refund process, no dispute queue.",
-      },
+      { label: "Escrow", value: "#4823 · opened when the listing was taken" },
+      { label: "Buyer (issuer)", value: "the buyer who took the listing" },
+      { label: "Supplier (receiver)", value: "the supplier who listed it" },
+      { label: "Deadline", value: "2026-08-19 · 14 days after it was taken" },
+      { label: "On delivery", value: <>the buyer calls <code>release()</code> → paid to the supplier</> },
+      { label: "Not delivered", value: <>after the deadline anyone can call <code>expire()</code> → returned to the buyer</> },
     ],
     facts: [
       {
-        title: "Terms stated up front",
-        text: "Time frame and escrow amount are part of the listing itself. Nothing is renegotiated after you commit.",
+        title: "Terms fixed up front",
+        text: "The price and the time to deliver are part of the listing. Nothing can be changed after it is listed, and nothing is renegotiated when it is taken.",
       },
       {
-        title: "Confirm to commit",
-        text: "Confirming a listing opens the escrow. The supplier ships against a commitment they can verify on-chain.",
+        title: "Taking it is the order",
+        text: "Taking a listing records the buyer and settles it in one transaction. With escrow, the supplier can check the payment is held before starting.",
       },
       {
-        title: "Release on delivery",
-        text: "Refund policies become unnecessary: an undelivered order can only expire back to the buyer.",
+        title: "A way back that needs nobody's approval",
+        text: "If a held order is not delivered, the supplier can hand the payment back, and after the deadline anyone can trigger its return to the buyer. No refund request has to be approved by the supplier or by a platform.",
       },
       {
-        title: "Built on the same escrow",
-        text: "An RTS is the escrow protocol with a supply listing in front. Same rules, same keys, same guarantees.",
+        title: "The same escrow underneath",
+        text: "A listing that holds the payment uses the escrow protocol unchanged: the same three outcomes and the same limits on who can act.",
       },
     ],
   },
@@ -202,9 +257,23 @@ const protocols: Record<string, ProtocolDef> = {
 
 const protocolOrder = ["escrow", "rfp", "rts"]
 
-const SIGNATURES = `release(id)   // issuer only: settles the escrow to the receiver
-cancel(id)    // receiver only: returns the escrow to the issuer
-expire(id)    // anyone, once the term has ended: returns the escrow to the issuer`
+/* The three ways a request or a listing settles, the same on the landing page and in the whitepaper. */
+const SETTLEMENT: { way: string; code: string; text: string }[] = [
+  { way: "Recorded only", code: "Settlement.None", text: "Nothing is paid. The choice itself is the record." },
+  { way: "Paid directly", code: "Settlement.Direct", text: "The payment passes through the vault to the supplier in the same transaction." },
+  { way: "Held", code: "Settlement.Escrow", text: "The payment becomes an escrow. The supplier's time to deliver becomes its deadline." },
+]
+
+/* The only calls that move a held payment. The same for every escrow, however it was opened. */
+const HELD: Action[] = [
+  { from: "Active, before the deadline", who: <>The buyer (<code>issuer</code>)</>, call: <code>release(id)</code>, to: <>Released: paid to the supplier, less the platform fee</> },
+  { from: "Active, before the deadline", who: <>The supplier (<code>receiver</code>)</>, call: <code>cancel(id)</code>, to: <>Handed back (<code>Cancelled</code>): the held amount goes to the buyer</> },
+  { from: "Active, after the deadline", who: "Anyone", call: <code>expire(id)</code>, to: <>Returned (<code>Expired</code>): the held amount goes to the buyer, the only place it can go</> },
+]
+
+const SIGNATURES = `release(id)   // the buyer (issuer) only, before the deadline: pays the supplier (receiver)
+cancel(id)    // the supplier (receiver) only, before the deadline: hands the payment back to the buyer
+expire(id)    // anyone, after the deadline: returns the payment to the buyer`
 
 export async function generateStaticParams() {
   return protocolOrder.map((slug) => ({ slug }))
@@ -232,16 +301,44 @@ function Rows({ rows }: { rows: Row[] }) {
   )
 }
 
+function ActionTable({ actions }: { actions: Action[] }) {
+  return (
+    <DocTable minWidth="40rem">
+      <thead>
+        <tr>
+          <th scope="col">State</th>
+          <th scope="col">Who may act</th>
+          <th scope="col">Call</th>
+          <th scope="col">What happens next</th>
+        </tr>
+      </thead>
+      <tbody>
+        {actions.map((a, i) => (
+          <tr key={i}>
+            <td>{a.from}</td>
+            <td>{a.who}</td>
+            <td className="whitespace-nowrap">{a.call}</td>
+            <td>{a.to}</td>
+          </tr>
+        ))}
+      </tbody>
+    </DocTable>
+  )
+}
+
 export default async function ProtocolPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const protocol = protocols[slug]
   if (!protocol) notFound()
 
-  const noun = protocol.shortName === "Escrow" ? "escrow" : protocol.shortName
   const others = protocolOrder.filter((s) => s !== slug)
 
   return (
-    <DocPage title={protocol.title} summary={protocol.intro}>
+    <DocPage
+      title={protocol.title}
+      summary={protocol.intro}
+      meta="Technical reference. Today the contracts run on BNB Smart Chain Testnet, a public test network, and have not been independently audited."
+    >
       <h2 id="how-it-flows">How it flows</h2>
       <ol>
         {protocol.flow.map((step) => (
@@ -251,40 +348,56 @@ export default async function ProtocolPage({ params }: { params: Promise<{ slug:
         ))}
       </ol>
 
+      {protocol.actions && (
+        <>
+          <h2 id="how-it-settles">How it settles</h2>
+          <p>
+            Each request or listing states how it settles when it is accepted. A workspace can switch direct payment
+            or escrow off. Recording only is always available.
+          </p>
+          <DocTable minWidth="34rem">
+            <thead>
+              <tr>
+                <th scope="col">Way</th>
+                <th scope="col">In the contracts</th>
+                <th scope="col">What happens</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SETTLEMENT.map((s) => (
+                <tr key={s.code}>
+                  <td className="whitespace-nowrap">{s.way}</td>
+                  <td className="whitespace-nowrap">
+                    <code>{s.code}</code>
+                  </td>
+                  <td>{s.text}</td>
+                </tr>
+              ))}
+            </tbody>
+          </DocTable>
+        </>
+      )}
+
       <h2 id="who-can-do-what">Who can do what</h2>
+      {protocol.actions && (
+        <>
+          <p>Every call below writes a record. None of them can be undone or edited afterwards.</p>
+          <ActionTable actions={protocol.actions} />
+          <h3>When the payment is held</h3>
+        </>
+      )}
       <p>
-        One escrow, two keys. Each key moves the escrow in one direction only, and the clock settles anything left
-        untouched.
+        One held payment, one action on each side. Each action moves the payment in one direction only. After the
+        deadline the only action left is the return to the buyer. It does not happen by itself: someone has to send
+        that transaction, and anyone can.
       </p>
-      <DocTable minWidth="40rem">
-        <thead>
-          <tr>
-            <th scope="col">State</th>
-            <th scope="col">Who may act</th>
-            <th scope="col">Call</th>
-            <th scope="col">What happens next</th>
-          </tr>
-        </thead>
-        <tbody>
-          {protocol.states.map((s, i) => (
-            <tr key={i}>
-              <td>{s.from}</td>
-              <td>{s.who}</td>
-              <td className="whitespace-nowrap">{s.call}</td>
-              <td>{s.to}</td>
-            </tr>
-          ))}
-        </tbody>
-      </DocTable>
+      <ActionTable actions={HELD} />
       <pre>
         <code>{SIGNATURES}</code>
       </pre>
 
-      <h2 id="the-transaction">The transaction</h2>
-      <p>
-        Every {noun} resolves to the same on-chain object: a term-bound escrow with one key on each side. This is
-        what both parties see for the entire term. The figures below are an example.
-      </p>
+      <h2 id="an-example">An example</h2>
+      <p>{protocol.exampleNote}</p>
       <DocTable>
         {protocol.originRows && (
           <tbody>
@@ -308,6 +421,14 @@ export default async function ProtocolPage({ params }: { params: Promise<{ slug:
           <p>{fact.text}</p>
         </Fragment>
       ))}
+
+      <h2 id="in-the-contracts">In the contracts</h2>
+      <p>{protocol.reference}</p>
+      <p>
+        A developer gets the contract addresses, the interface files and code examples for these calls from the{" "}
+        <Link href="/app/connect">Connect a platform</Link> page. The <Link href="/whitepaper">whitepaper</Link> sets
+        out the rules that hold across all three.
+      </p>
 
       <h2 id="other-protocols">Other protocols</h2>
       <ul>

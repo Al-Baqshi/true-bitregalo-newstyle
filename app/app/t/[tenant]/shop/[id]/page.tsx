@@ -126,7 +126,7 @@ export default function SalePage({ params }: { params: Promise<{ id: string }> }
 
               {!free && pay && (
                 <p className="max-w-[62ch] text-sm text-muted-foreground">
-                  The seller receives {money(cost - fee)} after the {rules.feeBps / 100}% platform fee.
+                  The organisation receives {money(cost - fee)} after the {rules.feeBps / 100}% platform fee.
                   {address && <> Your balance: <Amount value={erc.balance} decimals={pay.decimals} symbol={pay.symbol} />.</>}
                 </p>
               )}

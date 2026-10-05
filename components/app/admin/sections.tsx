@@ -2,7 +2,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import type { Address } from "viem"
-import { addresses, PUBLIC_WORKSPACE_ID } from "@/lib/bitregalo/config"
+import { addresses, PUBLIC_WORKSPACE_ID, network } from "@/lib/bitregalo/config"
 import { useCountryCounts, useMarketAvailable } from "@/lib/bitregalo/market"
 import { useWorkspaceName } from "@/lib/bitregalo/names"
 import { Addr, Amount, Card, Empty, Fact, Facts, LedgerRow, Pill, RowsSkeleton, Section, Stat } from "@/components/app/ui"
@@ -101,11 +101,11 @@ export function Funding({ p }: { p: Platform }) {
 
         <Card title="Sponsored gas" description="The paymaster's deposit and stake on the EntryPoint. The deposit pays users' network fees once sponsored gas is switched on.">
           <Facts columns={3}>
-            <Fact label="Deposit">{d ? <Amount value={d.deposit} symbol="tBNB" /> : "…"}</Fact>
+            <Fact label="Deposit">{d ? <Amount value={d.deposit} symbol={network.nativeSymbol} /> : "…"}</Fact>
             <Fact label="Stake">
               {d ? (
                 <>
-                  <Amount value={d.stake} symbol="tBNB" />
+                  <Amount value={d.stake} symbol={network.nativeSymbol} />
                   <span className="block text-sm font-normal text-muted-foreground">
                     {d.staked ? `Staked, ${Math.round(d.unstakeDelaySec / 3600)} h to unstake` : d.withdrawTime > 0 ? "Unlocking" : "Not staked"}
                   </span>
@@ -119,14 +119,14 @@ export function Funding({ p }: { p: Platform }) {
           </Facts>
         </Card>
 
-        <Card flush title="Wallets that pay their own network fees" description="Each needs tBNB for its own transactions. Under 0.02 tBNB is flagged.">
+        <Card flush title="Wallets that pay their own network fees" description={`Each needs ${network.nativeSymbol} for its own transactions. Under 0.02 ${network.nativeSymbol} is flagged.`}>
           {p.gasWallets.length === 0 && <RowsSkeleton rows={2} />}
           {p.gasWallets.map((g) => (
             <LedgerRow
               key={g.address}
               title={g.label}
               meta={<>{g.what}<span className="block"><Addr a={g.address} /></span></>}
-              amount={g.balance !== undefined ? <Amount value={g.balance} symbol="tBNB" /> : "…"}
+              amount={g.balance !== undefined ? <Amount value={g.balance} symbol={network.nativeSymbol} /> : "…"}
               status={g.balance === undefined ? undefined : g.balance < LOW_BNB ? <Pill tone="accent">Top up soon</Pill> : <Pill tone="good">Enough</Pill>}
             />
           ))}
@@ -369,7 +369,7 @@ export function Roadmap({ p }: { p: Platform }) {
   const statusOf = (item: RoadmapItem) => (liveDone(item) ? "Done" : item.status)
 
   return (
-    <Section title="Roadmap" description="The production plan, phase by phase, then the open items that are not part of a phase.">
+    <Section title="Roadmap" description="What is built, then what is designed and not built yet, in the order it is planned. The open items that are not part of a phase come last.">
       <div className="space-y-6">
         <Card flush title="Phases">
           <ol>
@@ -409,7 +409,6 @@ export function Roadmap({ p }: { p: Platform }) {
             ))}
           </Card>
         </div>
-        <p className="text-xs text-subtle">This plan lives in components/app/admin/roadmap.ts.</p>
       </div>
     </Section>
   )

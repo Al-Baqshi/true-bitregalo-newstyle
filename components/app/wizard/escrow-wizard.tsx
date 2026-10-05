@@ -5,6 +5,7 @@ import { isAddress } from "viem"
 import QRCode from "qrcode"
 import { toast } from "sonner"
 import { Check, Copy, Share2 } from "lucide-react"
+import { chain } from "@/lib/bitregalo/config"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import { useSettlementTokens } from "@/lib/bitregalo/instances"
 import { useInstanceRules } from "@/lib/bitregalo/instance-rules"
@@ -115,7 +116,7 @@ export function EscrowWizard() {
           {[
             { title: "You send a link", body: "Fill in the job below and send the supplier the link or QR code. Making it writes nothing to the chain." },
             { title: "The supplier accepts", body: "They open the link and sign once. That lists the job for you only, to be paid by escrow." },
-            { title: "You fund it", body: "You get the listing link back (it also shows under My activity). Approve and confirm, and the payment is held until you release it." },
+            { title: "You fund it", body: `You get the listing link back (it also shows under ${t.isPublic ? "My activity" : "Listings in this workspace"}). Approve and confirm, and the payment is held until you release it.` },
           ].map((s, i) => (
             <li key={s.title}>
               <span className="t-num flex size-8 items-center justify-center rounded-full border border-border-strong text-sm font-[600]" aria-hidden>{i + 1}</span>
@@ -190,7 +191,7 @@ export function EscrowWizard() {
                 <Button onClick={copy} aria-live="polite">{copied ? <Check /> : <Copy />}{copied ? "Copied" : "Copy link"}</Button>
                 {canShare && <Button variant="secondary" onClick={share}><Share2 />Share</Button>}
               </div>
-              <p className="text-xs text-subtle">Nothing has been signed. The supplier needs a wallet on BNB Smart Chain Testnet; you need {chosen!.symbol} to fund it.</p>
+              <p className="text-xs text-subtle">Nothing has been signed. The supplier needs a wallet on {chain.name}; you need {chosen!.symbol} to fund it.</p>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground" role="status">{problem ?? "Fill in the job, and the link and QR code appear here."}</p>

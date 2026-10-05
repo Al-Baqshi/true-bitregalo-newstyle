@@ -4,15 +4,22 @@ import {
 } from "lucide-react"
 
 /*
- * How the app is organised. There are two places a person can be:
+ * How the app is organised. The app is BitRegalo's reference implementation and its own
+ * public workspace; the product is the infrastructure underneath (records nobody can edit,
+ * payment commitments that execute as agreed). There are three ways to use it: connect a
+ * platform, run a workspace, use the BitRegalo network. Inside the app that makes two
+ * places a person can be:
  *
- *   The BitRegalo network  everyone, anywhere: send USDT, hold a payment in escrow, ask for
- *                          things and offer them in a marketplace by country. It runs on
- *                          BitRegalo's own public workspace. Pages live at /app.
+ *   The BitRegalo network  BitRegalo's own public workspace, open to everyone: send a
+ *                          payment, hold a payment in escrow, ask for things and offer
+ *                          them in a marketplace by country. Pages live at /app.
  *
- *   A workspace            one organisation's own BitRegalo: its own contracts, rules,
- *                          currencies, tokens, shop and treasury. Everything done inside
- *                          it is recorded under it. Pages live at /app/t/{id}.
+ *   A workspace            one organisation's own contracts: its records and rules, a
+ *                          vault, a treasury, its currencies, tokens and shop. Everything
+ *                          done inside it is recorded under it. Pages live at /app/t/{id}.
+ *
+ * Both have a "Connect a platform" page: how an existing product uses those contracts
+ * from its own site, app or back office.
  *
  * Both are laid out the same way, a sidebar on a desktop and bottom tabs on a phone,
  * so people learn one structure. The same groups carry into the mobile app.
@@ -57,11 +64,11 @@ export const NETWORK: NavModel = {
     },
     {
       key: "orgs",
-      label: "For organisations",
+      label: "Platforms and organisations",
       icon: Building2,
       items: [
-        { key: "workspaces", label: "Workspaces", path: "/workspaces", icon: Building2, also: ["/launch"] },
         { key: "connect", label: "Connect a platform", path: "/connect", icon: Cable },
+        { key: "workspaces", label: "Workspaces", path: "/workspaces", icon: Building2, also: ["/launch"] },
       ],
     },
   ],

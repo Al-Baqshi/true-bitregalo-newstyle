@@ -150,7 +150,7 @@ function LaunchWizard() {
                 </div>
                 <p className="mt-1.5 text-sm text-muted-foreground">Paste the address of any standard token (ERC-20).</p>
               </div>
-              <Label title="Service fee per payment" hint="A flat amount added to each payment and paid by the buyer, in units of the token being paid. It goes to BitRegalo and covers the network costs it pays on users' behalf. The same figure applies to every token above.">
+              <Label title="Service fee per payment" hint="A flat amount added to each payment and paid by the buyer, in units of the token being paid. It goes to BitRegalo. Network fees are separate: each person pays their own. The same figure applies to every token above.">
                 <input className={cn(input, "t-num max-w-40")} type="number" inputMode="decimal" min="0" step="any" value={serviceFee} onChange={(e) => setServiceFee(e.target.value)} />
               </Label>
             </div>
@@ -366,7 +366,7 @@ function LaunchWizard() {
       intro={
         preset
           ? "This creates the BitRegalo network's new workspace on the current contracts: open to everyone, with escrow and direct payments in tUSD and USDT. Your wallet signs as its admin. Once it exists, BitRegalo points the app at it, and everything people do on the network is recorded there."
-          : "Your organisation's own workspace: its own contracts, rules and fees, the currencies it accepts, its tokens, shop and treasury. Everything done in it is recorded under it, apart from the BitRegalo network. You are its admin, and its treasury belongs to you alone."
+          : "Your organisation's own workspace: its own contracts, rules and fees, the currencies it accepts, its tokens, shop and treasury. Everything done in it is recorded under it, apart from the BitRegalo network, whether people use this app or a platform you connect. You are its admin, and its treasury belongs to you alone."
       }
       steps={steps}
       plan={plan}
@@ -388,7 +388,7 @@ function LaunchWizard() {
           title="The new public network is created"
           actions={
             <>
-              <Button asChild><Link href="/app/operator">Back to Platform</Link></Button>
+              <Button asChild><Link href="/app/operator">Back to Platform and earnings</Link></Button>
               <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}`}>Open workspace #{String(r.tenantId)}</Link></Button>
             </>
           }
@@ -404,13 +404,14 @@ function LaunchWizard() {
             <>
               <Button asChild><Link href={`/app/t/${String(r.tenantId)}`}>Open your workspace</Link></Button>
               <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/shop/new`}>Sell in the shop</Link></Button>
+              <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/connect`}>Connect your platform</Link></Button>
               {r.rfpId !== undefined && <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/requests/${String(r.rfpId)}`}>View your request</Link></Button>}
               {r.token !== undefined && <Button asChild variant="secondary"><Link href={`/app/t/${String(r.tenantId)}/tokens/${String(r.token)}`}>View {sym}</Link></Button>}
             </>
           }
         >
           <p>Workspace #{String(r.tenantId)} has its own records contract (<Addr a={String(r.instance)} />), vault (<Addr a={String(r.vault)} />) and treasury. You are its admin and the treasury&apos;s owner.</p>
-          <p>Next, open your workspace: everything you set up is there. Share its link with suppliers and customers; anyone with a wallet can make offers, create listings and get paid through it.</p>
+          <p>Next, open your workspace: everything you set up is there. Share its link with suppliers and customers; anyone with a wallet can make offers, create listings and get paid through it. To use it from your own site or app, see its Connect a platform page.</p>
           <p className="t-mono break-all text-sm text-foreground">{origin}/app/t/{String(r.tenantId)}</p>
         </Done>
       )}

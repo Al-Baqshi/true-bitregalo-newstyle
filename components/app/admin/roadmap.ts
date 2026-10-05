@@ -23,13 +23,14 @@ export type Phase = { n: number; title: string; status: Status; items: RoadmapIt
 export const PHASES: Phase[] = [
   {
     n: 1,
-    title: "Contracts, version 1",
+    title: "Contracts, version 2",
     status: "Done",
     items: [
       { title: "Workspace treasury", status: "Done" },
       { title: "Shop: selling utility tokens", status: "Done" },
       { title: "Redeem", status: "Done" },
       { title: "Pay and payment links", status: "Done" },
+      { title: "Hardening after three security reviews", status: "Done", note: "Limits on what a payer is charged, exits that cannot be blocked, sales approved by the treasury's owner, two-step handovers. On the practice network since 6 October 2026. Not audited by an independent firm" },
     ],
   },
   {

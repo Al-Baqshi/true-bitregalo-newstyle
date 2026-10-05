@@ -157,7 +157,7 @@ export default async function WhitepaperPage() {
   const { sections, toc } = prepare(raw)
 
   return (
-    <DocPage title="BitRegalo Whitepaper" meta="Version 6 · 5 October 2026 · By Al Baqshi Mohammed" toc={toc} action={<PrintButton />}>
+    <DocPage title="BitRegalo Whitepaper" meta="Version 6 · 6 October 2026 · By Al Baqshi Mohammed" toc={toc} action={<PrintButton />}>
       {sections.map((s) => (
         <Fragment key={s.id}>
           <h2 id={s.id}>{s.title}</h2>

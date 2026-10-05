@@ -16,7 +16,7 @@ Each organisation gets its own set of contracts, called a workspace. It can run 
 
 The protocol is the same in both. Its first implementation is for EVM networks. It runs today on a public test network, and it has been deployed unchanged to a private Hyperledger Besu network. Implementations for other ledgers, such as Stellar and Hyperledger Fabric, are planned.
 
-This paper describes the system as it stands on 5 October 2026. It has not been independently audited, it is not on a main network, no organisation runs it in production, and BitRegalo has not issued a token. Where something is planned and not built, the paper says so.
+This paper describes the system as it stands on 6 October 2026. It has not been independently audited, it is not on a main network, no organisation runs it in production, and BitRegalo has not issued a token. Where something is planned and not built, the paper says so.
 
 # The problem
 
@@ -186,16 +186,18 @@ Version 2 is a hardening release. It adds no feature. It changes how safely the 
 - **A refused payout is credited.** If a token will not deliver a payout, the held payment still reaches its outcome, and the amount is credited to the same wallet to collect later.
 - **Roles change hands in two steps.** A workspace's admin, a token's owner and the owners of the platform's contracts offer the role, and the other wallet accepts it. The owners of the platform's contracts cannot give ownership up.
 - **An offer carries a last moment.** An offer on a request can be chosen only until the time its supplier set. A listing can carry one too.
-- **Who may create a token.** A workspace's own token is created by its admin. A project's token is created by the admin or by the project's owner.
+- **Who may create a token.** A workspace's own token is created by its admin. A project's token is created by the admin or by the project's owner. Whoever creates a token owns it.
+- **Gas sponsorship has limits.** The contract that pays network fees for people pays only for accounts that cannot be changed and for workspaces its owner lists, within a limit per action and a budget per hour, and it can be paused at once.
 
 Version 2 is a new set of contracts with its own mother. Workspaces on earlier versions are not changed. The reference web app is written for version 2.
 
 ## Evidence
 
 - The source of every contract on the public test network is published and verified against what is deployed.
-- 110 automated tests pass, including tests that run random sequences of actions against the vault and check that its rules still hold.
+- 192 automated tests pass, including tests that run random sequences of actions against the vault and check that its rules still hold.
+- Three security reviews were made in October 2026, the last in the manner of a paid audit by reviewers given only the code. Every finding was fixed, and each fix has a test. The findings are published with the code. All three reviews were made with an AI assistant, not by an independent firm.
 - One script deploys the whole protocol to a fresh network and runs it end to end. It is how the private Besu deployment was checked, and anyone can run it against their own network.
-- The contracts have not been independently audited.
+- The contracts have not been audited by an independent firm.
 
 # Services around the contracts
 
@@ -238,7 +240,7 @@ There is no BitRegalo token. If BitRegalo ever issues one, it will be issued thr
 
 # Status
 
-| Part | State on 5 October 2026 |
+| Part | State on 6 October 2026 |
 | --- | --- |
 | Records, escrow, requests, listings, projects, tokens | Live on the public test network, version 0 |
 | Payments with receipts, token sales, redemption, workspace treasury | Version 1 is deployed and registered there. No workspace has been launched on it yet |

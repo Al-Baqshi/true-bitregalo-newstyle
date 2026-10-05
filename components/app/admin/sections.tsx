@@ -84,19 +84,30 @@ export function Funding({ p }: { p: Platform }) {
   const vault = p.feeVault.filter((h) => p.tokenOf(h.token).stable || h.amount > 0n)
   const held = p.escrowHeld.filter((h) => h.amount > 0n)
   const withTreasury = p.workspaces.filter((w) => !!w.treasury)
+  const waiting = p.feesWaiting.filter((h) => h.amount > 0n)
   const d = p.deposit
 
   return (
     <Section title="Funding" description="Where the platform's tokens and its users' tokens sit right now.">
       <div className="space-y-6">
-        <Card flush title="Platform fee vault" description="Every platform, service, launch and token fee lands here." action={<Button asChild size="sm" variant="ghost"><Link href="/app/operator">Withdraw</Link></Button>}>
+        <Card flush title="Platform fee treasury" description="Launch and token fees arrive here straight away. Platform and service fees arrive when someone sends them on from a workspace vault." action={<Button asChild size="sm" variant="ghost"><Link href="/app/operator">Withdraw</Link></Button>}>
           {!p.ready.workspaces && vault.every((h) => h.amount === 0n) ? <RowsSkeleton rows={2} /> : vault.map((h) => {
             const t = p.tokenOf(h.token)
             return <LedgerRow key={h.token} title={t.symbol} meta={<Addr a={h.token} />} amount={<Amount value={h.amount} decimals={t.decimals} />} />
           })}
           <p className="border-t border-border px-5 py-3 text-sm text-muted-foreground sm:px-6">
-            Only the vault&apos;s owner, <Addr a={String(p.treasuryOwner ?? "")} />, can withdraw, on Platform and earnings.
+            Only the treasury&apos;s owner, <Addr a={String(p.treasuryOwner ?? "")} />, can withdraw, on Platform and earnings.
           </p>
+        </Card>
+
+        <Card flush title="Fees waiting in workspace vaults" description="Kept in each workspace's vault as payments happen. Anyone can send them to the platform fee treasury." action={<Button asChild size="sm" variant="ghost"><Link href="/app/operator">Send them on</Link></Button>}>
+          {!p.ready.workspaces ? <RowsSkeleton rows={1} /> : waiting.length === 0 ? (
+            <Empty title="Nothing is waiting" body="Fees appear here after a direct payment, a sale, or the release of a held payment." />
+          ) : waiting.map((h) => {
+            const t = p.tokenOf(h.token)
+            const where = p.workspaces.filter((w) => w.fees.some((x) => same(x.token, h.token)))
+            return <LedgerRow key={h.token} title={t.symbol} meta={<>In {where.map((w) => nameOf(w.id)).join(", ")}</>} amount={<Amount value={h.amount} decimals={t.decimals} />} />
+          })}
         </Card>
 
         <Card title="Sponsored gas" description="The paymaster's deposit and stake on the EntryPoint. The deposit pays users' network fees once sponsored gas is switched on.">
@@ -151,7 +162,7 @@ export function Funding({ p }: { p: Platform }) {
 
         <Card flush title="Workspace treasuries" description="Owned by each workspace's admin. They hold the shop's stock and what it earns.">
           {!p.ready.records ? <RowsSkeleton rows={1} /> : withTreasury.length === 0 ? (
-            <Empty title="No workspace has a treasury yet" body="Treasuries arrived with version 1 of the contracts. Workspaces created on older contracts have none." />
+            <Empty title="No workspace yet" body="Every workspace gets its own treasury when it is created. They appear here once a workspace exists." />
           ) : withTreasury.map((w) => (
             <LedgerRow
               key={String(w.id)}
@@ -203,14 +214,14 @@ export function Workspaces({ p }: { p: Platform }) {
               meta={
                 <>
                   <span className="block">
-                    Workspace #{String(w.id)} · {w.version === undefined ? "version …" : `version ${w.version}`} · admin <Addr a={w.admin} /> · platform fee {pct(w.feeBps)}
+                    Workspace #{String(w.id)} · {w.version === undefined ? "contract set …" : `contract set ${w.version}`} · admin <Addr a={w.admin} /> · platform fee {pct(w.feeBps)}
                   </span>
                   {settings.length > 0 && <span className="block">{settings.join(" · ").replace(/^./, (c) => c.toUpperCase())}</span>}
                   <span className="block t-num">{counts.join(" · ")}</span>
                 </>
               }
               amount={p.ready.workspaces ? <Amounts held={w.held} tokenOf={p.tokenOf} none="Nothing held" /> : undefined}
-              status={w.version === undefined ? undefined : current ? <Pill tone="good">Current</Pill> : <Pill>Older contracts</Pill>}
+              status={w.version === undefined ? undefined : current ? <Pill tone="good">Current</Pill> : <Pill>Earlier contracts</Pill>}
             />
           )
         })}
@@ -293,18 +304,18 @@ export function Users({ p, me }: { p: Platform; me?: string }) {
 export function Contracts({ p, me }: { p: Platform; me?: string }) {
   const rows = [
     { name: "Registry", tech: "BitRegaloMother", what: "Launches workspaces, registers contract versions and holds the fee settings. Cannot touch anyone's tokens.", addr: addresses.mother, owner: p.owner, pending: p.pendingOwner },
-    { name: "Fee vault", tech: "Treasury", what: "Receives every platform fee. Only its owner can withdraw.", addr: addresses.treasury, owner: p.treasuryOwner, pending: p.treasuryPending },
-    { name: "Paymaster", tech: "BitRegaloPaymaster", what: "Pays network fees for sponsored transactions from its EntryPoint deposit.", addr: addresses.paymaster, owner: p.paymasterOwner, pending: p.paymasterPending },
-    { name: "Token maker", tech: "TokenFactory", what: "Creates utility tokens for workspaces and projects.", addr: addresses.tokenFactory, owner: p.factoryOwner, pending: p.factoryPending },
-    { name: "Test stablecoin", tech: "tUSD", what: "Practice tokens with no value, from the public faucet.", addr: addresses.testStable, owner: p.testStableOwner },
+    { name: "Platform fee treasury", tech: "Treasury", what: "Receives every platform fee. Only its owner can withdraw.", addr: addresses.treasury, owner: p.treasuryOwner, pending: p.treasuryPending },
+    { name: "Paymaster", tech: "BitRegaloPaymaster", what: "Pays network fees for sponsored transactions from its EntryPoint deposit, for the workspaces its owner lists.", addr: addresses.paymaster, owner: p.paymasterOwner, pending: p.paymasterPending },
+    { name: "Token maker", tech: "TokenFactory", what: "Creates utility tokens for workspaces and projects. A workspace's own token can only be created by its admin.", addr: addresses.tokenFactory, owner: p.factoryOwner, pending: p.factoryPending },
+    { name: "Test stablecoin", tech: "tUSD", what: "Practice tokens with no value, from the public faucet. It has no owner.", addr: addresses.testStable },
     { name: "EntryPoint", tech: "ERC-4337 v0.7", what: "The shared contract that runs sponsored transactions and keeps the paymaster's deposit and stake. Not BitRegalo's own.", addr: deployment.entryPoint },
     { name: "Utility token template", tech: "UtilityToken", what: "The code every new utility token copies.", addr: deployment.utilityTokenImpl },
-    { name: "Smart account factory", tech: "SimpleAccountFactory", what: "Creates smart accounts for the embedded wallet, which the app does not use yet.", addr: deployment.simpleAccountFactory },
-    { name: "Smart account template", tech: "SimpleAccount", what: "The code each smart account runs.", addr: deployment.accountImplementation },
-  ].filter((c): c is typeof c & { addr: Address } => !!c.addr)
+    { name: "Smart account factory", tech: "BitRegaloAccountFactory", what: "Creates smart accounts for the embedded wallet, which the app does not use yet.", addr: deployment.accountFactory },
+    { name: "Smart account template", tech: "BitRegaloAccount", what: "The code each smart account runs. It cannot be upgraded.", addr: deployment.accountImplementation },
+  ].filter((c): c is typeof c & { addr: Address } => !!c.addr) as { name: string; tech: string; what: string; addr: Address; owner?: Address; pending?: Address }[]
 
   return (
-    <Section title="Contracts" description="The platform's own contracts and every contract version. Each workspace keeps the version it was created with.">
+    <Section title="Contracts" description="The platform's own contracts and every registered set of workspace contracts. Each workspace keeps the set it was created with. An owner of a platform contract cannot give ownership up, and a handover takes two steps.">
       <div className="space-y-6">
         <Card flush title="Platform contracts">
           {rows.map((c) => (
@@ -326,15 +337,14 @@ export function Contracts({ p, me }: { p: Platform; me?: string }) {
           ))}
         </Card>
 
-        <Card flush title="Contract versions" description="New workspaces get the newest registered version.">
+        <Card flush title="Contract sets" description="Numbered by the registry in the order they were registered on this network. New workspaces get the newest one. This app works with protocol version 2.">
           {p.versions.map((v) => (
             <LedgerRow
               key={v.n}
-              lead={`v${v.n}`}
-              title={<>Version {v.n}{v.n === p.latest && <span className="font-normal text-muted-foreground"> (current)</span>}</>}
+              lead={`#${v.n}`}
+              title={<>Contract set {v.n}{v.n === p.latest && <span className="font-normal text-muted-foreground"> (current)</span>}</>}
               meta={
                 <>
-                  {v.n === 0 ? "Requests, listings, escrow and tokens." : v.n === 1 ? "Adds a workspace treasury, the shop with redemption, and payments." : null}
                   <span className="block">
                     Records <Addr a={v.instanceImpl ?? ""} /> · vault <Addr a={v.vaultImpl ?? ""} />
                     {v.treasuryImpl && <> · treasury <Addr a={v.treasuryImpl} /></>}

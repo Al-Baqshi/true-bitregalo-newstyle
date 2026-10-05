@@ -17,7 +17,6 @@ export default function Workspaces() {
   const current = versionCount.data !== undefined ? Number(versionCount.data as bigint) - 1 : null
   const details = useReadContracts({
     contracts: orgs.flatMap((w) => [
-      { address: addresses.mother, abi: abis.mother, functionName: "tenants", args: [w.id] },
       { address: w.instance, abi: abis.instance, functionName: "rfpCount" },
       { address: w.instance, abi: abis.instance, functionName: "offerCount" },
       { address: w.vault, abi: abis.vault, functionName: "escrowCount" },
@@ -27,10 +26,9 @@ export default function Workspaces() {
   const isMine = (admin: string) => !!address && admin.toLowerCase() === address.toLowerCase()
   // Your own workspaces first, then the rest in the order they were created.
   const rows = orgs.map((w, i) => ({ w, i })).sort((a, b) => Number(isMine(b.w.admin)) - Number(isMine(a.w.admin)))
-  /** Workspace 0 was the first public workspace; when the network has moved on, say so. */
-  const title = (id: bigint) => (id === 0n ? "BitRegalo public workspace (first version)" : nameOf(id))
-  const versionWord = (v: number | undefined) =>
-    v === undefined ? null : current !== null && v === current ? "Current contracts" : v === 0 ? "First version" : `Version ${v}`
+  const title = (id: bigint) => nameOf(id)
+  /** A workspace keeps the contracts it was created with; say when a newer set has been registered since. */
+  const versionWord = (v: number) => (current === null ? null : v === current ? "Current contracts" : "Earlier contracts")
   const plural = (n: bigint | undefined, one: string, many: string) => (n === undefined ? null : `${String(n)} ${n === 1n ? one : many}`)
 
   return (
@@ -51,11 +49,10 @@ export default function Workspaces() {
           />
         )}
         {rows.map(({ w, i }) => {
-          const tenant = details.data?.[i * 4]?.result as { version: bigint } | undefined
-          const rfps = details.data?.[i * 4 + 1]?.result as bigint | undefined
-          const listings = details.data?.[i * 4 + 2]?.result as bigint | undefined
-          const escrows = details.data?.[i * 4 + 3]?.result as bigint | undefined
-          const version = versionWord(tenant ? Number(tenant.version) : undefined)
+          const rfps = details.data?.[i * 3]?.result as bigint | undefined
+          const listings = details.data?.[i * 3 + 1]?.result as bigint | undefined
+          const escrows = details.data?.[i * 3 + 2]?.result as bigint | undefined
+          const version = versionWord(Number(w.version))
           const counts = [plural(rfps, "request", "requests"), plural(listings, "listing", "listings"), plural(escrows, "escrow", "escrows")].filter(Boolean)
           return (
             <LedgerRow

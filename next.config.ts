@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 import bundle from "./lib/bitregalo/bitregalo.json";
 
 // The public network is an ordinary workspace whose pages live at /app instead of /app/t/{id}.
-const PUBLIC = process.env.NEXT_PUBLIC_PUBLIC_WORKSPACE ?? String((bundle.deployments as { publicWorkspace?: number }).publicWorkspace ?? 0);
+const PUBLIC = process.env.NEXT_PUBLIC_PUBLIC_WORKSPACE ?? String((bundle.deployments as { publicTenantId?: number }).publicTenantId ?? 0);
 
 const nextConfig: NextConfig = {
   async redirects() {

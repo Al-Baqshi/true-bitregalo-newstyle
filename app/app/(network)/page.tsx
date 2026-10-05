@@ -37,9 +37,7 @@ export default function NetworkHome() {
   const settingUp = !isConnected || (!!addresses.testStable && !funded)
   // A connected wallet with no practice tokens and nothing done yet only needs the setup.
   const showActivity = isConnected && (!settingUp || activity.items.length > 0)
-  const ready = (a: (typeof NEW_ACTIONS)[number]) => !a.minVersion || t.version >= BigInt(a.minVersion)
-  // What works today comes first; what is still coming to the network goes last.
-  const actions = NEW_ACTIONS.filter((a) => !a.workspaceOnly).sort((a, b) => Number(ready(b)) - Number(ready(a)))
+  const actions = NEW_ACTIONS.filter((a) => !a.workspaceOnly)
 
   return (
     <div className="space-y-12">
@@ -51,31 +49,16 @@ export default function NetworkHome() {
 
       <Section title="What would you like to do?">
         <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2">
-          {actions.map((a) => {
-            if (!ready(a)) {
-              return (
-                <div key={a.key} className="flex flex-col bg-card px-5 py-4 sm:px-6 sm:py-5">
-                  <span className="flex items-center gap-2.5">
-                    <a.icon className="size-5 shrink-0 text-subtle" aria-hidden />
-                    <span className="t-subheading text-muted-foreground">{a.label}</span>
-                  </span>
-                  <span className="mt-1.5 text-sm text-muted-foreground">
-                    <span className="font-[560] text-foreground">Coming to the network soon.</span> It needs the current contracts, which the network is moving to.
-                  </span>
-                </div>
-              )
-            }
-            return (
-              <Link key={a.key} href={t.base + a.path} className="group flex flex-col bg-card px-5 py-4 outline-none transition-colors hover:bg-secondary/60 focus-visible:bg-secondary/60 sm:px-6 sm:py-5">
-                <span className="flex items-center gap-2.5">
-                  <a.icon className="size-5 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" aria-hidden />
-                  <span className="t-subheading flex-1">{a.label}</span>
-                  <ArrowRight className="size-4 shrink-0 text-subtle transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden />
-                </span>
-                <span className="mt-1.5 text-sm text-muted-foreground">{LINE[a.key] ?? a.hint}</span>
-              </Link>
-            )
-          })}
+          {actions.map((a) => (
+            <Link key={a.key} href={t.base + a.path} className="group flex flex-col bg-card px-5 py-4 outline-none transition-colors hover:bg-secondary/60 focus-visible:bg-secondary/60 sm:px-6 sm:py-5">
+              <span className="flex items-center gap-2.5">
+                <a.icon className="size-5 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" aria-hidden />
+                <span className="t-subheading flex-1">{a.label}</span>
+                <ArrowRight className="size-4 shrink-0 text-subtle transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden />
+              </span>
+              <span className="mt-1.5 text-sm text-muted-foreground">{LINE[a.key] ?? a.hint}</span>
+            </Link>
+          ))}
           <Link href="/app/help" className="group flex flex-col bg-card px-5 py-4 outline-none transition-colors hover:bg-secondary/60 focus-visible:bg-secondary/60 sm:px-6 sm:py-5">
             <span className="flex items-center gap-2.5">
               <span className="t-subheading flex-1 text-muted-foreground group-hover:text-foreground">Not sure yet?</span>

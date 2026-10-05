@@ -46,6 +46,8 @@ export function Wizard(props: {
   eyebrow?: string
   title: string
   intro: string
+  /** Something the person must know before they start, such as whether they are allowed to do this here. */
+  notice?: React.ReactNode
   steps: WizardStep[]
   plan: WizardAction[]
   summary?: SummaryRow[]
@@ -92,7 +94,7 @@ export function Wizard(props: {
         setStatus((s) => ({ ...s, [a.id]: "done" }))
       } catch (e) {
         setStatus((s) => ({ ...s, [a.id]: "error" }))
-        setError(((e as Error).message ?? String(e)).split("\n")[0].slice(0, 200))
+        setError(((e as Error).message ?? String(e)).split("\n")[0].slice(0, 240).replace(/\.$/, ""))
         return
       }
     }
@@ -111,6 +113,7 @@ export function Wizard(props: {
         <h1 className="t-title">{props.title}</h1>
         <p className="mt-2.5 text-base text-muted-foreground">{props.intro}</p>
       </header>
+      {props.notice && <div className="mb-7">{props.notice}</div>}
 
       {/* Phones and tablets: where you are, in one line. */}
       <div className="mb-5 @3xl:hidden">

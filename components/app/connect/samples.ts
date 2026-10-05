@@ -16,7 +16,6 @@ export type SampleContext = {
   chainId: number
   records: string
   vault: string
-  version: number
   rpcUrl: string
   /** The first token the workspace accepts; none means only "record only" works. */
   token?: { symbol: string; address: string; decimals: number }
@@ -52,9 +51,9 @@ import { bscTestnet } from "viem/chains"
 import "viem/window"
 
 // ${c.label}, today on ${c.chainName} (chain id ${c.chainId})
-// Records contract: requests and listings${c.version >= 1 ? ", payments" : ""}
+// Records contract: requests, listings, payments and the shop
 export const RECORDS: Address = "${c.records}"
-// Vault: holds payments in escrow
+// Vault: holds payments in escrow. Token approvals go to this address.
 export const VAULT: Address = "${c.vault}"
 ${token}
 
@@ -118,6 +117,16 @@ const title = readLabel(request.scopeHash) // null when the wording is private o
 const offers = await publicClient.readContract({
   address: RECORDS, abi: recordsAbi, functionName: "bidCount", args: [count],
 })
+if (offers > 0n) {
+  const offer = await publicClient.readContract({
+    address: RECORDS, abi: recordsAbi, functionName: "getBid", args: [count, 1n],
+  })
+  // offer.provider   the supplier who made it
+  // offer.amount     their price, offer.timeframe their delivery time (seconds)
+  // offer.validUntil the last moment it can be chosen (unix seconds)
+  // offer.withdrawn  true once the supplier took it back
+  console.log(offer.amount, offer.validUntil)
+}
 
 // Listings work the same way: offerCount() and getOffer(id).
 // Escrows live in the vault: escrowCount() and getEscrow(id).
@@ -166,24 +175,31 @@ const listing = await publicClient.readContract({
 // listing.state       1 open, 2 taken, 3 withdrawn
 // listing.settlement  0 record only, 1 direct payment, 2 escrow
 // listing.designatedBuyer, when set, is the only wallet that can take it
+// listing.validUntil  the last moment it can be taken (unix seconds); 0 = until withdrawn
 
+// What the buyer agrees to pay: the price plus the flat service fee for this
+// token, as you show it to them. 0 when the listing is record only.
+let total = 0n
 if (listing.settlement !== 0) {
-  // The buyer pays the price plus the flat service fee for this token
   const [, , serviceFee] = await publicClient.readContract({
     address: RECORDS, abi: recordsAbi, functionName: "tokens", args: [listing.token],
   })
-  // 1. Allow the vault to take that much
+  total = listing.amount + serviceFee
+  // 1. Allow the vault to take exactly that much
   const approval = await walletClient.writeContract({
     account, address: listing.token, abi: erc20Abi,
-    functionName: "approve", args: [VAULT, listing.amount + serviceFee],
+    functionName: "approve", args: [VAULT, total],
   })
   await publicClient.waitForTransactionReceipt({ hash: approval })
 }
 
-// 2. Take the listing. With escrow, the payment is now held by the vault.
+// 2. Take the listing. The second argument is the most the buyer can be
+// charged: if a fee went up since you read it, the call fails with
+// TotalAboveMax and nothing is charged. With escrow, the payment is now
+// held by the vault.
 const hash = await walletClient.writeContract({
   account, address: RECORDS, abi: recordsAbi,
-  functionName: "confirmOffer", args: [listingId],
+  functionName: "confirmOffer", args: [listingId, total],
 })
 const receipt = await publicClient.waitForTransactionReceipt({ hash })
 const [taken] = parseEventLogs({
@@ -207,7 +223,9 @@ const escrow = await publicClient.readContract({
 // escrow.expiresAt is the deadline (unix seconds)
 
 // Only the buyer can release it, and only before the deadline.
-// The supplier receives the amount minus the platform fee.
+// The supplier receives the amount minus the platform fee. The fee stays
+// in the vault until anyone calls collectFees(token), which sends it to
+// the platform fee treasury.
 const hash = await walletClient.writeContract({
   account, address: VAULT, abi: vaultAbi,
   functionName: "release", args: [escrowId],
@@ -216,6 +234,8 @@ await publicClient.waitForTransactionReceipt({ hash })
 
 // The supplier can hand it back instead: cancel(escrowId).
 // After the deadline anyone can return it to the buyer: expire(escrowId).
+// If the token refuses a payout, the escrow still settles and the amount is
+// credited: claimable(account, token), collected with claim(token).
 // Its page: ${c.pages}/escrows/{id}
 `
 }
@@ -237,17 +257,21 @@ const amount = parseUnits("25", ${dec}) // 25 ${sym}
 const [, , serviceFee] = await publicClient.readContract({
   address: RECORDS, abi: recordsAbi, functionName: "tokens", args: [TOKEN],
 })
+// The total you show the payer. It is what they approve, and the most
+// they can be charged.
+const total = amount + serviceFee
 const approval = await walletClient.writeContract({
   account, address: TOKEN, abi: erc20Abi,
-  functionName: "approve", args: [VAULT, amount + serviceFee],
+  functionName: "approve", args: [VAULT, total],
 })
 await publicClient.waitForTransactionReceipt({ hash: approval })
 
 const hash = await walletClient.writeContract({
   account, address: RECORDS, abi: recordsAbi,
   functionName: "pay",
-  // payee, token, amount, reference, project (0 for none)
-  args: [payee, TOKEN, amount, encodeLabel("Invoice 1042"), 0n],
+  // payee, token, amount, reference, project (0 for none), most to charge.
+  // The payee cannot be one of the protocol's own contracts.
+  args: [payee, TOKEN, amount, encodeLabel("Invoice 1042"), 0n, total],
 })
 const receipt = await publicClient.waitForTransactionReceipt({ hash })
 const [paid] = parseEventLogs({

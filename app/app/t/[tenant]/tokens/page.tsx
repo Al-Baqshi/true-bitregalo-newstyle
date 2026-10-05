@@ -1,9 +1,10 @@
 "use client"
 import Link from "next/link"
-import { useAccount, useReadContract, useReadContracts } from "wagmi"
+import { useAccount, useReadContracts } from "wagmi"
 import type { Address } from "viem"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import { abis, addresses } from "@/lib/bitregalo/config"
+import { useProjects, useWorkspaceTokens } from "@/lib/bitregalo/instances"
 import { Addr, Amount, Pill, PageHead, Empty, Card } from "@/components/app/ui"
 import { Explainer } from "@/components/app/explain"
 import { Button } from "@/components/ui/button"
@@ -12,8 +13,10 @@ export default function TokensPage() {
   const t = useTenant()
   const base = t.base
   const { address } = useAccount()
-  const list = useReadContract({ address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "tenantTokens", args: [t.id], query: { refetchInterval: 15_000 } })
-  const tokens = ((list.data as Address[] | undefined) ?? []).slice().reverse()
+  // The workspace's own tokens and its projects' tokens, newest first.
+  const list = useWorkspaceTokens(t.id, t.instance)
+  const tokens = list.addresses.slice().reverse()
+  const projects = useProjects(t.instance)
   const meta = useReadContracts({
     contracts: tokens.flatMap((a) => [
       { address: a, abi: abis.utilityToken, functionName: "name" },
@@ -30,9 +33,16 @@ export default function TokensPage() {
     contracts: tokens.map((a) => ({ address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "tokenInfo", args: [a] })),
     query: { enabled: tokens.length > 0 },
   })
-  const loading = list.data === undefined
+  const loading = list.isLoading
   const me = address?.toLowerCase()
   const isAdmin = !!me && t.admin.toLowerCase() === me
+  const ownsProject = !!me && projects.list.some((p) => p.active && p.owner.toLowerCase() === me)
+  /** Who may create a token here: the factory's rule, said before anyone starts. */
+  const canCreate = !address
+    ? "The workspace admin creates the workspace's own tokens. A project owner creates a token for their own project."
+    : isAdmin ? "You are the admin here, so you can create a token for the workspace or for any of its projects."
+    : ownsProject ? "You own a project here, so you can create a token for it. Only the admin can create a token for the workspace itself."
+    : "Only the admin can create a token for the workspace itself. You can create one for a project of your own: start a project first, or as part of creating the token."
   /** ", by …" when the token maker recorded who created it. */
   const issuer = (creator: Address | undefined) =>
     !creator || /^0x0{40}$/.test(creator) ? null
@@ -44,12 +54,14 @@ export default function TokensPage() {
     <div className="space-y-8">
       <PageHead
         title="Tokens"
-        intro="Currencies, credits, vouchers and memberships issued for this workspace. Each one says who issued it and whether it can be used to pay here."
+        intro="Credits, vouchers and memberships issued for this workspace and its projects. Each one says who issued it and whether it can be used to pay here."
         action={<Button asChild><Link href={`${base}/tokens/new`}>Create a token</Link></Button>}
       />
+      <p className="-mt-3 max-w-[62ch] text-sm text-muted-foreground">{canCreate}</p>
       <Explainer id="tokens" title="What are tokens here?">
-        <p>A token is a currency or credit issued for this workspace: site credits, vouchers, memberships, loyalty points, or a currency of its own. Whoever holds it keeps it in their wallet like any other coin.</p>
-        <p>A token <b>can be used to pay here</b> once the workspace admin switches it on for payments. Then requests, listings and escrows in this workspace can be paid in it.</p>
+        <p>A token is a credit issued for this workspace or one of its projects: site credits, vouchers, memberships, loyalty points. Whoever holds it keeps it in their wallet like any other token.</p>
+        <p>The workspace admin creates the workspace&apos;s own tokens. A project&apos;s owner can create a token for that project. Whoever creates a token owns it and receives the first supply.</p>
+        <p>A token <b>can be used to pay here</b> once the workspace admin switches it on for payments. Then requests, listings and escrows in this workspace can be paid in it. Holders can <b>redeem</b> it once the admin allows that.</p>
       </Explainer>
 
       {loading && (
@@ -91,7 +103,7 @@ export default function TokensPage() {
                   {cfg && (usable ? <Pill tone="good">Can be used to pay here</Pill> : <Pill>Not for payments yet</Pill>)}
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  Issued for this workspace{project ? `, for project #${String(project)}` : ""}{issuer(created?.[2])}.
+                  {project ? `Issued for project #${String(project)}` : "The workspace's own token"}{issuer(created?.[2])}.
                 </p>
                 {cfg && !usable && (
                   <p className="mt-1 text-sm text-muted-foreground">
@@ -111,7 +123,7 @@ export default function TokensPage() {
                   </div>
                 </dl>
                 <p className="mt-4 text-sm text-muted-foreground">
-                  {fixed ? "Fixed supply: nobody can create more." : youMint ? "You can create more of it." : "Its creator can create more."}
+                  {fixed ? "Fixed supply: nobody can create more." : youMint ? "You own it and can create more." : owner && t.treasury && owner.toLowerCase() === t.treasury.toLowerCase() ? "The workspace treasury creates more as it sells." : "Its owner can create more."}
                   {!address && " Connect a wallet to see your balance."}
                 </p>
               </li>

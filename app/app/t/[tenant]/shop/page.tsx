@@ -9,7 +9,6 @@ import { abis } from "@/lib/bitregalo/config"
 import { Amount, Card, Empty, PageHead, Pill, RowsSkeleton } from "@/components/app/ui"
 import { Explainer } from "@/components/app/explain"
 import { Button } from "@/components/ui/button"
-import { OlderContract } from "@/components/app/older-contract"
 import { saleStatus } from "@/lib/bitregalo/sales"
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
@@ -18,9 +17,13 @@ export default function Shop() {
   const t = useTenant()
   const base = t.base
   const { address } = useAccount()
-  const hasShop = t.version >= 1n
-  const { count } = useSaleCount(hasShop)
+  const { count } = useSaleCount()
   const sales = useSales(count)
+  // What the treasury's owner has approved for each sale and is not sold yet. Without it nothing can be bought.
+  const approvals = useReadContracts({
+    contracts: sales.ids.map((id) => ({ address: t.treasury!, abi: abis.workspaceTreasury, functionName: "saleAllowance", args: [id] })),
+    query: { enabled: !!t.treasury && sales.ids.length > 0, refetchInterval: 15_000 },
+  })
   const payTokens = useSettlementTokens(t.instance, t.id)
   const { send, isPending } = useTx()
   const isAdmin = !!address && t.admin.toLowerCase() === address.toLowerCase()
@@ -41,9 +44,8 @@ export default function Shop() {
       decimals: Number((meta.data?.[i * 3 + 2]?.result as number | undefined) ?? 18),
     }
   }
-  if (!hasShop) return <OlderContract what="The shop" />
-  const loading = (hasShop && count === undefined) || sales.isLoading
-  const items = sales.data.map((s, i) => (s ? { s, id: sales.ids[i] } : null)).filter((x) => x !== null)
+  const loading = count === undefined || sales.isLoading
+  const items = sales.data.map((s, i) => (s ? { s, id: sales.ids[i], approved: approvals.data?.[i]?.result as bigint | undefined } : null)).filter((x) => x !== null)
 
   return (
     <div>
@@ -54,7 +56,8 @@ export default function Shop() {
       />
       <Explainer id="shop" title="How buying works">
         <p>Each sale names a token, a price per token and how many are left. When you buy, your stablecoin goes to the workspace&apos;s treasury and the tokens come to you in the same transaction. Nobody holds your payment in between.</p>
-        <p>To use what you bought, open the token and <b>redeem</b> it with a reference the workspace understands. Redeeming hands the token back to them, free of charge.</p>
+        <p>The tokens are handed out from the workspace treasury, so a sale starts only when the treasury&apos;s owner has approved it. Until then it shows as waiting for approval.</p>
+        <p>If the workspace lets holders <b>redeem</b> a token, open the token and redeem it with a reference the workspace understands. Redeeming hands the token back to them, at no fee.</p>
       </Explainer>
 
       {loading && items.length === 0 && <Card flush><RowsSkeleton rows={2} /></Card>}
@@ -62,7 +65,7 @@ export default function Shop() {
         <Card flush>
           <Empty
             title="Nothing for sale yet"
-            body={isAdmin ? "Open the first sale: pick a token, set a price, choose how many." : "The admin has not put anything up for sale."}
+            body={isAdmin ? "Open the first sale: pick a token, set a price, choose how many. The treasury's owner then approves it." : "The admin has not put anything up for sale."}
             action={isAdmin ? <Button asChild size="sm"><Link href={`${base}/shop/new`}>Sell in the shop</Link></Button> : undefined}
           />
         </Card>
@@ -70,10 +73,10 @@ export default function Shop() {
 
       {items.length > 0 && (
         <ul className="grid gap-4 sm:grid-cols-2">
-          {items.map(({ s, id }) => {
+          {items.map(({ s, id, approved }) => {
             const tm = tokenMeta(s.token)
             const pay = payTokens.all.find((x) => x.address.toLowerCase() === s.payToken.toLowerCase())
-            const st = saleStatus(s)
+            const st = saleStatus(s, approved)
             const label = decodeLabel(s.metaHash)
             const onSale = st.label === "on sale"
             return (

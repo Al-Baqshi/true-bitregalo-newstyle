@@ -14,5 +14,5 @@ export function useWorkspaceName() {
   return (id: bigint) =>
     id === PUBLIC_WORKSPACE_ID
       ? "BitRegalo network"
-      : (ready ? instanceName(id) : null) ?? (id === 0n ? "BitRegalo public workspace (first version)" : `Workspace #${id}`)
+      : (ready ? instanceName(id) : null) ?? `Workspace #${id}`
 }

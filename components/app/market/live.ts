@@ -69,5 +69,7 @@ export function stillOpen(kind: EntryKind, r: LiveRecord | undefined, now = Date
     return rfp.state === 1 && Number(rfp.deadline) > now
   }
   const o = r as Offer
-  return o.state === 1 && /^0x0{40}$/.test(o.designatedBuyer)
+  // A listing may carry a last moment to take it; 0 means open until the supplier withdraws it.
+  const valid = o.validUntil === 0n || Number(o.validUntil) >= now
+  return o.state === 1 && valid && /^0x0{40}$/.test(o.designatedBuyer)
 }

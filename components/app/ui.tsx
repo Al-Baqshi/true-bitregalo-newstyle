@@ -174,6 +174,30 @@ export function Amount({ value, decimals = 18, symbol = "" }: { value: bigint; d
   )
 }
 
+/**
+ * What leaves the payer's wallet, said before they sign: the amount, the service fee and their
+ * sum. The sum is also what the wallet approves and the most the contract may charge.
+ */
+export function PayTotal({ amount, serviceFee, decimals, symbol, amountLabel = "Amount", className }: { amount: bigint; serviceFee: bigint | undefined; decimals: number; symbol: string; amountLabel?: string; className?: string }) {
+  const row = "flex items-baseline justify-between gap-6 py-1.5"
+  return (
+    <dl className={cn("max-w-sm text-sm", className)}>
+      <div className={row}>
+        <dt className="text-muted-foreground">{amountLabel}</dt>
+        <dd className="font-[520]"><Amount value={amount} decimals={decimals} symbol={symbol} /></dd>
+      </div>
+      <div className={row}>
+        <dt className="text-muted-foreground">Service fee</dt>
+        <dd className="font-[520]">{serviceFee === undefined ? "…" : <Amount value={serviceFee} decimals={decimals} symbol={symbol} />}</dd>
+      </div>
+      <div className={cn(row, "border-t border-foreground/20")}>
+        <dt className="font-semibold">Total you pay</dt>
+        <dd className="text-base font-[620]">{serviceFee === undefined ? "…" : <Amount value={amount + serviceFee} decimals={decimals} symbol={symbol} />}</dd>
+      </div>
+    </dl>
+  )
+}
+
 export function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: React.ReactNode }) {
   return (
     <label className="block">

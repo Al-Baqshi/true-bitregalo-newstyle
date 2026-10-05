@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useAccount } from "wagmi"
-import { abis, addresses, chain, EXPLORER, explorerAddress, RPC_URL } from "@/lib/bitregalo/config"
+import { abis, addresses, chain, EXPLORER, explorerAddress, PROTOCOL_VERSION, RPC_URL } from "@/lib/bitregalo/config"
 import { useSettlementTokens } from "@/lib/bitregalo/instances"
 import { useInstanceRules } from "@/lib/bitregalo/instance-rules"
 import { MARKET_API, useMarketAvailable } from "@/lib/bitregalo/market"
@@ -29,7 +29,6 @@ export function ConnectPlatform() {
   const tokens = useSettlementTokens(t.instance, t.id)
   const rules = useInstanceRules(t.instance)
   const marketOn = useMarketAvailable()
-  const v1 = t.version >= 1n
   const id = String(t.id)
 
   // Browser-only facts, read after mount so the server render matches the first client render.
@@ -45,7 +44,6 @@ export function ConnectPlatform() {
     chainId: chain.id,
     records: t.instance,
     vault: t.vault,
-    version: Number(t.version),
     rpcUrl: RPC_URL,
     token: token ? { symbol: token.symbol, address: token.address, decimals: token.decimals } : undefined,
     pages,
@@ -60,9 +58,9 @@ export function ConnectPlatform() {
   const files = [
     { title: "Records contract", body: "The workspace's records and rules: requests, offers, listings, payments and the shop.", file: "bitregalo-records.abi.json", abi: abis.instance },
     { title: "Vault", body: "Holds payments in escrow and settles direct payments: release, hand back, return.", file: "bitregalo-vault.abi.json", abi: abis.vault },
-    { title: "Workspace treasury", body: "Holds the workspace's own tokens, such as shop stock. Only the admin can move them out. Version 1 and later.", file: "bitregalo-workspace-treasury.abi.json", abi: abis.workspaceTreasury },
+    { title: "Workspace treasury", body: "Holds the workspace's own tokens, such as shop stock. Only its owner can move them out, and a sale hands out only what the owner approved.", file: "bitregalo-workspace-treasury.abi.json", abi: abis.workspaceTreasury },
     { title: "ERC-20 token", body: "Balances and approvals for any token, USDT included.", file: "erc20.abi.json", abi: abis.erc20 },
-    { title: "Token factory", body: "Creates a workspace's own tokens: vouchers, credits, memberships.", file: "bitregalo-token-factory.abi.json", abi: abis.tokenFactory },
+    { title: "Token factory", body: "Creates a workspace's own tokens: vouchers, credits, memberships. A workspace's token is created by its admin, a project's token by the admin or the project's owner.", file: "bitregalo-token-factory.abi.json", abi: abis.tokenFactory },
   ]
 
   return (
@@ -101,9 +99,9 @@ export function ConnectPlatform() {
           </p>
           <dl className="mt-6 grid gap-x-10 gap-y-6 sm:grid-cols-2">
             {[
-              { name: "Read everything without a key", body: `Every record in ${here} (requests, offers, listings, escrows${v1 ? ", payments" : ""}) can be read straight from the contracts by any site or server, at no cost.` },
-              { name: "Have your users sign on your site", body: `Your site or app asks each user's own wallet to sign the same actions this app offers: post a request, take a listing, fund or release an escrow${v1 ? ", pay someone" : ""}. Your platform never holds their tokens.` },
-              { name: "Send payment links", body: v1 ? "Links and QR codes that open the right screen in this app with the details filled in: a payment to a wallet, or a job paid by escrow. No code needed." : "A link that opens the right screen in this app with a job filled in, paid by escrow. No code needed. Links for a payment to a wallet need contract version 1." },
+              { name: "Read everything without a key", body: `Every record in ${here} (requests, offers, listings, escrows, payments) can be read straight from the contracts by any site or server, at no cost.` },
+              { name: "Have your users sign on your site", body: `Your site or app asks each user's own wallet to sign the same actions this app offers: post a request, take a listing, fund or release an escrow, pay someone. Each paying call names the most the user agrees to be charged. Your platform never holds their tokens.` },
+              { name: "Send payment links", body: "Links and QR codes that open the right screen in this app with the details filled in: a payment to a wallet, or a job paid by escrow. No code needed." },
               { name: "Use the marketplace index", body: "The titles, descriptions, categories and countries of public requests and listings. Reading is public; writing a description needs a signature from the wallet that owns the record." },
             ].map((x) => (
               <div key={x.name}>
@@ -149,17 +147,15 @@ export function ConnectPlatform() {
             <Card flush title="Contracts">
               <dl>
                 <ValueRow label="Workspace id" value={id} hint={t.isPublic ? "The BitRegalo network's number in the workspace registry." : "This workspace's number in the workspace registry."} />
-                <ValueRow label="Records contract" value={t.instance} explorer={explorerAddress(t.instance)} hint="Requests, offers and listings, plus payments and the shop from version 1." />
+                <ValueRow label="Records contract" value={t.instance} explorer={explorerAddress(t.instance)} hint="Requests, offers, listings, payments and the shop." />
                 <ValueRow label="Vault" value={t.vault} explorer={explorerAddress(t.vault)} hint="Holds payments in escrow. Token approvals go to this address." />
-                {v1 && (
-                  t.treasury
-                    ? <ValueRow label="Treasury" value={t.treasury} explorer={explorerAddress(t.treasury)} hint="Owned by the workspace admin." />
-                    : <ValueRow label="Treasury" value="…" copy="" />
-                )}
-                <ValueRow label="Contract version" value={String(t.version)} mono={false} copy="" hint={v1 ? "Requests, listings, escrows, payments, the shop and the treasury." : "Requests, listings and escrows. Payments, the shop and the treasury need version 1."} />
+                {t.treasury
+                  ? <ValueRow label="Treasury" value={t.treasury} explorer={explorerAddress(t.treasury)} hint="The workspace's own treasury. It has its own owner, the admin at first." />
+                  : <ValueRow label="Treasury" value="…" copy="" />}
+                <ValueRow label="Protocol version" value={String(PROTOCOL_VERSION)} mono={false} copy="" hint="Requests, listings, escrows, payments, the shop and the treasury. Every paying call carries the most the payer agrees to be charged." />
               </dl>
               <p className="border-t border-border px-5 py-3.5 text-sm text-muted-foreground sm:px-6">
-                Shared by every workspace: the workspace registry <Addr a={addresses.mother} />, where <code className="t-mono">tenants(id)</code> gives any workspace&apos;s contracts, and the token factory <Addr a={addresses.tokenFactory} />.
+                Shared by every workspace: the workspace registry <Addr a={addresses.mother} />, where <code className="t-mono">tenants(id)</code> gives any workspace&apos;s contracts and <code className="t-mono">adminOf(id)</code> its admin, and the token factory <Addr a={addresses.tokenFactory} />.
               </p>
             </Card>
 
@@ -211,11 +207,6 @@ export function ConnectPlatform() {
               <DownloadRow key={f.file} title={f.title} body={f.body} file={f.file} onDownload={() => saveFile(f.file, JSON.stringify(f.abi, null, 2) + "\n", "application/json")} />
             ))}
           </Card>
-          {!v1 && (
-            <p className="mt-4 max-w-[66ch] text-sm text-muted-foreground">
-              {t.isPublic ? "The network" : "This workspace"} runs contract version 0. Its records contract has the request, listing and escrow functions in this file, but not <code className="t-mono">pay</code>, the shop or the treasury: calling those fails.
-            </p>
-          )}
         </Section>
       </Anchor>
 
@@ -246,7 +237,7 @@ export function ConnectPlatform() {
 
             <Example
               title="Take a listing and fund the escrow"
-              body={<>The buyer allows the vault to take the price plus the service fee, then takes the listing. With escrow, the payment is held by the vault until the buyer releases it; with direct payment, the supplier is paid at once.</>}
+              body={<>The buyer allows the vault to take exactly the price plus the service fee, then takes the listing and names that total as the most to be charged. If a fee changed in between, the call fails and nothing is charged. With escrow, the payment is held by the vault until the buyer releases it; with direct payment, the supplier is paid at once.</>}
             >
               <CodeBlock name="take-a-listing.ts" code={code.take} />
             </Example>
@@ -258,14 +249,8 @@ export function ConnectPlatform() {
               <CodeBlock name="release-an-escrow.ts" code={code.release} />
             </Example>
 
-            <Example title="Pay someone" body={<>A direct payment with a reference and a receipt, in one transaction after the approval.</>}>
-              {v1 ? (
-                <CodeBlock name="pay-someone.ts" code={code.pay} />
-              ) : (
-                <Notice title="Needs contract version 1">
-                  <p>{t.isPublic ? "The network runs" : "This workspace runs"} version 0, which has no <code className="t-mono">pay</code> function for paying a wallet outside a request or listing. The example appears here for workspaces on version 1 or later.</p>
-                </Notice>
-              )}
+            <Example title="Pay someone" body={<>A direct payment with a reference and a receipt, in one transaction after the approval. The last argument is the most the payer agrees to be charged: the amount plus the service fee.</>}>
+              <CodeBlock name="pay-someone.ts" code={code.pay} />
             </Example>
           </div>
         </Section>
@@ -280,9 +265,8 @@ export function ConnectPlatform() {
             <Example
               title="Payment link"
               body={<>Asks someone to pay a wallet. Amounts are in whole tokens, such as 25 or 12.5.</>}
-              action={v1 ? <Button asChild size="sm" variant="secondary"><Link href={`${t.base}/get-paid`}>Make one in Get paid</Link></Button> : undefined}
+              action={<Button asChild size="sm" variant="secondary"><Link href={`${t.base}/get-paid`}>Make one in Get paid</Link></Button>}
             >
-              {v1 ? (
                 <div className="space-y-5">
                   <CodeBlock wrap name="Payment link" code={`${pages}/pay?to=${wallet}&token=${tokenAddr}&amount=25&ref=Invoice%201042&fixed=1`} />
                   <Params
@@ -296,11 +280,6 @@ export function ConnectPlatform() {
                     ]}
                   />
                 </div>
-              ) : (
-                <Notice title="Needs contract version 1">
-                  <p>Payment links use the <code className="t-mono">pay</code> function, which {t.isPublic ? "the network's" : "this workspace's"} contracts (version 0) do not have.</p>
-                </Notice>
-              )}
             </Example>
 
             <Example
@@ -325,11 +304,11 @@ export function ConnectPlatform() {
               </div>
             </Example>
 
-            <Example title="Record pages" body={<>Every request, listing, escrow{v1 ? " and payment" : ""} has a public page anyone can open, numbered from 1.</>}>
+            <Example title="Record pages" body={<>Every request, listing, escrow and payment has a public page anyone can open, numbered from 1.</>}>
               <CodeBlock
                 wrap
               name="Record pages"
-                code={[`${pages}/requests/{id}`, `${pages}/listings/{id}`, `${pages}/escrows/{id}`, ...(v1 ? [`${pages}/payments/{id}`] : [])].join("\n")}
+                code={[`${pages}/requests/{id}`, `${pages}/listings/{id}`, `${pages}/escrows/{id}`, `${pages}/payments/{id}`].join("\n")}
               />
             </Example>
           </div>

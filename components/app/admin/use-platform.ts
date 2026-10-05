@@ -13,7 +13,7 @@ import { useBalance, useReadContracts } from "wagmi"
 import type { Abi, Address } from "viem"
 import bundle from "@/lib/bitregalo/bitregalo.json"
 import { abis, addresses, versions as fileVersions, STABLES } from "@/lib/bitregalo/config"
-import { useInstances } from "@/lib/bitregalo/instances"
+import { useInstances, useTokensOf } from "@/lib/bitregalo/instances"
 import type { Bid, Escrow, Offer, Payment, Rfp } from "@/lib/bitregalo/hooks"
 
 /** Per workspace and kind of record. Beyond this the page needs the indexer. */
@@ -27,7 +27,7 @@ const dep = bundle.deployments as unknown as {
   paymasterSigner?: string
   deployer?: string
   utilityTokenImpl?: string
-  simpleAccountFactory?: string
+  accountFactory?: string
   accountImplementation?: string
 }
 export const deployment = {
@@ -35,14 +35,11 @@ export const deployment = {
   paymasterSigner: dep.paymasterSigner as Address | undefined,
   deployer: dep.deployer as Address | undefined,
   utilityTokenImpl: dep.utilityTokenImpl as Address | undefined,
-  simpleAccountFactory: dep.simpleAccountFactory as Address | undefined,
+  accountFactory: dep.accountFactory as Address | undefined,
   accountImplementation: dep.accountImplementation as Address | undefined,
 }
 
-const ownableAbi: Abi = [
-  { type: "function", name: "owner", stateMutability: "view", inputs: [], outputs: [{ type: "address" }] },
-  { type: "function", name: "pendingOwner", stateMutability: "view", inputs: [], outputs: [{ type: "address" }] },
-]
+const ownableAbi = abis.ownable
 /** EntryPoint v0.7: the paymaster's deposit and stake. */
 const entryPointAbi: Abi = [
   {
@@ -128,7 +125,7 @@ export type WorkspaceRow = {
   escrows?: bigint
   /** Every direct settlement through the vault: payments, shop sales, redemptions, direct awards. */
   direct?: bigint
-  /** Open-amount payments ("Send a payment"), version 1 and later. */
+  /** Open-amount payments ("Send a payment"). */
   payments?: bigint
   sales?: bigint
   bids: number
@@ -136,6 +133,8 @@ export type WorkspaceRow = {
   /** Escrows by state number (index 1 held, 2 released, 3 handed back, 4 returned). */
   escrowStates: number[]
   held: Held[]
+  /** Platform fees kept in this workspace's vault until someone sends them to the platform fee treasury. */
+  fees: Held[]
   treasuryBalances: Held[]
 }
 
@@ -146,7 +145,7 @@ export type UserRow = {
   firstSeen: bigint
   /** Workspace ids this wallet appears in. Plain numbers: React's dev tools cannot print arrays of bigints. */
   active: number[]
-  /** For workspaces that require identity checks: the expiry of this wallet's check there (0 = none). */
+  /** For workspaces that require identity checks: the expiry of this wallet's valid approval there (0 = none, expired, revoked or void). */
   kyc: { workspace: bigint; until: bigint }[]
 }
 
@@ -171,7 +170,6 @@ export function usePlatform() {
     ["paymaster.owner", { address: addresses.paymaster, abi: ownableAbi, functionName: "owner" }],
     ["paymaster.pending", { address: addresses.paymaster, abi: ownableAbi, functionName: "pendingOwner" }],
     ["paymaster.deposit", { address: deployment.entryPoint, abi: entryPointAbi, functionName: "getDepositInfo", args: [addresses.paymaster] }],
-    ...(addresses.testStable ? [["testStable.owner", { address: addresses.testStable, abi: ownableAbi, functionName: "owner" }] as [string, Call]] : []),
   ], true)
   const owner = head.get<Address>("owner")
   const versionCount = head.get<bigint>("versionCount")
@@ -180,15 +178,15 @@ export function usePlatform() {
 
   /* ── Stage 2: versions, every token, and each workspace's settings and counts ── */
   const ws = useInstances()
+  // The factory lists a workspace's own tokens and each project's tokens separately, in pages.
+  const created = useTokensOf(ws.list)
   const s2 = useBatch([
     ...Array.from({ length: Number(versionCount ?? 0n) }, (_, i): [string, Call] => [`version.${i}`, { address: addresses.mother, abi: abis.mother, functionName: "versions", args: [BigInt(i)] }]),
-    ...Array.from({ length: Number(tokenCount ?? 0n) }, (_, i): [string, Call] => [`token.${i}`, { address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "allTokens", args: [BigInt(i)] }]),
     ...ws.list.flatMap((w): [string, Call][] => {
       const inst = { address: w.instance, abi: abis.instance }
       const vault = { address: w.vault, abi: abis.vault }
       const k = String(w.id)
       return [
-        [`${k}.tenant`, { address: addresses.mother, abi: abis.mother, functionName: "tenants", args: [w.id] }],
         [`${k}.requests`, { ...inst, functionName: "rfpCount" }],
         [`${k}.listings`, { ...inst, functionName: "offerCount" }],
         [`${k}.directOn`, { ...inst, functionName: "directEnabled" }],
@@ -197,20 +195,18 @@ export function usePlatform() {
         [`${k}.fee`, { ...inst, functionName: "feeBps" }],
         [`${k}.escrows`, { ...vault, functionName: "escrowCount" }],
         [`${k}.direct`, { ...vault, functionName: "directCount" }],
-        [`${k}.factoryTokens`, { address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "tenantTokens", args: [w.id] }],
+        [`${k}.payments`, { ...inst, functionName: "paymentCount" }],
+        [`${k}.sales`, { ...inst, functionName: "saleCount" }],
+        [`${k}.treasury`, { ...inst, functionName: "treasury" }],
       ]
     }),
   ], head.done && !ws.isLoading)
 
-  const factoryTokens = uniq(Array.from({ length: Number(tokenCount ?? 0n) }, (_, i) => s2.get<Address>(`token.${i}`)).filter((a): a is Address => !!a))
+  const factoryTokens = uniq(ws.list.flatMap((w) => created.of(w.id).map((x) => x.address)))
   const known = uniq([...STABLES.map((s) => s.address), ...factoryTokens])
-  const versionOf = (id: bigint) => {
-    const t = s2.get<{ version: bigint }>(`${id}.tenant`)
-    return t ? Number(t.version) : undefined
-  }
-  const candidatesOf = (id: bigint) => uniq([...STABLES.map((s) => s.address), ...(s2.get<Address[]>(`${id}.factoryTokens`) ?? [])])
+  const candidatesOf = (id: bigint) => uniq([...STABLES.map((s) => s.address), ...created.of(id).map((x) => x.address)])
 
-  /* ── Stage 3: token details, balances held, newer counts, and the records themselves ── */
+  /* ── Stage 3: token details, balances held, fees waiting, and the records themselves ── */
   const s3 = useBatch([
     ...known.flatMap((t): [string, Call][] => [
       [`sym.${lower(t)}`, { address: t, abi: abis.utilityToken, functionName: "symbol" }],
@@ -222,20 +218,12 @@ export function usePlatform() {
       const inst = { address: w.instance, abi: abis.instance }
       const vault = { address: w.vault, abi: abis.vault }
       const k = String(w.id)
-      const v = versionOf(w.id) ?? 0
       return [
         ...candidatesOf(w.id).flatMap((t): [string, Call][] => [
           [`${k}.locked.${lower(t)}`, { ...vault, functionName: "totalLocked", args: [t] }],
+          [`${k}.fees.${lower(t)}`, { ...vault, functionName: "accruedFees", args: [t] }],
           [`${k}.accepts.${lower(t)}`, { ...inst, functionName: "tokens", args: [t] }],
         ]),
-        // Payments, the shop and the treasury arrived in version 1; older contracts lack the calls.
-        ...(v >= 1
-          ? ([
-            [`${k}.payments`, { ...inst, functionName: "paymentCount" }],
-            [`${k}.sales`, { ...inst, functionName: "saleCount" }],
-            [`${k}.treasury`, { ...inst, functionName: "treasury" }],
-          ] as [string, Call][])
-          : []),
         ...range(s2.get<bigint>(`${k}.requests`)).flatMap((id): [string, Call][] => [
           [`${k}.rfp.${id}`, { ...inst, functionName: "getRfp", args: [id] }],
           [`${k}.bidCount.${id}`, { ...inst, functionName: "bidCount", args: [id] }],
@@ -244,16 +232,16 @@ export function usePlatform() {
         ...range(s2.get<bigint>(`${k}.escrows`)).map((id): [string, Call] => [`${k}.escrow.${id}`, { ...vault, functionName: "getEscrow", args: [id] }]),
       ]
     }),
-  ], s2.done)
+  ], s2.done && !created.isLoading)
 
   /* ── Stage 4: offers on requests, payments, and each workspace treasury's balances ── */
   const s4 = useBatch(
     ws.list.flatMap((w): [string, Call][] => {
       const inst = { address: w.instance, abi: abis.instance }
       const k = String(w.id)
-      const treasury = s3.get<Address>(`${k}.treasury`)
+      const treasury = s2.get<Address>(`${k}.treasury`)
       return [
-        ...range(s3.get<bigint>(`${k}.payments`)).map((id): [string, Call] => [`${k}.payment.${id}`, { ...inst, functionName: "getPayment", args: [id] }]),
+        ...range(s2.get<bigint>(`${k}.payments`)).map((id): [string, Call] => [`${k}.payment.${id}`, { ...inst, functionName: "getPayment", args: [id] }]),
         ...range(s2.get<bigint>(`${k}.requests`)).flatMap((rfp) =>
           range(s3.get<bigint>(`${k}.bidCount.${rfp}`)).map((b): [string, Call] => [`${k}.bid.${rfp}.${b}`, { ...inst, functionName: "getBid", args: [rfp, b] }]),
         ),
@@ -320,18 +308,18 @@ export function usePlatform() {
       seen(e?.issuer, "escrowBuyer", w.id, `${k}.escrow.${id}`)
       seen(e?.receiver, "escrowSupplier", w.id, `${k}.escrow.${id}`)
     }
-    for (const id of range(s3.get<bigint>(`${k}.payments`))) {
+    for (const id of range(s2.get<bigint>(`${k}.payments`))) {
       const p = s4.get<Payment>(`${k}.payment.${id}`)
       seen(p?.payer, "payer", w.id, `${k}.payment.${id}`)
       seen(p?.payee, "payee", w.id, `${k}.payment.${id}`)
     }
-    const treasury = s3.get<Address>(`${k}.treasury`)
+    const treasury = s2.get<Address>(`${k}.treasury`)
     return {
       id: w.id,
       instance: w.instance,
       vault: w.vault,
       admin: w.admin,
-      version: versionOf(w.id),
+      version: Number(w.version),
       treasury: treasury && !isZero(treasury) ? treasury : undefined,
       directOn: s2.get<boolean>(`${k}.directOn`),
       escrowOn: s2.get<boolean>(`${k}.escrowOn`),
@@ -342,12 +330,13 @@ export function usePlatform() {
       listings: s2.get<bigint>(`${k}.listings`),
       escrows: s2.get<bigint>(`${k}.escrows`),
       direct: s2.get<bigint>(`${k}.direct`),
-      payments: s3.get<bigint>(`${k}.payments`),
-      sales: s3.get<bigint>(`${k}.sales`),
+      payments: s2.get<bigint>(`${k}.payments`),
+      sales: s2.get<bigint>(`${k}.sales`),
       bids,
       listingsTaken,
       escrowStates,
       held: cands.map((t) => ({ token: t, amount: s3.get<bigint>(`${k}.locked.${lower(t)}`) ?? 0n })).filter((h) => h.amount > 0n),
+      fees: cands.map((t) => ({ token: t, amount: s3.get<bigint>(`${k}.fees.${lower(t)}`) ?? 0n })).filter((h) => h.amount > 0n),
       treasuryBalances: cands.map((t) => ({ token: t, amount: s4.get<bigint>(`${k}.treasuryBal.${lower(t)}`) ?? 0n })).filter((h) => h.amount > 0n),
     }
   })
@@ -360,8 +349,13 @@ export function usePlatform() {
   const kycWorkspaces = workspaces.filter((w) => w.kycRequired)
   const wallets = [...users.values()]
   const s5 = useBatch(
+    // `kycOf` gives the recorded approval; `isKycValid` says whether it counts now (not expired, not
+    // revoked, and recorded since the attester was last changed).
     kycWorkspaces.flatMap((w) =>
-      wallets.map((u): [string, Call] => [`${w.id}.kycUntil.${lower(u.address)}`, { address: w.instance, abi: abis.instance, functionName: "kycValidUntil", args: [u.address] }]),
+      wallets.flatMap((u): [string, Call][] => [
+        [`${w.id}.kycOf.${lower(u.address)}`, { address: w.instance, abi: abis.instance, functionName: "kycOf", args: [u.address] }],
+        [`${w.id}.kycValid.${lower(u.address)}`, { address: w.instance, abi: abis.instance, functionName: "isKycValid", args: [u.address] }],
+      ]),
     ),
     s4.done,
   )
@@ -373,7 +367,10 @@ export function usePlatform() {
       records: u.recordKeys.size,
       firstSeen: u.firstSeen,
       active: [...u.active].map(Number).sort((a, b) => a - b),
-      kyc: kycWorkspaces.map((w) => ({ workspace: w.id, until: s5.get<bigint>(`${w.id}.kycUntil.${lower(u.address)}`) ?? 0n })),
+      kyc: kycWorkspaces.map((w) => ({
+        workspace: w.id,
+        until: s5.get<boolean>(`${w.id}.kycValid.${lower(u.address)}`) ? BigInt(s5.get<{ validUntil: bigint }>(`${w.id}.kycOf.${lower(u.address)}`)?.validUntil ?? 0n) : 0n,
+      })),
     }))
     // Most active first: records, then how many roles, then the earliest workspace.
     .sort((a, b) => b.records - a.records || b.roles.length - a.roles.length || Number(a.firstSeen - b.firstSeen))
@@ -383,6 +380,10 @@ export function usePlatform() {
   for (const w of workspaces) for (const h of w.held) heldTotals.set(lower(h.token), (heldTotals.get(lower(h.token)) ?? 0n) + h.amount)
   const escrowHeld: Held[] = known.map((t) => ({ token: t, amount: heldTotals.get(lower(t)) ?? 0n }))
   const feeVault: Held[] = known.map((t) => ({ token: t, amount: s3.get<bigint>(`feeVault.${lower(t)}`) ?? 0n }))
+  const feeTotals = new Map<string, bigint>()
+  for (const w of workspaces) for (const h of w.fees) feeTotals.set(lower(h.token), (feeTotals.get(lower(h.token)) ?? 0n) + h.amount)
+  /** Fees still in workspace vaults, summed per token. */
+  const feesWaiting: Held[] = known.map((t) => ({ token: t, amount: feeTotals.get(lower(t)) ?? 0n }))
 
   const registered = Number(versionCount ?? 0n)
   const onChainVersions = Array.from({ length: registered }, (_, i) => s2.get<{ instanceImpl: Address; vaultImpl: Address; deprecated: boolean }>(`version.${i}`))
@@ -404,7 +405,7 @@ export function usePlatform() {
   /* ── Wallets that pay network fees ──────────────────────────────────────── */
   const paymasterOwner = head.get<Address>("paymaster.owner")
   const gasCandidates: Omit<GasWallet, "balance">[] = [
-    ...(owner ? [{ label: "Platform owner", what: "Owns the registry, the fee vault and the token maker, and signs every platform change.", address: owner }] : []),
+    ...(owner ? [{ label: "Platform owner", what: "Owns the registry, the platform fee treasury and the token maker, and signs every platform change.", address: owner }] : []),
     ...(deployment.deployer ? [{ label: "Deployer", what: "Deploys new contracts and versions.", address: deployment.deployer }] : []),
     ...(paymasterOwner ? [{ label: "Paymaster owner", what: "Owns the paymaster and tops up its deposit on the EntryPoint.", address: paymasterOwner }] : []),
     ...(deployment.paymasterSigner ? [{ label: "Paymaster signer", what: "Approves the transactions the paymaster sponsors.", address: deployment.paymasterSigner }] : []),
@@ -443,11 +444,11 @@ export function usePlatform() {
     factoryPending: head.get<Address>("factory.pending"),
     paymasterOwner,
     paymasterPending: head.get<Address>("paymaster.pending"),
-    testStableOwner: head.get<Address>("testStable.owner"),
     deposit,
     tokens,
     tokenOf,
     feeVault,
+    feesWaiting,
     escrowHeld,
     workspaces,
     users: userRows,

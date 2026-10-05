@@ -3,7 +3,7 @@ import { Suspense, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useAccount, useReadContracts } from "wagmi"
-import { formatUnits, isAddress, maxUint256, parseUnits, zeroAddress, type Address } from "viem"
+import { formatUnits, isAddress, parseUnits, zeroAddress, type Address } from "viem"
 import { abis, addresses, STABLES } from "@/lib/bitregalo/config"
 import { FaucetButton } from "@/components/app/faucet"
 import { encodeLabel, eventArgs, labelBytes, rememberInstanceName } from "@/lib/bitregalo/instances"
@@ -45,11 +45,33 @@ function LaunchWizard() {
       { address: addresses.mother, abi: abis.mother, functionName: "deployFeeToken" },
       { address: addresses.mother, abi: abis.mother, functionName: "defaultFeeBps" },
       { address: addresses.mother, abi: abis.mother, functionName: "versionCount" },
+      { address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "creationFeeAmount" },
+      { address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "creationFeeToken" },
     ],
+    // Kept fresh while the person reads: what they see at review is what they agree to.
+    query: { refetchInterval: 20_000 },
   })
-  const [deployFee, deployFeeToken, feeBps, versionCount] = (mother.data ?? []).map((r) => r.result) as [bigint?, Address?, number?, bigint?]
-  const fee = (deployFee as bigint | undefined) ?? 0n
-  const feeStable = STABLES.find((x) => x.address.toLowerCase() === (deployFeeToken ?? "").toLowerCase())
+  const [deployFee, deployFeeTokenRaw, feeBps, versionCount, tokenFeeRaw, tokenFeeTokenRaw] = (mother.data ?? []).map((r) => r.result) as [bigint?, Address?, number?, bigint?, bigint?, Address?]
+  const loaded = !!mother.data && feeBps !== undefined && deployFee !== undefined
+  const fee = deployFee ?? 0n
+  const deployFeeToken = deployFeeTokenRaw ?? zeroAddress
+  const feeStable = STABLES.find((x) => x.address.toLowerCase() === deployFeeToken.toLowerCase())
+  // The token factory's own fee, for the optional first token.
+  const tokenFee = tokenFeeRaw ?? 0n
+  const tokenFeeToken = tokenFeeTokenRaw ?? zeroAddress
+  // Fees are amounts of someone else's token: read its symbol and decimals rather than assume them.
+  const feeMeta = useReadContracts({
+    contracts: [
+      { address: deployFeeToken, abi: abis.utilityToken, functionName: "symbol" },
+      { address: deployFeeToken, abi: abis.utilityToken, functionName: "decimals" },
+      { address: tokenFeeToken, abi: abis.utilityToken, functionName: "symbol" },
+      { address: tokenFeeToken, abi: abis.utilityToken, functionName: "decimals" },
+    ],
+    query: { enabled: fee > 0n || tokenFee > 0n },
+  })
+  const feeSymbol = (feeMeta.data?.[0]?.result as string | undefined) ?? feeStable?.symbol ?? "tokens"
+  const feeDecimals = Number((feeMeta.data?.[1]?.result as number | undefined) ?? 18)
+  const tokenFeeText = tokenFee > 0n ? `${formatUnits(tokenFee, Number((feeMeta.data?.[3]?.result as number | undefined) ?? 18))} ${(feeMeta.data?.[2]?.result as string | undefined) ?? "tokens"}` : null
 
   // basics
   const [name, setName] = useState(preset ? "BitRegalo network" : "")
@@ -58,7 +80,6 @@ function LaunchWizard() {
   const [direct, setDirect] = useState(PRESETS[preset ? "marketplace" : "shop"].direct)
   const [escrow, setEscrow] = useState(PRESETS[preset ? "marketplace" : "shop"].escrow)
   const [stables, setStables] = useState<string[]>(STABLES.map((x) => x.address))
-  const useUsdt = stables.includes(addresses.usdt)
   const [extraTokens, setExtraTokens] = useState<string[]>([])
   const [newToken, setNewToken] = useState("")
   const [serviceFee, setServiceFee] = useState("0.1")
@@ -74,14 +95,24 @@ function LaunchWizard() {
   const [tokenSupply, setTokenSupply] = useState("1000000")
   const [reqTitle, setReqTitle] = useState("")
   const [reqSettle, setReqSettle] = useState<Pay>("2")
-  const [reqCurrency, setReqCurrency] = useState<"usdt" | "own">("usdt")
+  const [reqCurrency, setReqCurrency] = useState<"stable" | "own">("stable")
   const [reqDays, setReqDays] = useState("7")
 
   const paid = direct || escrow
   const baseTokens = [...stables, ...extraTokens] as Address[]
+  // The first stablecoin switched on: what a first request is paid in unless it uses the new token.
+  const firstStable = STABLES.find((x) => stables.includes(x.address))
+  // The service fee is typed in whole tokens; each token's own decimals turn it into units.
+  const tokenDecimals = useReadContracts({
+    contracts: baseTokens.map((a) => ({ address: a, abi: abis.utilityToken, functionName: "decimals" })),
+    query: { enabled: baseTokens.length > 0 },
+  })
+  const decimalsOf = (i: number) => Number((tokenDecimals.data?.[i]?.result as number | undefined) ?? 18)
+  const decimalsKnown = baseTokens.every((_, i) => tokenDecimals.data?.[i]?.result !== undefined)
   const sym = tokenSymbol.trim().toUpperCase()
   const requestNeedsProject = withRequest && withProject
-  const launchFeeText = fee > 0n && feeStable ? `${formatUnits(fee, 18)} ${feeStable.symbol}` : null
+  const launchFeeText = fee > 0n ? `${formatUnits(fee, feeDecimals)} ${feeSymbol}` : null
+  const pct = feeBps !== undefined ? `${Number(feeBps) / 100}%` : "…"
 
   function choosePurpose(p: Purpose) {
     setPurpose(p)
@@ -93,7 +124,7 @@ function LaunchWizard() {
   const steps: WizardStep[] = [
     {
       id: "basics", title: preset ? "The public network" : "Your workspace", caption: preset ? "Its name in this app, and what it is for. Both are filled in for the network." : "What to call it and what it is for.",
-      valid: !name.trim() ? "Give your workspace a name" : true,
+      valid: !loaded ? "Reading the platform's fees…" : !name.trim() ? "Give your workspace a name" : true,
       content: (
         <div className="grid gap-6">
           <Label title="Workspace name" hint="Shown in this app, in this browser. The public record holds addresses, not names.">
@@ -118,7 +149,7 @@ function LaunchWizard() {
     },
     {
       id: "payments", title: "How people pay", caption: "“Just record it” always works. Switch on the ways to pay.",
-      valid: paid && baseTokens.length === 0 ? "Choose at least one token people can pay in" : paid && !(Number(serviceFee) >= 0) ? "Enter a service fee (0 is fine)" : true,
+      valid: paid && baseTokens.length === 0 ? "Choose at least one token people can pay in" : paid && !(Number(serviceFee) >= 0) ? "Enter a service fee (0 is fine)" : paid && !decimalsKnown ? "One of the tokens does not answer like a token. Check the addresses you added" : true,
       content: (
         <div className="grid gap-4">
           <AddOn checked={escrow} onChange={setEscrow} title="Hold it safely (escrow)" description="The buyer's payment is locked in your workspace's vault. Only the buyer can release it to the supplier, and only the supplier can hand it back. After the deadline it can only go back to the buyer, and anyone can trigger that." />
@@ -174,7 +205,7 @@ function LaunchWizard() {
                 {paid && feeBps !== undefined && (
                   <div className="max-w-[48ch]">
                     <dt className="font-[560]">On each payment, taken from the supplier</dt>
-                    <dd className="text-muted-foreground"><span className="t-num text-foreground">{Number(feeBps) / 100}%</span> platform fee, fixed for this workspace when it is created.</dd>
+                    <dd className="text-muted-foreground"><span className="t-num text-foreground">{Number(feeBps) / 100}%</span> platform fee. This percentage is fixed into the workspace when it is created and never changes for it.</dd>
                   </div>
                 )}
                 {paid && (
@@ -214,7 +245,7 @@ function LaunchWizard() {
     content: (
       <div className="grid gap-3">
         <AddOn checked={withProject} onChange={setWithProject} title="Start a project" description="A name that groups related work inside your workspace: a site, a programme, a product line. Requests and tokens can be linked to it." />
-        <AddOn checked={withToken} onChange={setWithToken} title="Create your own token" description={paid ? "Credits, vouchers or memberships for your workspace. It is accepted as payment straight away." : "Credits, vouchers or memberships for your workspace. With payments off, it is created but not accepted as payment yet."} />
+        <AddOn checked={withToken} onChange={setWithToken} title="Create your own token" tag={tokenFeeText ? `Costs ${tokenFeeText}` : undefined} description={paid ? "Credits, vouchers or memberships for your workspace. It is accepted as payment straight away." : "Credits, vouchers or memberships for your workspace. With payments off, it is created but not accepted as payment yet."} />
         <AddOn checked={withRequest} onChange={setWithRequest} title="Post your first request" description="Open a request so suppliers can start making offers as soon as your workspace is live." />
       </div>
     ),
@@ -256,7 +287,7 @@ function LaunchWizard() {
     ]
     steps.push({
       id: "request", title: "Your first request", caption: "Suppliers answer with offers. You choose one.",
-      valid: !reqTitle.trim() ? "Say what you need" : labelBytes(reqTitle) > 31 ? "Keep the public title to 31 characters" : !(Number(reqDays) >= 1) ? "Offers need to stay open for at least a day" : reqSettle !== "0" && reqCurrency === "usdt" && !useUsdt ? "USDT is not one of the tokens you accept" : true,
+      valid: !reqTitle.trim() ? "Say what you need" : labelBytes(reqTitle) > 31 ? "Keep the public title to 31 characters" : !(Number(reqDays) >= 1) ? "Offers need to stay open for at least a day" : reqSettle !== "0" && reqCurrency === "stable" && !firstStable ? "No stablecoin is switched on for this workspace" : reqSettle !== "0" && reqCurrency === "own" && !withToken ? "Switch on “Create your own token” first" : true,
       content: (
         <div className="grid gap-6">
           <Label title="What do you need?" counter={`${labelBytes(reqTitle)}/31`} hint="A short public title. Share the details with suppliers yourself.">
@@ -269,10 +300,10 @@ function LaunchWizard() {
           {reqSettle !== "0" && (
             <fieldset>
               <legend className="t-label mb-2">In which token?</legend>
-              <Choice<"usdt" | "own">
+              <Choice<"stable" | "own">
                 value={reqCurrency} onChange={setReqCurrency} columns={2}
                 options={[
-                  { value: "usdt", title: "Pay in USDT", disabled: useUsdt ? undefined : "Not one of the tokens you accept" },
+                  { value: "stable", title: `Pay in ${firstStable?.symbol ?? "a stablecoin"}`, disabled: firstStable ? undefined : "No stablecoin is switched on above" },
                   { value: "own", title: `Pay in ${sym || "your token"}`, disabled: withToken ? undefined : "Switch on “Create your own token” first" },
                 ]}
               />
@@ -288,22 +319,28 @@ function LaunchWizard() {
 
   // ── plan ────────────────────────────────────────────────────────────────
   const plan: WizardAction[] = []
-  if (fee > 0n && deployFeeToken) {
-    plan.push({ id: "fee", label: `Approve the launch fee (${formatUnits(fee, 18)} ${feeStable?.symbol ?? "tokens"})`, detail: "Gives BitRegalo's platform contract permission to collect the fee from your wallet.", run: async ({ tx }) => { await tx("Approve launch fee", { address: deployFeeToken, abi: abis.erc20, functionName: "approve", args: [addresses.mother, maxUint256] }) } })
+  if (fee > 0n) {
+    plan.push({ id: `fee-${fee}`, label: `Approve the launch fee of ${launchFeeText}`, detail: "Lets BitRegalo's platform contract take exactly this amount from your wallet, and no more.", run: async ({ tx }) => { await tx("Approve launch fee", { address: deployFeeToken, abi: abis.erc20, functionName: "approve", args: [addresses.mother, fee] }) } })
   }
   plan.push({
-    id: "launch", label: `Create “${name.trim() || "your workspace"}”`, detail: `BitRegalo's platform contract creates your workspace's own contracts, with you as admin.${launchFeeText ? ` The ${launchFeeText} fee is paid here.` : ""}`,
+    id: "launch", label: `Create “${name.trim() || "your workspace"}”`, detail: `BitRegalo's platform contract creates your workspace's own contracts, with you as admin.${launchFeeText ? ` The ${launchFeeText} fee is paid here.` : ""} The platform fee of ${pct} is fixed into the workspace.`,
     run: async ({ tx, results }) => {
       const version = ((versionCount as bigint | undefined) ?? 1n) - 1n
       const r = await tx("Launch workspace", {
         address: addresses.mother, abi: abis.mother, functionName: "launchTenant",
-        args: [{
-          admin: address!, version, tokens: paid ? baseTokens : [], decimals: paid ? baseTokens.map(() => 18) : [],
-          serviceFees: paid ? baseTokens.map(() => parseUnits(serviceFee || "0", 18)) : [],
-          minTerm: BigInt(Math.max(3600, Math.round(Number(minDays) * 86400))), maxTerm: BigInt(Math.round(Number(maxDays) * 86400)),
-          kycRequired: false, attester: zeroAddress, directEnabled: direct, escrowEnabled: escrow,
-        }],
+        args: [
+          {
+            admin: address!, version, tokens: paid ? baseTokens : [],
+            serviceFees: paid ? baseTokens.map((_, i) => parseUnits(serviceFee || "0", decimalsOf(i))) : [],
+            minTerm: BigInt(Math.max(3600, Math.round(Number(minDays) * 86400))), maxTerm: BigInt(Math.round(Number(maxDays) * 86400)),
+            kycRequired: false, attester: zeroAddress, directEnabled: direct, escrowEnabled: escrow,
+          },
+          // What this wallet agrees to, exactly as shown at review: the fee's token, the most of it to pay,
+          // and the highest platform percentage to accept. If the platform changed any of them, the launch is refused.
+          { feeToken: deployFeeToken, maxDeployFee: fee, maxFeeBps: Number(feeBps) },
+        ],
       })
+      // A workspace's number is only known from its launch: read it from the event, never assume it.
       const ev = eventArgs<{ tenantId: bigint; instance: Address; vault: Address }>(r, abis.mother, "TenantLaunched")
       Object.assign(results, ev)
       rememberInstanceName(ev.tenantId, name)
@@ -319,12 +356,20 @@ function LaunchWizard() {
     })
   }
   if (withToken) {
+    if (tokenFee > 0n) {
+      plan.push({ id: `token-fee-${tokenFee}`, label: `Approve the token creation fee of ${tokenFeeText}`, detail: "Lets the token factory take exactly this amount from your wallet, and no more.", run: async ({ tx }) => { await tx("Approve creation fee", { address: tokenFeeToken, abi: abis.erc20, functionName: "approve", args: [addresses.tokenFactory, tokenFee] }) } })
+    }
     plan.push({
-      id: "token", label: `Create the token ${sym || "…"} (${tokenName.trim() || "…"})`, detail: `${Number(tokenSupply || 0).toLocaleString()} ${sym || "tokens"} go to your wallet${withProject ? ", linked to the project" : ""}.`,
+      id: "token", label: `Create the token ${sym || "…"} (${tokenName.trim() || "…"})`, detail: `${Number(tokenSupply || 0).toLocaleString()} ${sym || "tokens"} go to your wallet${withProject ? ", linked to the project" : ""}.${tokenFeeText ? ` The ${tokenFeeText} fee is paid here.` : ""}`,
       run: async ({ tx, results }) => {
         const r = await tx("Create token", {
           address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "createToken",
-          args: [{ name: tokenName.trim(), symbol: sym, decimals: 18, cap: 0n, initialSupply: parseUnits(tokenSupply, 18), owner: zeroAddress, tenantId: results.tenantId as bigint, projectId: (results.projectId as bigint | undefined) ?? 0n }],
+          // You are the new workspace's admin, so you may create its token. You own it and receive the supply.
+          args: [
+            { name: tokenName.trim(), symbol: sym, decimals: 18, cap: 0n, initialSupply: parseUnits(tokenSupply, 18), tenantId: results.tenantId as bigint, projectId: (results.projectId as bigint | undefined) ?? 0n },
+            tokenFeeToken,
+            tokenFee,
+          ],
         })
         results.token = eventArgs<{ token: Address }>(r, abis.tokenFactory, "TokenCreated").token
       },
@@ -332,7 +377,7 @@ function LaunchWizard() {
     if (paid) {
       plan.push({
         id: "accept", label: `Accept ${sym || "your token"} as payment`, detail: `Requests and listings in your workspace can then be paid in ${sym || "it"}, with the same service fee.`,
-        run: async ({ tx, results }) => { await tx("Accept as payment", { address: results.instance as Address, abi: abis.instance, functionName: "setToken", args: [results.token, true, 18, parseUnits(serviceFee || "0", 18)] }) },
+        run: async ({ tx, results }) => { await tx("Accept as payment", { address: results.instance as Address, abi: abis.instance, functionName: "setToken", args: [results.token, true, parseUnits(serviceFee || "0", 18)] }) },
       })
     }
   }
@@ -340,7 +385,7 @@ function LaunchWizard() {
     plan.push({
       id: "request", label: `Post the request “${reqTitle.trim()}”`, detail: `${reqSettle === "2" ? "Hold it safely (escrow)" : reqSettle === "1" ? "Pay straight away (direct payment)" : "Just record it"} · open for offers for ${reqDays} ${Number(reqDays) === 1 ? "day" : "days"}.`,
       run: async ({ tx, results }) => {
-        const token = reqSettle === "0" ? zeroAddress : reqCurrency === "own" ? (results.token as Address) : addresses.usdt
+        const token = reqSettle === "0" ? zeroAddress : reqCurrency === "own" ? (results.token as Address) : firstStable!.address
         const deadline = BigInt(Math.floor(Date.now() / 1000) + Math.round(Number(reqDays) * 86400))
         const r = await tx("Post request", {
           address: results.instance as Address, abi: abis.instance, functionName: "postRfp",
@@ -377,9 +422,10 @@ function LaunchWizard() {
         { label: "Ways to settle", value: ["Just record it", escrow && "hold it safely (escrow)", direct && "pay straight away"].filter(Boolean).join(", ") },
         { label: "Accepted tokens", value: acceptedWords },
         ...(escrow ? [{ label: "Escrow term", value: `${minDays || "…"} to ${maxDays || "…"} days` }] : []),
-        { label: "Platform fee", value: feeBps !== undefined ? `${Number(feeBps) / 100}% of each payment, from the supplier` : "…" },
+        { label: "Platform fee", value: feeBps !== undefined ? `${pct} of each payment, taken from the supplier. Fixed into this workspace for good` : "…" },
         ...(paid ? [{ label: "Service fee", value: `${serviceFee || "0"} per payment, from the buyer` }] : []),
-        ...(launchFeeText ? [{ label: "One-off cost", value: `${launchFeeText} to create it` }] : []),
+        { label: "Launch fee", value: !loaded ? "…" : launchFeeText ? `${launchFeeText}, paid once when you sign` : "None" },
+        ...(withToken && tokenFeeText ? [{ label: "Token creation fee", value: `${tokenFeeText}, paid once` }] : []),
         { label: "Extras", value: [withProject && "a project", withToken && "a token", withRequest && "a first request"].filter(Boolean).join(", ") || "none" },
         { label: "Transactions to sign", value: String(plan.length) },
       ]}

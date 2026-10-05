@@ -43,7 +43,15 @@ function fromEnv(id: number): NetworkEntry {
     stables: [],
   }
 }
-const entry = NETWORKS[bundle.chainId] ?? fromEnv(bundle.chainId)
+const known = NETWORKS[bundle.chainId] ?? fromEnv(bundle.chainId)
+/**
+ * The app reads many values in one batch through the network's Multicall3 contract. A local copy
+ * of a built-in network (an anvil node with the same chain id, say) has no such contract, and
+ * every batched read would come back empty. NEXT_PUBLIC_NO_MULTICALL=1 sends the reads one by one.
+ */
+const entry: NetworkEntry = process.env.NEXT_PUBLIC_NO_MULTICALL === "1"
+  ? { ...known, chain: { ...known.chain, contracts: { ...known.chain.contracts, multicall3: undefined } } as Chain }
+  : known
 
 export const chain = entry.chain
 /** Overridable at build time so the same app can point at a local fork for testing. */
@@ -63,45 +71,53 @@ export const network = {
   explorer: entry.explorer,
 } as const
 
-const dep = bundle.deployments
-export const addresses = {
-  mother: dep.mother as Address,
-  treasury: dep.treasury as Address,
-  paymaster: dep.paymaster as Address,
-  tokenFactory: (dep as { tokenFactory?: string }).tokenFactory as Address,
-  instance: dep.tenants.t0.instance as Address,
-  vault: dep.tenants.t0.vault as Address,
-  usdt: dep.tenants.t0.tokens["0"] as Address,
-  /** Practice stablecoin with a public faucet; undefined on networks without one. */
-  testStable: (dep as { testStable?: string }).testStable as Address | undefined,
+type TenantRecord = { instance: string; vault: string; treasury?: string; admin?: string; tokens?: Record<string, string> }
+const dep = bundle.deployments as unknown as {
+  mother: string; treasury: string; paymaster: string; tokenFactory: string; testStable?: string
+  /** The workspace the deploy scripts launched as the public one. Never assume it is number 0. */
+  publicTenantId?: number
+  tenants?: Record<string, TenantRecord>
+  versions: Record<string, { instanceImpl: string; vaultImpl: string; treasuryImpl?: string }>
 }
 
 /**
  * The BitRegalo public network: the workspace anyone uses when they are not inside an
- * organisation's own workspace. It is an ordinary workspace run by BitRegalo, chosen here.
- * Override per build with NEXT_PUBLIC_PUBLIC_WORKSPACE, or set `publicWorkspace` in the
- * deployments file.
+ * organisation's own workspace. It is an ordinary workspace run by BitRegalo. Its number is
+ * `publicTenantId` in the deployments record (a workspace's number is only known from its
+ * launch); NEXT_PUBLIC_PUBLIC_WORKSPACE overrides it per build.
  */
-export const PUBLIC_WORKSPACE_ID = BigInt(
-  process.env.NEXT_PUBLIC_PUBLIC_WORKSPACE ?? String((dep as { publicWorkspace?: number }).publicWorkspace ?? 0)
-)
+export const PUBLIC_WORKSPACE_ID = BigInt(process.env.NEXT_PUBLIC_PUBLIC_WORKSPACE ?? String(dep.publicTenantId ?? 0))
+/** What the deployments record says about the public workspace. Empty when the build points at another one. */
+const pub: Partial<TenantRecord> = dep.tenants?.[`t${PUBLIC_WORKSPACE_ID}`] ?? {}
 
-/**
- * The mother numbers versions in the order they were registered on that network, so the same
- * code can be version 1 on one network and version 0 on a network deployed later. What the app
- * needs to know is what a workspace can do. A version registered with a workspace-treasury
- * implementation has payments, the shop, redemption and the treasury: protocol version 1.
- */
-export function protocolVersion(registered: bigint): bigint {
-  const v = versions.find((x) => BigInt(x.n) === registered)
-  return v?.treasuryImpl && registered < 1n ? 1n : registered
+export const addresses = {
+  mother: dep.mother as Address,
+  /** The platform fee treasury. A workspace's own treasury is read from its workspace contract. */
+  treasury: dep.treasury as Address,
+  paymaster: dep.paymaster as Address,
+  tokenFactory: dep.tokenFactory as Address,
+  /** The public workspace's contracts, as recorded at deployment. Pages read them from the mother instead. */
+  instance: pub.instance as Address | undefined,
+  vault: pub.vault as Address | undefined,
+  /** The first token the public workspace accepted at launch: USDT on a public network, the practice token on a local one. */
+  usdt: pub.tokens?.["0"] as Address | undefined,
+  /** Practice stablecoin with a public faucet; undefined on networks without one. */
+  testStable: dep.testStable as Address | undefined,
 }
 
+/**
+ * The protocol version this app is written for. Every workspace it serves has payments, the
+ * shop, redemption and a treasury. (The mother's own version numbers only say in which order
+ * implementation sets were registered on one network.)
+ */
+export const PROTOCOL_VERSION = 2
+
 /** Implementation sets from the deployments file, oldest first. Registration state lives on the mother. */
-export const versions = Object.entries(dep.versions as Record<string, { instanceImpl: string; vaultImpl: string; treasuryImpl?: string }>)
+export const versions = Object.entries(dep.versions)
   .map(([k, v]) => ({ n: Number(k.replace(/^v/, "")), instanceImpl: v.instanceImpl as Address, vaultImpl: v.vaultImpl as Address, treasuryImpl: v.treasuryImpl as Address | undefined }))
   .sort((a, b) => a.n - b.n)
 
+const OWNABLE = ["owner", "pendingOwner", "transferOwnership", "acceptOwnership"]
 export const abis = {
   mother: bundle.abis.mother as Abi,
   instance: bundle.abis.instance as Abi,
@@ -109,7 +125,12 @@ export const abis = {
   tokenFactory: bundle.abis.tokenFactory as Abi,
   utilityToken: bundle.abis.utilityToken as Abi,
   erc20: bundle.abis.erc20 as Abi,
-  workspaceTreasury: (bundle.abis as { workspaceTreasury?: unknown }).workspaceTreasury as Abi,
+  workspaceTreasury: bundle.abis.workspaceTreasury as Abi,
+  /** The platform fee treasury. */
+  treasury: bundle.abis.treasury as Abi,
+  testStable: bundle.abis.testStable as Abi,
+  /** Two-step ownership, the same on every platform contract (mother, fee treasury, token factory, paymaster). */
+  ownable: (bundle.abis.mother as Abi).filter((x) => x.type === "function" && OWNABLE.includes(x.name)),
 }
 
 /** Stablecoins the app offers by name on this network. Any other ERC-20 can be added by address. */

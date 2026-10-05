@@ -2,8 +2,8 @@
 import Link from "next/link"
 import { useReadContract, useReadContracts } from "wagmi"
 import type { Address } from "viem"
-import { abis, addresses } from "@/lib/bitregalo/config"
-import { useProjects } from "@/lib/bitregalo/instances"
+import { abis } from "@/lib/bitregalo/config"
+import { useProjects, useWorkspaceTokens } from "@/lib/bitregalo/instances"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import { Addr, Card, Empty, LedgerRow, PageHead, Pill, RowsSkeleton } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
@@ -16,22 +16,16 @@ export default function ProjectsPage() {
   const count = useReadContract({ address: t.instance, abi: abis.instance, functionName: "projectCount", query: { enabled: !!t.instance, refetchInterval: 20_000 } })
   const expected = count.data as bigint | undefined
   const loading = expected === undefined || (expected > 0n && projects.list.length === 0)
-  const tokens = useReadContract({ address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "tenantTokens", args: [t.id] })
-  const list = (tokens.data as Address[] | undefined) ?? []
-  const info = useReadContracts({
-    contracts: list.flatMap((a) => [
-      { address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "tokenInfo", args: [a] },
-      { address: a, abi: abis.utilityToken, functionName: "symbol" },
-    ]),
+  // The token factory lists each project's tokens under that project.
+  const list = useWorkspaceTokens(t.id, t.instance).tokens.filter((x) => x.projectId > 0n)
+  const symbols = useReadContracts({
+    contracts: list.map((x) => ({ address: x.address, abi: abis.utilityToken, functionName: "symbol" })),
     query: { enabled: list.length > 0 },
   })
   const byProject = new Map<string, { address: Address; symbol: string }[]>()
-  list.forEach((a, i) => {
-    const ti = info.data?.[i * 2]?.result as readonly [bigint, bigint, Address, bigint] | undefined
-    const sym = (info.data?.[i * 2 + 1]?.result as string) ?? "…"
-    if (!ti) return
-    const key = String(ti[1])
-    byProject.set(key, [...(byProject.get(key) ?? []), { address: a, symbol: sym }])
+  list.forEach((x, i) => {
+    const key = String(x.projectId)
+    byProject.set(key, [...(byProject.get(key) ?? []), { address: x.address, symbol: (symbols.data?.[i]?.result as string) ?? "…" }])
   })
   const rows = projects.list.slice().reverse()
   const start = <Button asChild><Link href={`${base}/projects/new`}>Start a project</Link></Button>
@@ -40,7 +34,7 @@ export default function ProjectsPage() {
     <div>
       <PageHead
         title="Projects"
-        intro="A project is a name that groups related requests, listings and tokens: a building site, a programme, a product line."
+        intro="A project is a name that groups related requests, listings and tokens: a building site, a programme, a product line. A project's owner can create a token for it."
         action={start}
       />
       <Card flush title={rows.length > 0 ? `All projects (${rows.length})` : "All projects"}>

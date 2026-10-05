@@ -49,9 +49,8 @@ export function useMyActivity() {
   const rfps = useRfps(rfpCount)
   const offers = useOffers(offerCount)
   const escrows = useEscrows(escrowCount)
-  const hasPay = t.version >= 1n
-  const { count: payCount } = usePaymentCount(hasPay)
-  const payments = usePayments(hasPay ? payCount : undefined)
+  const { count: payCount } = usePaymentCount()
+  const payments = usePayments(payCount)
   const tokens = useSettlementTokens(t.instance, t.id)
 
   // Offers on requests: one count per request, then every offer.
@@ -109,7 +108,8 @@ export function useMyActivity() {
       if (!r || !mine(r.requester)) return
       const id = rfps.ids[i]
       const label = decodeLabel(r.scopeHash)
-      const live = allBids.filter((b) => b.rfpId === id && b.bid && !b.bid.withdrawn).length
+      // Offers that can still be chosen: not withdrawn, and not past their valid-until time.
+      const live = allBids.filter((b) => b.rfpId === id && b.bid && !b.bid.withdrawn && timeLeft(b.bid.validUntil) !== "elapsed").length
       const open = r.state === 1
       const closed = timeLeft(r.deadline) === "elapsed"
       items.push({
@@ -132,7 +132,7 @@ export function useMyActivity() {
       const chosen = r.state === 2 && r.acceptedBid === b.bidId
       const status: ActivityItem["status"] = b.bid.withdrawn
         ? { word: "Withdrawn", tone: "muted" }
-        : r.state === 1 ? { word: "Waiting", tone: "accent" }
+        : r.state === 1 ? (timeLeft(b.bid.validUntil) === "elapsed" ? { word: "Expired", tone: "muted" } : { word: "Waiting", tone: "accent" })
         : chosen ? { word: "Chosen", tone: "good" }
         : r.state === 2 ? { word: "Not chosen", tone: "muted" }
         : { word: "Request withdrawn", tone: "muted" }
@@ -141,7 +141,7 @@ export function useMyActivity() {
         kind: "offer",
         href: `${base}/requests/${b.rfpId}`,
         title: label ? `Your offer on “${label}”` : `Your offer on request #${b.rfpId}`,
-        meta: <>To {who(r.requester)} · delivery in {days(b.bid.timeframe)}{r.state === 1 && !b.bid.withdrawn ? " · the buyer has not chosen yet" : ""}</>,
+        meta: <>To {who(r.requester)} · delivery in {days(b.bid.timeframe)}{r.state === 1 && !b.bid.withdrawn ? (timeLeft(b.bid.validUntil) === "elapsed" ? " · its valid-until time has passed" : ` · the buyer has not chosen yet · valid for ${timeLeft(b.bid.validUntil)}`) : ""}</>,
         amount: r.settlement !== 0 ? money(b.bid.amount, r.token) : undefined,
         status,
       })
@@ -153,9 +153,12 @@ export function useMyActivity() {
       const id = String(offers.ids[i])
       const supplier = mine(o.supplier)
       const took = o.state === 2 && mine(o.buyer)
-      const forMe = o.state === 1 && !ZERO.test(o.designatedBuyer) && mine(o.designatedBuyer) && !supplier
-      if (!supplier && !took && !forMe) return
-      const word = ["—", "Open", "Taken", "Withdrawn"][o.state] ?? "—"
+      // A listing can carry a last moment to take it (0 means open until withdrawn).
+      const lapsed = o.state === 1 && o.validUntil > 0n && timeLeft(o.validUntil) === "elapsed"
+      const named = o.state === 1 && !ZERO.test(o.designatedBuyer) && mine(o.designatedBuyer) && !supplier
+      const forMe = named && !lapsed
+      if (!supplier && !took && !named) return
+      const word = lapsed ? "Expired" : ["—", "Open", "Taken", "Withdrawn"][o.state] ?? "—"
       items.push({
         key: `listing-${id}`,
         kind: "listing",
@@ -165,9 +168,9 @@ export function useMyActivity() {
           ? <>Listing you created · {HOW[o.settlement]} · {o.state === 2 ? <>taken by {who(o.buyer)}</> : ZERO.test(o.designatedBuyer) ? "open to anyone" : <>for {who(o.designatedBuyer)}</>}</>
           : took
             ? <>Listing you took · from {who(o.supplier)} · {HOW[o.settlement]}</>
-            : <>Made for you by {who(o.supplier)} · delivery within {days(o.timeframe)} · {HOW[o.settlement]}</>,
+            : <>Made for you by {who(o.supplier)} · delivery within {days(o.timeframe)} · {HOW[o.settlement]}{o.validUntil > 0n && <> · {timeLeft(o.validUntil) === "elapsed" ? "no longer valid" : `valid for ${timeLeft(o.validUntil)}`}</>}</>,
         amount: o.settlement !== 0 ? money(o.amount, o.token) : undefined,
-        status: forMe ? { word: "Waiting for you", tone: "accent" } : { word, tone: o.state === 1 ? "accent" : o.state === 2 ? "good" : "muted" },
+        status: forMe ? { word: "Waiting for you", tone: "accent" } : { word, tone: lapsed ? "muted" : o.state === 1 ? "accent" : o.state === 2 ? "good" : "muted" },
         needs: forMe ? (o.settlement === 2 ? "Fund it: the payment is then held until you release it" : o.settlement === 1 ? "Take it and pay" : "Take it") : undefined,
       })
     })
@@ -193,7 +196,6 @@ export function useMyActivity() {
   return {
     connected: !!me,
     loading,
-    hasPay,
     items,
     needs: items.filter((x) => x.needs),
     rest: items.filter((x) => !x.needs),

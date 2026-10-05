@@ -1,16 +1,16 @@
 "use client"
 import { useState } from "react"
 import Link from "next/link"
-import { useAccount, useReadContract, useReadContracts } from "wagmi"
+import { useAccount, useReadContracts } from "wagmi"
 import { isAddress, parseUnits, type Address } from "viem"
 import { useTenant } from "@/lib/bitregalo/tenant"
-import { useTx } from "@/lib/bitregalo/hooks"
-import { useSettlementTokens } from "@/lib/bitregalo/instances"
-import { abis, addresses } from "@/lib/bitregalo/config"
+import { useSaleCount, useSales, useTx } from "@/lib/bitregalo/hooks"
+import { decodeLabel, useSettlementTokens, useWorkspaceTokens } from "@/lib/bitregalo/instances"
+import { abis } from "@/lib/bitregalo/config"
 import { Card, Addr, Amount, PageHead, LedgerRow, Section, Notice, Field, inputCls, Empty, RowsSkeleton } from "@/components/app/ui"
 import { Explainer } from "@/components/app/explain"
 import { Button } from "@/components/ui/button"
-import { OlderContract } from "@/components/app/older-contract"
+import { SaleApproval } from "@/components/app/sale-approval"
 
 export default function TreasuryPage() {
   const t = useTenant()
@@ -30,31 +30,40 @@ export default function TreasuryPage() {
   const isOwner = !!me && owner?.toLowerCase() === me
   const isPending_ = !!me && pending?.toLowerCase() === me
   const settle = useSettlementTokens(t.instance, t.id)
-  const factoryTokens = useReadContract({ address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "tenantTokens", args: [t.id] })
-  const tokenList = Array.from(new Set([...settle.all.map((x) => x.address), ...(((factoryTokens.data as Address[] | undefined) ?? []))]))
+  const own = useWorkspaceTokens(t.id, t.instance)
+  const tokenList = Array.from(new Set([...settle.all.map((x) => x.address), ...own.addresses]))
+  // Sales hand tokens out of this treasury, each within what its owner approved for it.
+  const { count: saleCount } = useSaleCount()
+  const sales = useSales(saleCount)
+  const saleApprovals = useReadContracts({
+    contracts: sales.ids.map((id) => ({ address: tr!, abi: abis.workspaceTreasury, functionName: "saleAllowance", args: [id] })),
+    query: { enabled: !!tr && sales.ids.length > 0, refetchInterval: 15_000 },
+  })
   const bal = useReadContracts({
     contracts: tokenList.flatMap((a) => [
       { address: a, abi: abis.utilityToken, functionName: "symbol" },
       { address: a, abi: abis.utilityToken, functionName: "decimals" },
       { address: a, abi: abis.erc20, functionName: "balanceOf", args: [tr ?? t.instance] },
       { address: a, abi: abis.utilityToken, functionName: "owner" },
+      { address: a, abi: abis.utilityToken, functionName: "pendingOwner" },
     ]),
     query: { enabled: !!tr && tokenList.length > 0, refetchInterval: 15_000 },
   })
   const rows = tokenList.map((a, i) => ({
     token: a,
-    symbol: (bal.data?.[i * 4]?.result as string) ?? "…",
-    decimals: Number((bal.data?.[i * 4 + 1]?.result as number) ?? 18),
-    amount: (bal.data?.[i * 4 + 2]?.result as bigint) ?? 0n,
-    mintedByTreasury: !!tr && ((bal.data?.[i * 4 + 3]?.result as Address | undefined)?.toLowerCase() === tr.toLowerCase()),
+    symbol: (bal.data?.[i * 5]?.result as string) ?? "…",
+    decimals: Number((bal.data?.[i * 5 + 1]?.result as number) ?? 18),
+    amount: (bal.data?.[i * 5 + 2]?.result as bigint) ?? 0n,
+    mintedByTreasury: !!tr && ((bal.data?.[i * 5 + 3]?.result as Address | undefined)?.toLowerCase() === tr.toLowerCase()),
+    /** Its owner has offered it to the treasury; the treasury's owner has not accepted yet. */
+    offered: !!tr && ((bal.data?.[i * 5 + 4]?.result as Address | undefined)?.toLowerCase() === tr.toLowerCase()),
     stable: settle.accepted.some((x) => x.address === a),
     /** Created for this workspace through the token factory, as opposed to a stablecoin. */
-    ours: (((factoryTokens.data as Address[] | undefined) ?? []).some((x) => x.toLowerCase() === a.toLowerCase())),
+    ours: own.addresses.some((x) => x.toLowerCase() === a.toLowerCase()),
   }))
   const [newOwner, setNewOwner] = useState("")
   const [amounts, setAmounts] = useState<Record<string, string>>({})
   const refresh = () => { head.refetch(); bal.refetch() }
-  if (t.version < 1n) return <OlderContract what="A workspace treasury" />
   if (!tr) {
     return (
       <div className="space-y-8">
@@ -66,6 +75,13 @@ export default function TreasuryPage() {
   const loadingRows = tokenList.length > 0 && !bal.data
   const withdrawable = rows.filter((r) => r.amount > 0n)
   const minting = rows.filter((r) => r.mintedByTreasury)
+  const offeredTokens = rows.filter((r) => r.offered)
+  // Sales that still matter to the treasury: open ones, and finished ones with an approval left over.
+  const liveSales = sales.data
+    .map((s, i) => (s ? { s, id: sales.ids[i], approved: (saleApprovals.data?.[i]?.result as bigint | undefined) ?? 0n } : null))
+    .filter((x) => x !== null)
+    .filter((x) => (x.s.active && x.s.remaining > 0n) || x.approved > 0n)
+  const waitingSales = liveSales.filter((x) => x.approved === 0n).length
   const offered = pending && !/^0x0{40}$/.test(pending) ? pending : undefined
 
   return (
@@ -77,7 +93,8 @@ export default function TreasuryPage() {
       />
       <Explainer id="treasury" title="What this is">
         <p>The treasury is a small contract created together with your workspace, at <Addr a={tr} />. It is owned by <Addr a={owner ?? ""} />{isOwner ? " (that is you)" : ""}. Anyone can pay into it. Only the owner can withdraw, and ownership only changes when the new owner accepts.</p>
-        <p>It also holds the stock for your sales. If you hand it the minting of a token, it creates tokens as they sell, and you can take minting back here.</p>
+        <p>It also holds the stock for your sales. A sale can only hand out tokens once the treasury&apos;s owner has approved that sale and an amount for it; opening a sale gives the workspace admin no claim on the treasury.</p>
+        <p>If a token&apos;s owner offers the token to the treasury and the treasury&apos;s owner accepts, the treasury creates tokens as they sell. The owner can hand the token back here.</p>
       </Explainer>
 
       {isPending_ && (
@@ -97,6 +114,7 @@ export default function TreasuryPage() {
               <>
                 {r.ours ? (r.stable ? "This workspace's token, accepted as payment here" : "This workspace's token, stock for the shop") : r.stable ? "Accepted as payment here" : "Not accepted as payment here"}
                 {r.mintedByTreasury && " · the treasury creates more as it sells"}
+                {r.offered && " · offered to the treasury, not accepted yet"}
                 {" · "}<span className="whitespace-nowrap"><Addr a={r.token} /></span>
               </>
             }
@@ -105,9 +123,43 @@ export default function TreasuryPage() {
         ))}
       </Card>
 
+      <Card
+        flush
+        title="Sales that draw on the treasury"
+        description={liveSales.length === 0 ? undefined : waitingSales > 0 ? `${waitingSales} ${waitingSales === 1 ? "sale waits" : "sales wait"} for the owner's approval.` : "Every open sale has an approval."}
+      >
+        {liveSales.length === 0 && <Empty title="No open sales" body="When the workspace admin opens a sale, it appears here with its terms. Nothing can be bought until the treasury's owner approves it." />}
+        {liveSales.map(({ s, id }) => (
+          <div key={String(id)} className="border-b border-border px-5 py-5 last:border-b-0 sm:px-6">
+            <p className="mb-3 text-sm text-muted-foreground">
+              <Link className="text-base font-[560] text-foreground underline decoration-border-strong decoration-1 underline-offset-[3px] hover:decoration-foreground" href={`${base}/shop/${String(id)}`}>Sale #{String(id)}</Link>
+              {decodeLabel(s.metaHash) ? <> · {decodeLabel(s.metaHash)}</> : null}
+              {!s.active ? " · closed" : null}
+            </p>
+            <SaleApproval id={id} sale={s} onChange={() => { saleApprovals.refetch(); refresh() }} />
+          </div>
+        ))}
+      </Card>
+
+      {offeredTokens.length > 0 && (
+        <Card flush title="Tokens offered to the treasury" description="Their owner wants the treasury to create them as they sell. It takes effect when the treasury's owner accepts.">
+          {offeredTokens.map((r) => (
+            <div key={r.token} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-border px-5 py-4 last:border-b-0 sm:px-6">
+              <div className="min-w-0">
+                <p className="text-base font-[560]">{r.symbol}</p>
+                <p className="text-sm text-muted-foreground">Once accepted, the treasury owns {r.symbol} and creates what an approved sale needs. <Addr a={r.token} /></p>
+              </div>
+              {isOwner
+                ? <Button disabled={isPending} onClick={() => send(`Accept ${r.symbol} for the treasury`, { address: tr, abi: abis.workspaceTreasury, functionName: "acceptToken", args: [r.token] }).then(refresh)}>Accept {r.symbol}</Button>
+                : <p className="text-sm text-muted-foreground">Waiting for the treasury&apos;s owner.</p>}
+            </div>
+          ))}
+        </Card>
+      )}
+
       {!isOwner && (
         <Notice title="Read-only view">
-          <p>Only the treasury&apos;s owner, <Addr a={owner ?? ""} />, can withdraw or hand the treasury over. {address ? "The connected wallet is not the owner." : "Connect the owner's wallet to do either."}</p>
+          <p>Only the treasury&apos;s owner, <Addr a={owner ?? ""} />, can withdraw, approve a sale or hand the treasury over. {address ? "The connected wallet is not the owner." : "Connect the owner's wallet to do either."}</p>
         </Notice>
       )}
 
@@ -131,14 +183,17 @@ export default function TreasuryPage() {
             </Card>
 
             {minting.length > 0 && (
-              <Card flush title="Minting" description="Tokens the treasury creates as they sell. Taking minting back hands the minter role to your wallet; sales then come from stock the treasury already holds.">
+              <Card flush title="Tokens the treasury creates" description="Tokens the treasury owns and creates as they sell. Handing one back takes two steps: you offer it to your wallet here, then accept it on the token's page. After that, sales come from stock the treasury already holds.">
                 {minting.map((r) => (
                   <div key={r.token} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-border px-5 py-4 last:border-b-0 sm:px-6">
                     <div className="min-w-0">
                       <p className="text-base font-[560]">{r.symbol}</p>
                       <p className="text-sm text-muted-foreground">The treasury creates {r.symbol} on demand.</p>
                     </div>
-                    <Button variant="secondary" disabled={isPending} onClick={() => send(`Take back minting of ${r.symbol}`, { address: tr, abi: abis.workspaceTreasury, functionName: "releaseToken", args: [r.token, address] }).then(refresh)}>Take minting back</Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button variant="secondary" disabled={isPending} onClick={() => send(`Offer ${r.symbol} back to your wallet`, { address: tr, abi: abis.workspaceTreasury, functionName: "releaseToken", args: [r.token, address] }).then(refresh)}>Offer {r.symbol} back to my wallet</Button>
+                      <Button asChild variant="ghost"><Link href={`${base}/tokens/${r.token}`}>Open the token</Link></Button>
+                    </div>
                   </div>
                 ))}
               </Card>

@@ -44,7 +44,8 @@ All are optional and read at build time. Put them in `.env.local`.
 | `NEXT_PUBLIC_MARKET_API` | `lib/bitregalo/market.ts` | Base URL of the marketplace index. Defaults to the index BitRegalo runs for the built-in network; on another network, without it the app shows records with no descriptions. |
 | `NEXT_PUBLIC_NETWORK_NAME`, `NEXT_PUBLIC_NATIVE_SYMBOL`, `NEXT_PUBLIC_EXPLORER_URL`, `NEXT_PUBLIC_PRACTICE_NETWORK` | `lib/bitregalo/config.ts` | Describe a network that is not built in. See "Another network". |
 | `NEXT_PUBLIC_RPC_URL` | `lib/bitregalo/config.ts` | RPC endpoint. Defaults to a public BNB Smart Chain Testnet endpoint; set it to point the app at a local fork. |
-| `NEXT_PUBLIC_PUBLIC_WORKSPACE` | `lib/bitregalo/config.ts`, `next.config.ts` | Which workspace is the public BitRegalo network served at `/app`. Defaults to `publicWorkspace` in `lib/bitregalo/bitregalo.json`, or 0. |
+| `NEXT_PUBLIC_NO_MULTICALL` | `lib/bitregalo/config.ts` | Set to `1` when the RPC is a local copy of a built-in network that has no Multicall3 contract (a fresh anvil node with chain id 97, say). Batched reads are then sent one by one; without it every list in the app stays empty there. |
+| `NEXT_PUBLIC_PUBLIC_WORKSPACE` | `lib/bitregalo/config.ts`, `next.config.ts` | Which workspace is the public BitRegalo network served at `/app`. Defaults to `publicTenantId` in the deployment record inside `lib/bitregalo/bitregalo.json`, or 0. |
 
 ## Another network
 
@@ -53,7 +54,8 @@ network's deployment record and the contract interface files. To build for anoth
 private one included:
 
 ```sh
-# in bitregalo-contracts: forge build, and deploy (script/try-network.sh does both checks)
+# in bitregalo-contracts (protocol version 2): forge build, and deploy (script/try-network.sh does both checks)
+# the path must hold out/ (the build) and deployments/<chainId>.json (the deployment record)
 node scripts/make-bundle.mjs ../bitregalo-contracts <chainId>
 NEXT_PUBLIC_RPC_URL=http://your-node:8545 \
 NEXT_PUBLIC_NETWORK_NAME="Your network" \
@@ -61,6 +63,19 @@ NEXT_PUBLIC_NATIVE_SYMBOL=ETH \
 NEXT_PUBLIC_PRACTICE_NETWORK=1 \
 npm run build
 ```
+
+The app is written for protocol version 2 of the contracts and serves no earlier version. The
+deployment record names the public workspace as `publicTenantId` and its contracts under
+`tenants.t<id>`; the app never assumes it is workspace 0. After regenerating the bundle, run
+`node scripts/check-abi.mjs`: it checks every contract call in the source against the bundle's
+ABIs (function name and number of arguments) and fails on a mismatch.
+
+`scripts/smoke-v2.mjs` runs the app's main flows against a network with funded test keys, with the
+same call shapes the app uses. It reads the contracts from the bundle, so generate the bundle for
+the network you run it against first (it was written against a local anvil node with the
+contracts deployed: `node scripts/smoke-v2.mjs http://127.0.0.1:8551 97`). It needs the keys of
+the workspace admin, a buyer and a supplier (`ADMIN_KEY`, `BUYER_KEY`, `SUPPLIER_KEY`; anvil's
+test keys by default), and it writes transactions, so use it on a local or practice network only.
 
 `NEXT_PUBLIC_EXPLORER_URL` is optional: a private network may have no public block explorer, and
 addresses are then shown without links. Networks BitRegalo itself runs on are listed in `NETWORKS`

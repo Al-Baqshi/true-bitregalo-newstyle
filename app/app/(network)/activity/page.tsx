@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { useTenant } from "@/lib/bitregalo/tenant"
-import { Card, Empty, Notice, PageHead, RowsSkeleton, Section } from "@/components/app/ui"
+import { Card, Empty, PageHead, RowsSkeleton, Section } from "@/components/app/ui"
 import { ConnectButton } from "@/components/app/connect-button"
 import { Button } from "@/components/ui/button"
 import { ActivityRow, useMyActivity, type ActivityKind } from "./activity"
@@ -76,16 +76,6 @@ export default function MyActivity() {
             ))}
           </div>
         </Section>
-      )}
-
-      {!a.hasPay && (
-        <Notice tone="muted" title="Payments are not listed here yet">
-          <p>
-            {t.isPublic
-              ? "The network's current contracts have no direct payments, so there are none to show. Sending payments and getting paid arrive when the network moves to the current contracts."
-              : "This workspace runs the first version of the contracts, which has no direct payments."}
-          </p>
-        </Notice>
       )}
 
       <p className="max-w-[62ch] text-sm text-muted-foreground">

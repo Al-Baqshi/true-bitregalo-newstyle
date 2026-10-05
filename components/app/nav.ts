@@ -32,8 +32,6 @@ export type NavItem = {
   icon: LucideIcon
   /** Other paths that belong to this item (their pages highlight it). */
   also?: string[]
-  /** First contract version that has this page; older workspaces do not show it. */
-  minVersion?: number
 }
 export type NavGroup = { key: string; label: string; icon: LucideIcon; items: NavItem[] }
 export type NavModel = { home: NavItem; groups: NavGroup[] }
@@ -57,7 +55,7 @@ export const NETWORK: NavModel = {
       label: "Payments",
       icon: ArrowLeftRight,
       items: [
-        { key: "payments", label: "Sent and received", path: "/payments", icon: ArrowLeftRight, also: ["/pay", "/get-paid"], minVersion: 1 },
+        { key: "payments", label: "Sent and received", path: "/payments", icon: ArrowLeftRight, also: ["/pay", "/get-paid"] },
         { key: "escrows", label: "Escrows", path: "/escrows", icon: Lock },
         { key: "activity", label: "My activity", path: "/activity", icon: Activity },
       ],
@@ -83,7 +81,7 @@ export const WORKSPACE: NavModel = {
       label: "Market",
       icon: Store,
       items: [
-        { key: "shop", label: "Shop", path: "/shop", icon: Store, minVersion: 1 },
+        { key: "shop", label: "Shop", path: "/shop", icon: Store },
         { key: "requests", label: "Requests", path: "/requests", icon: FileSearch },
         { key: "listings", label: "Listings", path: "/listings", icon: Tag },
       ],
@@ -93,9 +91,9 @@ export const WORKSPACE: NavModel = {
       label: "Payments",
       icon: ArrowLeftRight,
       items: [
-        { key: "payments", label: "Sent and received", path: "/payments", icon: ArrowLeftRight, also: ["/pay", "/get-paid"], minVersion: 1 },
+        { key: "payments", label: "Sent and received", path: "/payments", icon: ArrowLeftRight, also: ["/pay", "/get-paid"] },
         { key: "escrows", label: "Escrows", path: "/escrows", icon: Lock },
-        { key: "treasury", label: "Treasury", path: "/treasury", icon: Landmark, minVersion: 1 },
+        { key: "treasury", label: "Treasury", path: "/treasury", icon: Landmark },
         { key: "tokens", label: "Tokens", path: "/tokens", icon: Coins },
       ],
     },
@@ -113,15 +111,15 @@ export const WORKSPACE: NavModel = {
 }
 
 /** The things a person can start. Verb first, in the order people reach for them. */
-export type NewAction = { key: string; label: string; hint: string; path: string; icon: LucideIcon; minVersion?: number; workspaceOnly?: boolean }
+export type NewAction = { key: string; label: string; hint: string; path: string; icon: LucideIcon; workspaceOnly?: boolean }
 export const NEW_ACTIONS: NewAction[] = [
-  { key: "pay", label: "Send a payment", hint: "Pay someone or send a gift in USDT, with a reference and a receipt", path: "/pay", icon: Send, minVersion: 1 },
-  { key: "get-paid", label: "Get paid", hint: "Make a payment link or QR code", path: "/get-paid", icon: QrCode, minVersion: 1 },
+  { key: "pay", label: "Send a payment", hint: "Pay someone or send a gift in USDT, with a reference and a receipt", path: "/pay", icon: Send },
+  { key: "get-paid", label: "Get paid", hint: "Make a payment link or QR code", path: "/get-paid", icon: QrCode },
   { key: "escrow", label: "Hold a payment for someone", hint: "Lock it in escrow until the work is done", path: "/escrows/new", icon: ShieldCheck },
   { key: "request", label: "Ask for something", hint: "Post a request; suppliers send prices and you choose one", path: "/requests/new", icon: FileSearch },
   { key: "listing", label: "Offer something", hint: "List what you sell at a fixed price", path: "/listings/new", icon: PackageCheck },
-  { key: "sale", label: "Sell in the shop", hint: "Put vouchers, credits or memberships on sale", path: "/shop/new", icon: Store, minVersion: 1, workspaceOnly: true },
-  { key: "token", label: "Create a token", hint: "A credit or voucher your workspace issues", path: "/tokens/new", icon: Coins, workspaceOnly: true },
+  { key: "sale", label: "Sell in the shop", hint: "Put vouchers, credits or memberships on sale", path: "/shop/new", icon: Store, workspaceOnly: true },
+  { key: "token", label: "Create a token", hint: "A credit or voucher your workspace or project issues", path: "/tokens/new", icon: Coins, workspaceOnly: true },
   { key: "project", label: "Start a project", hint: "Group related work under one name", path: "/projects/new", icon: Folder, workspaceOnly: true },
 ]
 

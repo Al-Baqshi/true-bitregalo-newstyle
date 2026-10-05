@@ -66,6 +66,10 @@ export function OfferWizard() {
   const [price, setPrice] = useState(pre?.amount ?? "")
   const [days, setDays] = useState(pre?.days || "7")
   const [who, setWho] = useState<"open" | "one">(pre ? "one" : "open")
+  // How long the listing can be taken. A job listed for one buyer gets a date by default, so the
+  // supplier is not held to the price for ever; an open listing stays until it is withdrawn.
+  const [stays, setStays] = useState<"open" | "days">(pre ? "days" : "open")
+  const [validDays, setValidDays] = useState("14")
   const [buyer, setBuyer] = useState(pre?.buyer ?? "")
   const [project, setProject] = useState("0")
   const [d, setD] = useState<Details>(() => emptyDetails({ title: pre?.title ?? "", country: pre?.country ?? "" }))
@@ -141,7 +145,7 @@ export function OfferWizard() {
     },
     {
       id: "delivery", title: "Delivery and buyer",
-      valid: !(termDays > 0) ? "Set a delivery time" : !termOk ? `Escrows in this workspace run from ${Math.round(rules.minTerm / 3600)} h to ${Math.round(rules.maxTerm / 86400)} days` : who === "one" && !isAddress(buyer) ? "Enter the buyer's wallet address" : true,
+      valid: !(termDays > 0) ? "Set a delivery time" : !termOk ? `Escrows in this workspace run from ${Math.round(rules.minTerm / 3600)} h to ${Math.round(rules.maxTerm / 86400)} days` : who === "one" && !isAddress(buyer) ? "Enter the buyer's wallet address" : stays === "days" && !(Number(validDays) > 0) ? "Say for how many days the listing can be taken" : true,
       content: (
         <div className="grid gap-5">
           <Label
@@ -162,6 +166,21 @@ export function OfferWizard() {
               <input className={`${input} t-mono`} value={buyer} onChange={(e) => setBuyer(e.target.value)} placeholder="0x…" autoComplete="off" spellCheck={false} />
             </Label>
           )}
+          <fieldset>
+            <legend className="t-label mb-2">How long can it be taken?</legend>
+            <Choice<"open" | "days">
+              value={stays} onChange={setStays} columns={2}
+              options={[
+                { value: "open", title: "Until I withdraw it", description: "It stays open at this price until you withdraw it." },
+                { value: "days", title: "For a set number of days", description: "After that nobody can take it, so you are not held to this price for ever." },
+              ]}
+            />
+          </fieldset>
+          {stays === "days" && (
+            <Label title="Valid for (days)" hint="Counted from when you sign. You can still withdraw it earlier.">
+              <input className={`${input} max-w-40`} type="number" inputMode="decimal" min="0.05" step="any" value={validDays} onChange={(e) => setValidDays(e.target.value)} />
+            </Label>
+          )}
           <Label title="Project (optional)" hint="Groups this listing with related work.">
             <select className={input} value={project} onChange={(e) => setProject(e.target.value)}>
               <option value="0">No project</option>
@@ -178,12 +197,22 @@ export function OfferWizard() {
     },
   ]
 
+  const validWord = stays === "days" ? `can be taken for ${validDays || "…"} ${Number(validDays) === 1 ? "day" : "days"}` : "open until you withdraw it"
   const plan: WizardAction[] = [{
-    id: "list", label: paid && chosen ? `List at ${price || "…"} ${chosen.symbol}` : "Publish the listing (record only)", detail: `Delivery within ${days} ${dayWord} · ${who === "one" ? "one named buyer" : "open to anyone"}`,
+    id: "list", label: paid && chosen ? `List at ${price || "…"} ${chosen.symbol}` : "Publish the listing (record only)", detail: `Delivery within ${days} ${dayWord} · ${who === "one" ? "one named buyer" : "open to anyone"} · ${validWord}`,
     run: async ({ tx, results }) => {
       const r = await tx("List offer", {
         address: t.instance, abi: abis.instance, functionName: "listOffer",
-        args: [paid ? (chosen!.address as Address) : zeroAddress, paid ? parseUnits(price, chosen!.decimals) : 0n, BigInt(Math.round(termDays * 86400)), BigInt(project), Number(settle), who === "one" ? buyer : zeroAddress],
+        // One struct. `validUntil` is the last moment the listing can be taken; 0 keeps it open until withdrawn.
+        args: [{
+          token: paid ? (chosen!.address as Address) : zeroAddress,
+          amount: paid ? parseUnits(price, chosen!.decimals) : 0n,
+          timeframe: BigInt(Math.round(termDays * 86400)),
+          validUntil: stays === "days" ? BigInt(Math.floor(Date.now() / 1000) + Math.round(Number(validDays) * 86400)) : 0n,
+          projectId: BigInt(project),
+          settlement: Number(settle),
+          designatedBuyer: who === "one" ? (buyer as Address) : zeroAddress,
+        }],
       })
       results.offerId = eventArgs<{ offerId: bigint }>(r, abis.instance, "OfferListed").offerId
     },
@@ -235,6 +264,7 @@ export function OfferWizard() {
         { label: "Price", value: paid && chosen ? `${price || "…"} ${chosen.symbol}` : "—" },
         { label: "Delivery", value: `${days} ${dayWord}` },
         { label: "Buyer", value: who === "one" ? (buyer ? short(buyer) : "…") : "Anyone" },
+        { label: "Can be taken", value: stays === "days" ? `For ${validDays || "…"} ${Number(validDays) === 1 ? "day" : "days"}` : "Until you withdraw it" },
         { label: "Marketplace", value: listing },
       ]}
       done={(r) => {

@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { useAccount, useReadContract } from "wagmi"
+import { useAccount } from "wagmi"
 import { ArrowLeft, Building2, Cable, Check, ChevronsUpDown, CircleHelp, Ellipsis, Globe2, LayoutGrid, Plus, TrendingUp } from "lucide-react"
 import { ConnectButton } from "./connect-button"
 import { NETWORK, NEW_ACTIONS, WORKSPACE, locate, type NavGroup, type NavItem } from "./nav"
@@ -11,19 +11,10 @@ import { ThemeChoice, ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { abis, addresses, chain, explorerAddress, PUBLIC_WORKSPACE_ID, short } from "@/lib/bitregalo/config"
+import { addresses, chain, explorerAddress, PUBLIC_WORKSPACE_ID, short } from "@/lib/bitregalo/config"
 import { useInstances } from "@/lib/bitregalo/instances"
 import { useWorkspaceName } from "@/lib/bitregalo/names"
 import { cn } from "@/lib/utils"
-
-/** Shop, payments and the treasury arrived with contract version 1; older workspaces do not have them. */
-function useWorkspaceVersion(tenant: bigint) {
-  const q = useReadContract({ address: addresses.mother, abi: abis.mother, functionName: "tenants", args: [tenant] })
-  const t = q.data as { version: bigint } | undefined
-  return t ? Number(t.version) : null
-}
-const available = <T extends { minVersion?: number }>(list: T[], version: number | null) =>
-  list.filter((x) => !x.minVersion || (version !== null && version >= x.minVersion))
 
 const focusRing = "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
 
@@ -37,11 +28,10 @@ function useLocation() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const here = useLocation()
-  const version = useWorkspaceVersion(here.id)
-  const groups: NavGroup[] = here.model.groups.map((g) => ({ ...g, items: available(g.items, version) })).filter((g) => g.items.length > 0)
-  const actions = available(NEW_ACTIONS, version).filter((a) => here.kind === "workspace" || !a.workspaceOnly)
-  const found = locate({ ...here.model, groups }, here.rest)
-  const group = found.group ? groups.find((g) => g.key === found.group!.key) ?? null : null
+  const groups: NavGroup[] = here.model.groups
+  const actions = NEW_ACTIONS.filter((a) => here.kind === "workspace" || !a.workspaceOnly)
+  const found = locate(here.model, here.rest)
+  const group = found.group
 
   return (
     <div className="flex min-h-dvh flex-col">

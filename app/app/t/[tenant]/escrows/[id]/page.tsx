@@ -3,9 +3,9 @@ import { use } from "react"
 import Link from "next/link"
 import { useAccount } from "wagmi"
 import { useTenant } from "@/lib/bitregalo/tenant"
-import { useEscrow, useTx, useErc20 } from "@/lib/bitregalo/hooks"
+import { useCredit, useEscrow, useTx, useErc20 } from "@/lib/bitregalo/hooks"
 import { abis } from "@/lib/bitregalo/config"
-import { Card, Addr, Pill, Amount, PageHead, Section, Facts, Fact, Empty, RowsSkeleton } from "@/components/app/ui"
+import { Card, Addr, Pill, Amount, PageHead, Section, Facts, Fact, Empty, Notice, RowsSkeleton } from "@/components/app/ui"
 import { Journey, when, inWords, type JourneyStep } from "@/components/app/journey"
 import { ConnectButton } from "@/components/app/connect-button"
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,8 @@ export default function EscrowPage({ params }: { params: Promise<{ id: string }>
   const { escrow: e, refetch } = useEscrow(id)
   const { send, isPending } = useTx()
   const erc = useErc20(e?.token, address)
+  // A payout the token refused to deliver is credited to the same wallet, to collect later.
+  const credit = useCredit(e?.token, address)
   const back = { href: `${base}/escrows`, label: "All escrows" }
   const title = `Escrow #${raw}`
 
@@ -75,7 +77,7 @@ export default function EscrowPage({ params }: { params: Promise<{ id: string }>
       ? `The deadline (${deadline}) has passed without a release or a hand-back, so this payment can only go back to the buyer.`
       : `Held by the vault until the buyer releases it, the supplier hands it back, or the deadline on ${deadline} passes.`
     : e.state === 2
-      ? <>The buyer released it. The supplier received <Amount value={e.amount - fee} decimals={dec} symbol={sym} />, the amount minus the {pct}% platform fee.</>
+      ? <>The buyer released it. The supplier was paid <Amount value={e.amount - fee} decimals={dec} symbol={sym} />, the amount minus the {pct}% platform fee.</>
       : e.state === 3
         ? "The supplier handed it back. The buyer got all of it back."
         : "The deadline passed with no release and no hand-back, so it went back to the buyer in full."
@@ -106,6 +108,18 @@ export default function EscrowPage({ params }: { params: Promise<{ id: string }>
         </div>
         <p className="mt-3 max-w-[62ch] text-base text-muted-foreground">{standing}</p>
       </section>
+
+      {credit.amount > 0n && (
+        <Notice
+          tone="accent"
+          title="A payout is credited to your wallet"
+          action={<Button disabled={isPending} onClick={() => send(`Collect ${sym}`, { address: t.vault, abi: abis.vault, functionName: "claim", args: [e.token] }).then(() => { credit.refetch(); erc.refetch() })}>Collect</Button>}
+        >
+          <p>
+            <Amount value={credit.amount} decimals={dec} symbol={sym} /> is waiting for you in this workspace&apos;s vault. The token did not deliver it when a held payment settled, so the vault credited it to your wallet instead. Collecting sends it to your wallet. Only your wallet can collect it.
+          </p>
+        </Notice>
+      )}
 
       <Card><Journey steps={journey} /></Card>
 

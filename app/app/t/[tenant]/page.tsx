@@ -1,13 +1,13 @@
 "use client"
 import Link from "next/link"
-import { useAccount, useReadContract } from "wagmi"
-import type { Address, Hex } from "viem"
+import { useAccount } from "wagmi"
+import type { Hex } from "viem"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import { useOverview, useRfps, useEscrows, useSaleCount } from "@/lib/bitregalo/hooks"
-import { decodeLabel, useSettlementTokens } from "@/lib/bitregalo/instances"
+import { decodeLabel, useSettlementTokens, useWorkspaceTokens } from "@/lib/bitregalo/instances"
 import { useWorkspaceName } from "@/lib/bitregalo/names"
 import { Card, Addr, Pill, LedgerRow, Amount, PageHead, Empty, Facts, Fact, Section, timeLeft } from "@/components/app/ui"
-import { abis, addresses, RFP_STATE, ESCROW_STATE, SETTLEMENT } from "@/lib/bitregalo/config"
+import { RFP_STATE, ESCROW_STATE, SETTLEMENT } from "@/lib/bitregalo/config"
 import { Button } from "@/components/ui/button"
 
 export default function Overview() {
@@ -16,21 +16,18 @@ export default function Overview() {
   const { address } = useAccount()
   const nameOf = useWorkspaceName()
   const ov = useOverview()
-  const [rfpCount, offerCount, escrowCount, directCount, admin, feeBps, direct, escrow, minTerm, maxTerm, tokenList] = (ov.data ?? []).map((r) => r.result)
+  const [rfpCount, offerCount, escrowCount, directCount, admin, feeBps, direct, escrow, minTerm, maxTerm] = (ov.data ?? []).map((r) => r.result)
   const rfps = useRfps(rfpCount as bigint | undefined)
   const escrows = useEscrows(escrowCount as bigint | undefined)
-  const hasPay = t.version >= 1n
-  const { count: saleCount } = useSaleCount(hasPay)
+  const { count: saleCount } = useSaleCount()
   const tokens = useSettlementTokens(t.instance, t.id)
-  const versionCount = useReadContract({ address: addresses.mother, abi: abis.mother, functionName: "versionCount" })
-  const current = versionCount.data !== undefined ? BigInt(versionCount.data as bigint) - 1n : null
+  const own = useWorkspaceTokens(t.id, t.instance)
   const tokenOf = (a: string) => tokens.all.find((x) => x.address.toLowerCase() === a.toLowerCase())
   const n = (v: unknown) => (v === undefined || v === null ? "…" : String(v))
   const runBy = String(admin ?? t.admin ?? "")
   const isAdmin = !!address && runBy.toLowerCase() === address.toLowerCase()
-  const name = t.id === 0n && !t.isPublic ? "BitRegalo public workspace (first version)" : nameOf(t.id)
-  const recorded = hasPay ? "its shop, payments, requests, listings, escrows, tokens and treasury" : "its requests, listings, escrows and tokens"
-  const versionWord = current !== null && t.version === current ? "Current contracts" : t.version === 0n ? "First version of the contracts" : `Contract version ${String(t.version)}`
+  const name = nameOf(t.id)
+  const recorded = "its shop, payments, requests, listings, escrows, tokens and treasury"
 
   return (
     <div className="space-y-12">
@@ -42,29 +39,22 @@ export default function Overview() {
             : `An organisation's own workspace on BitRegalo, run by its admin. Everything done here (${recorded}) is recorded under this workspace, separately from the BitRegalo network.`
         }
         action={
-          hasPay ? (
-            <>
-              <Button asChild><Link href={`${base}/get-paid`}>Get paid</Link></Button>
-              <Button asChild variant="secondary"><Link href={`${base}/pay`}>Send a payment</Link></Button>
-              <Button asChild variant="secondary"><Link href={`${base}/requests/new`}>Ask for something</Link></Button>
-            </>
-          ) : (
-            <>
-              <Button asChild><Link href={`${base}/requests/new`}>Ask for something</Link></Button>
-              <Button asChild variant="secondary"><Link href={`${base}/listings/new`}>Offer something</Link></Button>
-            </>
-          )
+          <>
+            <Button asChild><Link href={`${base}/get-paid`}>Get paid</Link></Button>
+            <Button asChild variant="secondary"><Link href={`${base}/pay`}>Send a payment</Link></Button>
+            <Button asChild variant="secondary"><Link href={`${base}/requests/new`}>Ask for something</Link></Button>
+          </>
         }
       />
 
       <p className="-mt-6 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
         {[
-          ...(hasPay ? [{ label: "sale", n: saleCount, href: `${base}/shop` }] : []),
+          { label: "sale", n: saleCount, href: `${base}/shop` },
           { label: "request", n: rfpCount, href: `${base}/requests` },
           { label: "listing", n: offerCount, href: `${base}/listings` },
           { label: "escrow", n: escrowCount, href: `${base}/escrows` },
-          ...(hasPay ? [{ label: "payment", n: directCount, href: `${base}/payments` }] : []),
-          { label: "token", n: tokenList ? (tokenList as Address[]).length : undefined, href: `${base}/tokens` },
+          { label: "payment", n: directCount, href: `${base}/payments` },
+          { label: "token", n: own.isLoading ? undefined : own.tokens.length, href: `${base}/tokens` },
         ].map((c) => (
           <Link key={c.label} href={c.href} className="flex min-h-9 items-center gap-1.5 transition-colors hover:text-foreground pointer-coarse:min-h-11">
             <span className="t-num font-semibold text-foreground">{n(c.n)}</span> {c.label}{c.n === undefined || Number(c.n) === 1 ? "" : "s"}
@@ -92,7 +82,7 @@ export default function Overview() {
           <Fact label="Escrow length">{minTerm !== undefined ? `${Math.round(Number(minTerm) / 3600)} h to ${Math.round(Number(maxTerm) / 86400)} days` : "…"}</Fact>
         </Facts>
         <p className="mt-6 border-t border-border pt-4 text-sm text-muted-foreground">
-          {versionWord}. Its own contracts: records <Addr a={t.instance} />, vault <Addr a={t.vault} />
+          Its own contracts: records <Addr a={t.instance} />, vault <Addr a={t.vault} />
           {t.treasury && <>, treasury <Addr a={t.treasury} /></>}. Payments held in escrow sit in the vault, and nobody, including BitRegalo and the admin, can send them anywhere but to the supplier or back to the buyer.
         </p>
       </Card>

@@ -176,6 +176,20 @@ On a shared network BitRegalo owns the mother and the platform fee treasury. On 
 | Supplier | Hand a held payment back to the buyer. | Release it to themselves. |
 | Anyone | Trigger the return to the buyer after the deadline. | Anything else. |
 
+## Version 2 of the contracts
+
+Version 2 is a hardening release. It adds no feature. It changes how safely the existing ones run:
+
+- **A payer is never charged more than they agreed.** Every call that takes tokens from a person names the most that person agreed to pay, and fails if the charge would be higher.
+- **The treasury's owner decides what is sold.** The workspace admin opens a sale. Nothing can be bought until the owner of the workspace treasury approves that sale and an amount for it. Opening a sale does not let holders redeem the token: the admin decides that separately, and only for a token created for that workspace.
+- **Fees wait in the vault.** The vault keeps the platform's fees as payments happen, and anyone can send them on to the platform fee treasury. A release, a hand-back or a return never depends on that transfer.
+- **A refused payout is credited.** If a token will not deliver a payout, the held payment still reaches its outcome, and the amount is credited to the same wallet to collect later.
+- **Roles change hands in two steps.** A workspace's admin, a token's owner and the owners of the platform's contracts offer the role, and the other wallet accepts it. The owners of the platform's contracts cannot give ownership up.
+- **An offer carries a last moment.** An offer on a request can be chosen only until the time its supplier set. A listing can carry one too.
+- **Who may create a token.** A workspace's own token is created by its admin. A project's token is created by the admin or by the project's owner.
+
+Version 2 is a new set of contracts with its own mother. Workspaces on earlier versions are not changed. The reference web app is written for version 2.
+
 ## Evidence
 
 - The source of every contract on the public test network is published and verified against what is deployed.
@@ -228,6 +242,7 @@ There is no BitRegalo token. If BitRegalo ever issues one, it will be issued thr
 | --- | --- |
 | Records, escrow, requests, listings, projects, tokens | Live on the public test network, version 0 |
 | Payments with receipts, token sales, redemption, workspace treasury | Version 1 is deployed and registered there. No workspace has been launched on it yet |
+| Version 2 of the contracts (hardening, no new feature) | On the public test network since 6 October 2026, as a new system with its own mother. The reference web app runs on it. Also exercised on a private Hyperledger Besu test network |
 | Private EVM network | Deployed and exercised on a Hyperledger Besu test network. None in production |
 | Marketplace index | Live |
 | Gas sponsor and signing in without a wallet | Built, not in use |

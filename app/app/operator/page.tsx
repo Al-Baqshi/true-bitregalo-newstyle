@@ -2,33 +2,31 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useAccount, useReadContract, useReadContracts } from "wagmi"
-import { parseUnits, type Address } from "viem"
+import { isAddress, parseUnits, type Address } from "viem"
 import { useTx } from "@/lib/bitregalo/hooks"
+import { useInstances, useTokensOf } from "@/lib/bitregalo/instances"
+import { useWorkspaceName } from "@/lib/bitregalo/names"
 import { abis, addresses, versions, PUBLIC_WORKSPACE_ID, STABLES, network } from "@/lib/bitregalo/config"
-import { Addr, Amount, Card, Fact, Facts, Field, LedgerRow, Notice, PageHead, Pill, Section, Stat, Stats, inputCls } from "@/components/app/ui"
+import { deployment } from "@/components/app/admin/use-platform"
+import { Addr, Amount, Card, Empty, Fact, Facts, Field, LedgerRow, Notice, PageHead, Pill, Section, Stat, Stats, inputCls } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-const ENTRY_POINT = "0x0000000071727De22E5E9d8BAf0edAc6f37da032" as Address
+/** The shared ERC-4337 EntryPoint, where the paymaster keeps its deposit. Not a BitRegalo contract. */
 const entryPointAbi = [{ type: "function", name: "balanceOf", stateMutability: "view", inputs: [{ name: "account", type: "address" }], outputs: [{ type: "uint256" }] }] as const
-const ownableAbi = [
-  { type: "function", name: "owner", stateMutability: "view", inputs: [], outputs: [{ type: "address" }] },
-  { type: "function", name: "pendingOwner", stateMutability: "view", inputs: [], outputs: [{ type: "address" }] },
-  { type: "function", name: "acceptOwnership", stateMutability: "nonpayable", inputs: [], outputs: [] },
-] as const
-const treasuryAbi = [{ type: "function", name: "sweep", stateMutability: "nonpayable", inputs: [{ name: "token", type: "address" }, { name: "to", type: "address" }, { name: "amount", type: "uint256" }], outputs: [] }] as const
+const isZero = (a?: string) => !a || /^0x0{40}$/.test(a)
 
 export default function Platform() {
   const { address } = useAccount()
   const { send, isPending } = useTx()
   const head = useReadContracts({
     contracts: [
-      { address: addresses.mother, abi: ownableAbi, functionName: "owner" },
-      { address: addresses.mother, abi: ownableAbi, functionName: "pendingOwner" },
-      { address: addresses.treasury, abi: ownableAbi, functionName: "owner" },
-      { address: addresses.treasury, abi: ownableAbi, functionName: "pendingOwner" },
-      { address: addresses.tokenFactory, abi: ownableAbi, functionName: "owner" },
-      { address: addresses.tokenFactory, abi: ownableAbi, functionName: "pendingOwner" },
+      { address: addresses.mother, abi: abis.ownable, functionName: "owner" },
+      { address: addresses.mother, abi: abis.ownable, functionName: "pendingOwner" },
+      { address: addresses.treasury, abi: abis.ownable, functionName: "owner" },
+      { address: addresses.treasury, abi: abis.ownable, functionName: "pendingOwner" },
+      { address: addresses.tokenFactory, abi: abis.ownable, functionName: "owner" },
+      { address: addresses.tokenFactory, abi: abis.ownable, functionName: "pendingOwner" },
       { address: addresses.mother, abi: abis.mother, functionName: "tenantCount" },
       { address: addresses.mother, abi: abis.mother, functionName: "defaultFeeBps" },
       { address: addresses.mother, abi: abis.mother, functionName: "deployFeeAmount" },
@@ -36,14 +34,16 @@ export default function Platform() {
       { address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "creationFeeAmount" },
       { address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "creationFeeToken" },
       { address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "tokenCount" },
-      { address: ENTRY_POINT, abi: entryPointAbi, functionName: "balanceOf", args: [addresses.paymaster] },
+      { address: deployment.entryPoint, abi: entryPointAbi, functionName: "balanceOf", args: [addresses.paymaster] },
       { address: addresses.mother, abi: abis.mother, functionName: "versionCount" },
     ],
     query: { refetchInterval: 15_000 },
   })
   const r = (head.data ?? []).map((x) => x.result)
-  const [mOwner, mPending, tOwner, tPending, fOwner, fPending, tenantCount, feeBps, deployFee, deployFeeToken, tokenFee, , tokenCount, gasDeposit, versionCount] = r as [Address?, Address?, Address?, Address?, Address?, Address?, bigint?, number?, bigint?, Address?, bigint?, Address?, bigint?, bigint?, bigint?]
-  const deployFeeSym = STABLES.find((x) => x.address.toLowerCase() === (deployFeeToken ?? "").toLowerCase())?.symbol ?? "tokens"
+  const [mOwner, mPending, tOwner, tPending, fOwner, fPending, tenantCount, feeBps, deployFee, deployFeeToken, tokenFee, tokenFeeToken, tokenCount, gasDeposit, versionCount] = r as [Address?, Address?, Address?, Address?, Address?, Address?, bigint?, number?, bigint?, Address?, bigint?, Address?, bigint?, bigint?, bigint?]
+  const symbolOf = (a?: string) => STABLES.find((x) => x.address.toLowerCase() === (a ?? "").toLowerCase())?.symbol ?? "tokens"
+  const deployFeeSym = symbolOf(deployFeeToken)
+  const tokenFeeSym = symbolOf(tokenFeeToken)
   const registered = Number(versionCount ?? 0n)
   const unregistered = versions.filter((v) => v.n >= registered)
   const me = address?.toLowerCase()
@@ -52,7 +52,7 @@ export default function Platform() {
 
   // The BitRegalo network at /app is one ordinary workspace, chosen in the app's settings.
   const pub = useReadContract({ address: addresses.mother, abi: abis.mother, functionName: "tenants", args: [PUBLIC_WORKSPACE_ID] })
-  const pubT = pub.data as { instance: Address; admin: Address; version: bigint } | undefined
+  const pubT = pub.data as { instance: Address; vault: Address; version: bigint } | undefined
   const latest = versionCount !== undefined && registered > 0 ? registered - 1 : null
   const pubVersion = pubT ? Number(pubT.version) : null
   const pubBehind = pubVersion !== null && latest !== null && pubVersion < latest
@@ -63,14 +63,15 @@ export default function Platform() {
   })
   const feeShort = isOwner && deployFee !== undefined && deployFee > 0n && feeBalance.data !== undefined && (feeBalance.data as bigint) < deployFee
   const canSwitchFeeToTest = !!addresses.testStable && deployFeeToken?.toLowerCase() !== addresses.testStable.toLowerCase()
-  const versionName = (v: number | null) => (v === null ? "…" : v === latest ? `Current contracts (version ${v})` : v === 0 ? "First version (version 0)" : `Version ${v}`)
+  // "Set" is the mother's own numbering of the contract sets registered on this network, oldest first.
+  const versionName = (v: number | null) => (v === null ? "…" : v === latest ? `The newest registered set (set ${v})` : `An earlier set (set ${v})`)
 
-  const n = Number(tokenCount ?? 0n)
-  const factoryTokens = useReadContracts({
-    contracts: Array.from({ length: n }, (_, i) => ({ address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "allTokens", args: [BigInt(i)] })),
-    query: { enabled: n > 0 },
-  })
-  const tokenList = Array.from(new Set([...STABLES.map((x) => x.address), ...((factoryTokens.data ?? []).map((x) => x.result as Address).filter(Boolean))]))
+  // Every workspace, and every token the factory created for one: fees can arise in any of them.
+  const nameOf = useWorkspaceName()
+  const ws = useInstances()
+  const created = useTokensOf(ws.list)
+  const candidatesOf = (id: bigint) => Array.from(new Set([...STABLES.map((x) => x.address), ...created.of(id).map((x) => x.address)]))
+  const tokenList = Array.from(new Set([...STABLES.map((x) => x.address), ...ws.list.flatMap((w) => created.of(w.id).map((x) => x.address))]))
   const bal = useReadContracts({
     contracts: tokenList.flatMap((t) => [
       { address: t, abi: abis.utilityToken, functionName: "symbol" },
@@ -86,18 +87,36 @@ export default function Platform() {
     amount: (bal.data?.[i * 3 + 2]?.result as bigint) ?? 0n,
   }))
   const earningAny = earnings.some((e) => e.amount > 0n)
+  const metaOf = (token: string) => earnings.find((e) => e.token.toLowerCase() === token.toLowerCase())
+
+  // Fees are kept in each workspace's vault as payments happen, until someone sends them on.
+  const waitingRefs = ws.list.flatMap((w) => candidatesOf(w.id).map((token) => ({ w, token })))
+  const waitingQ = useReadContracts({
+    contracts: waitingRefs.map((x) => ({ address: x.w.vault, abi: abis.vault, functionName: "accruedFees", args: [x.token] })),
+    query: { enabled: waitingRefs.length > 0, refetchInterval: 15_000 },
+  })
+  const waiting = waitingRefs.map((x, i) => ({ ...x, amount: (waitingQ.data?.[i]?.result as bigint | undefined) ?? 0n })).filter((x) => x.amount > 0n)
 
   const [newFee, setNewFee] = useState("")
   const [newLaunch, setNewLaunch] = useState("")
-  const [launchToken, setLaunchToken] = useState<string>(STABLES[0]?.address ?? addresses.usdt)
+  const [launchToken, setLaunchToken] = useState<string>(STABLES[0]?.address ?? "")
   const [newTokenFee, setNewTokenFee] = useState("")
-  const refresh = () => { head.refetch(); bal.refetch() }
+  const [tokenFeeIn, setTokenFeeIn] = useState<string>(STABLES[0]?.address ?? "")
+  const [handover, setHandover] = useState<{ contract: string; to: string }>({ contract: addresses.mother, to: "" })
+  const refresh = () => { head.refetch(); bal.refetch(); waitingQ.refetch() }
 
   const pending = [
     { label: "Platform rules", addr: addresses.mother, pending: mPending },
-    { label: "Fee vault", addr: addresses.treasury, pending: tPending },
+    { label: "Platform fee treasury", addr: addresses.treasury, pending: tPending },
     { label: "Token maker", addr: addresses.tokenFactory, pending: fPending },
   ].filter((p) => !!me && p.pending?.toLowerCase() === me)
+
+  const contracts = [
+    { name: "Platform rules", tech: "BitRegaloMother", what: "Creates new workspaces and holds the fee settings. Cannot touch anyone's tokens.", addr: addresses.mother, owner: mOwner, pending: mPending },
+    { name: "Platform fee treasury", tech: "Treasury", what: "Receives every fee. Only its owner can withdraw.", addr: addresses.treasury, owner: tOwner, pending: tPending },
+    { name: "Token maker", tech: "TokenFactory", what: "Creates tokens for workspaces and projects.", addr: addresses.tokenFactory, owner: fOwner, pending: fPending },
+  ]
+  const owned = contracts.filter((c) => !!me && c.owner?.toLowerCase() === me)
 
   const count = (v: bigint | undefined) => (v === undefined ? "…" : String(v))
   const fees = [
@@ -109,7 +128,7 @@ export default function Platform() {
     {
       name: "Service fee",
       value: "Set per workspace",
-      body: "A flat amount the buyer pays on top of each payment, sent straight to the fee vault. Each workspace admin sets it per token when creating the workspace, or later in its Settings.",
+      body: "A flat amount the buyer pays on top of each payment. Each workspace admin sets it per token when creating the workspace, or later in its Settings.",
     },
     {
       name: "Workspace launch fee",
@@ -118,7 +137,7 @@ export default function Platform() {
     },
     {
       name: "Token creation fee",
-      value: tokenFee !== undefined ? (tokenFee > 0n ? <><Amount value={tokenFee} /> USDT</> : "Free") : "…",
+      value: tokenFee !== undefined ? (tokenFee > 0n ? <><Amount value={tokenFee} /> {tokenFeeSym}</> : "Free") : "…",
       body: "Paid once each time someone creates a token.",
     },
   ]
@@ -127,7 +146,7 @@ export default function Platform() {
     <div className="space-y-12">
       <PageHead
         title="Platform and earnings"
-        intro="BitRegalo's own view: the fees the platform has collected, the deposit set aside for sponsoring network fees, and its contract versions. Anyone can look. Only the owner's wallet can change anything."
+        intro="BitRegalo's own view: the fees the platform has earned, the deposit set aside for sponsoring network fees, and its contract versions. Anyone can look. Only the owner's wallet can change anything."
       />
 
       <Notice tone="muted">
@@ -145,7 +164,7 @@ export default function Platform() {
           <p>Control of these contracts has been offered to your wallet. Until you accept, the previous owner still holds them.</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {pending.map((p) => (
-              <Button key={p.addr} disabled={isPending} onClick={() => send(`Accept ${p.label}`, { address: p.addr, abi: ownableAbi as never, functionName: "acceptOwnership", args: [] }).then(refresh)}>
+              <Button key={p.addr} disabled={isPending} onClick={() => send(`Accept ${p.label}`, { address: p.addr, abi: abis.ownable, functionName: "acceptOwnership", args: [] }).then(refresh)}>
                 Accept {p.label}
               </Button>
             ))}
@@ -158,14 +177,14 @@ export default function Platform() {
           <Facts columns={3}>
             <Fact label="Runs on">Workspace #{String(PUBLIC_WORKSPACE_ID)}</Fact>
             <Fact label="Its contracts">{versionName(pubVersion)}</Fact>
-            <Fact label="Newest registered">{latest === null ? "…" : `Version ${latest}`}</Fact>
+            <Fact label="Newest registered">{latest === null ? "…" : `Set ${latest}`}</Fact>
           </Facts>
           <div className="mt-6 border-t border-border pt-5">
             {pubBehind ? (
               <div className="grid gap-4">
                 <p className="max-w-[62ch] text-sm text-muted-foreground">
-                  The network runs on older contracts than the current ones, so it has no direct payments, shop or treasury. A new public
-                  workspace on the current contracts fixes that.{" "}
+                  The network runs on an earlier set of contracts than the newest registered one. A workspace keeps the contracts it was
+                  created with, so moving the network means creating a new public workspace on the newest set.{" "}
                   {deployFee === 0n
                     ? "Creating it is free: there is no launch fee right now."
                     : <>Creating it costs the normal launch fee{deployFee !== undefined && <> of <span className="t-num text-foreground"><Amount value={deployFee} /> {deployFeeSym}</span></>}, in practice tokens.</>}{" "}
@@ -186,14 +205,14 @@ export default function Platform() {
                     </p>
                   </Notice>
                 ) : isOwner ? (
-                  <div><Button asChild><Link href="/app/launch?preset=public">Create the public network on the current contracts</Link></Button></div>
+                  <div><Button asChild><Link href="/app/launch?preset=public">Create the public network on the newest contracts</Link></Button></div>
                 ) : (
                   <p className="text-sm text-muted-foreground">Only the platform owner creates it. {address ? "Your connected wallet is not the owner." : "Connect the owner's wallet to do it."}</p>
                 )}
               </div>
             ) : (
               <p className="max-w-[62ch] text-sm text-muted-foreground">
-                {pubVersion === null || latest === null ? "Reading the network's contracts…" : "The network runs on the current contracts. Nothing to do."}
+                {pubVersion === null || latest === null ? "Reading the network's contracts…" : "The network runs on the newest registered contracts. Nothing to do."}
               </p>
             )}
           </div>
@@ -207,7 +226,36 @@ export default function Platform() {
         <Stat label="Sponsored gas" value={gasDeposit !== undefined ? <Amount value={gasDeposit} symbol={network.nativeSymbol} /> : "…"} hint="on deposit; not in use yet" />
       </Stats>
 
-      <Section title="In the fee vault" description="Every fee lands in one fee vault. This is what it holds now: what the platform has earned and not yet withdrawn.">
+      <Section
+        title="Fees waiting in workspace vaults"
+        description="The platform fee and the service fee are kept in each workspace's vault as payments happen. They reach the platform fee treasury when someone sends them on. Anyone may do that; it only costs the network fee, and it cannot touch a held payment."
+      >
+        <Card flush>
+          {(ws.isLoading || created.isLoading || (waitingRefs.length > 0 && !waitingQ.data)) && waiting.length === 0 && <p className="px-5 py-4 text-sm text-muted-foreground sm:px-6" role="status">Reading the vaults…</p>}
+          {!ws.isLoading && !created.isLoading && (waitingRefs.length === 0 || !!waitingQ.data) && waiting.length === 0 && (
+            <Empty title="Nothing is waiting" body="Fees appear here after a direct payment, a sale, or the release of a held payment in any workspace." />
+          )}
+          {waiting.map((x) => {
+            const m = metaOf(x.token)
+            return (
+              <LedgerRow
+                key={`${x.w.id}-${x.token}`}
+                title={m?.symbol ?? "…"}
+                meta={<>In the vault of {nameOf(x.w.id)} · <Addr a={x.w.vault} /></>}
+                amount={<Amount value={x.amount} decimals={m?.decimals ?? 18} symbol={m?.symbol ?? ""} />}
+                status={
+                  <Button size="sm" variant="secondary" disabled={isPending || !address} onClick={() => send(`Send ${m?.symbol ?? "fees"} to the platform fee treasury`, { address: x.w.vault, abi: abis.vault, functionName: "collectFees", args: [x.token] }).then(refresh)}>
+                    Send to the platform fee treasury
+                  </Button>
+                }
+              />
+            )
+          })}
+        </Card>
+        {!address && waiting.length > 0 && <p className="mt-3 text-sm text-muted-foreground">Connect any wallet to send them on.</p>}
+      </Section>
+
+      <Section title="In the platform fee treasury" description="What the platform fee treasury holds now: launch and token fees, and the fees sent on from workspace vaults, not yet withdrawn.">
         <Card flush>
           {earnings.map((e) => (
             <LedgerRow
@@ -217,7 +265,7 @@ export default function Platform() {
               amount={<Amount value={e.amount} decimals={e.decimals} />}
               status={
                 ownsTreasury && e.amount > 0n ? (
-                  <Button size="sm" variant="secondary" disabled={isPending} onClick={() => send(`Withdraw ${e.symbol}`, { address: addresses.treasury, abi: treasuryAbi as never, functionName: "sweep", args: [e.token, address, e.amount] }).then(refresh)}>
+                  <Button size="sm" variant="secondary" disabled={isPending} onClick={() => send(`Withdraw ${e.symbol}`, { address: addresses.treasury, abi: abis.treasury, functionName: "sweep", args: [e.token, address, e.amount] }).then(refresh)}>
                     Withdraw
                   </Button>
                 ) : undefined
@@ -226,14 +274,14 @@ export default function Platform() {
           ))}
           <div className="border-t border-border px-5 py-3 sm:px-6">
             <p className="max-w-[68ch] text-sm text-muted-foreground">
-              {!earningAny && bal.data && <>Nothing has been collected yet. Fees arrive when a payment is made or an escrow is released in a workspace, and whenever a launch or token fee is charged. </>}
-              Only the vault&apos;s owner, <Addr a={String(tOwner ?? "")} />, can withdraw. A withdrawal sends the whole balance of that token to the owner&apos;s wallet.
+              {!earningAny && bal.data && <>Nothing is here yet. Launch and token fees arrive straight away. Fees from payments arrive when someone sends them on from a workspace vault. </>}
+              Only the treasury&apos;s owner, <Addr a={String(tOwner ?? "")} />, can withdraw. A withdrawal sends the whole balance of that token to the owner&apos;s wallet.
             </p>
           </div>
         </Card>
       </Section>
 
-      <Section title="Where the fees come from" description="Four kinds of fee, all paid into the same vault.">
+      <Section title="Where the fees come from" description="Four kinds of fee, all ending in the platform fee treasury.">
         <Card flush>
           <dl>
             {fees.map((f) => (
@@ -252,7 +300,7 @@ export default function Platform() {
           <Card className="mt-6" title="Change the fees" description="Owner only. Each change is a transaction your wallet signs and takes effect once it confirms.">
             <div className="grid gap-8">
               <form className="grid gap-4" onSubmit={(e) => e.preventDefault()}>
-                <Field label="Platform fee for new workspaces (%)" hint={`Between 0 and 5. Now ${feeBps !== undefined ? `${Number(feeBps) / 100}%` : "…"}. Workspaces that already exist keep their rate.`}>
+                <Field label="Platform fee for new workspaces (%)" hint={`Between 0 and 5. Now ${feeBps !== undefined ? `${Number(feeBps) / 100}%` : "…"}. Workspaces that already exist keep their rate. A workspace being created at a lower rate than the new one is refused, not created at the higher rate.`}>
                   <input className={cn(inputCls, "t-num max-w-40")} type="number" inputMode="decimal" min="0" max="5" step="0.1" value={newFee} onChange={(e) => setNewFee(e.target.value)} />
                 </Field>
                 <div>
@@ -273,9 +321,9 @@ export default function Platform() {
                     </select>
                   </Field>
                 </div>
-                <p className="max-w-[62ch] text-sm text-muted-foreground">Paid once when a workspace is created. On the practice network, charge it in tUSD so anyone can pay it from the faucet. 0 makes it free.</p>
+                <p className="max-w-[62ch] text-sm text-muted-foreground">Paid once when a workspace is created. On the practice network, charge it in tUSD so anyone can pay it from the faucet. 0 makes it free. Someone who is creating a workspace at the old fee is refused, not charged more.</p>
                 <div>
-                  <Button variant="secondary" disabled={isPending || newLaunch === ""} onClick={() => send("Set launch fee", { address: addresses.mother, abi: abis.mother, functionName: "setDeployFee", args: [launchToken, parseUnits(newLaunch || "0", 18)] }).then(refresh)}>
+                  <Button variant="secondary" disabled={isPending || newLaunch === "" || !isAddress(launchToken)} onClick={() => send("Set launch fee", { address: addresses.mother, abi: abis.mother, functionName: "setDeployFee", args: [launchToken, parseUnits(newLaunch || "0", 18)] }).then(refresh)}>
                     Save launch fee
                   </Button>
                 </div>
@@ -283,11 +331,19 @@ export default function Platform() {
 
               {fOwner?.toLowerCase() === me && (
                 <form className="grid gap-4 border-t border-border pt-8" onSubmit={(e) => e.preventDefault()}>
-                  <Field label="Token creation fee (USDT)" hint="Paid once each time someone creates a token. 0 makes it free.">
-                    <input className={cn(inputCls, "t-num max-w-40")} type="number" inputMode="decimal" min="0" value={newTokenFee} onChange={(e) => setNewTokenFee(e.target.value)} />
-                  </Field>
+                  <div className="grid gap-4 sm:grid-cols-[10rem_12rem]">
+                    <Field label="Token creation fee">
+                      <input className={cn(inputCls, "t-num")} type="number" inputMode="decimal" min="0" value={newTokenFee} onChange={(e) => setNewTokenFee(e.target.value)} />
+                    </Field>
+                    <Field label="Paid in">
+                      <select className={inputCls} value={tokenFeeIn} onChange={(e) => setTokenFeeIn(e.target.value)}>
+                        {STABLES.map((x) => <option key={x.address} value={x.address}>{x.symbol}</option>)}
+                      </select>
+                    </Field>
+                  </div>
+                  <p className="max-w-[62ch] text-sm text-muted-foreground">Paid once each time someone creates a token. 0 makes it free. Someone who is creating a token at the old fee is refused, not charged more.</p>
                   <div>
-                    <Button variant="secondary" disabled={isPending || newTokenFee === ""} onClick={() => send("Set token fee", { address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "setCreationFee", args: [addresses.usdt, parseUnits(newTokenFee || "0", 18)] }).then(refresh)}>
+                    <Button variant="secondary" disabled={isPending || newTokenFee === "" || !isAddress(tokenFeeIn)} onClick={() => send("Set token fee", { address: addresses.tokenFactory, abi: abis.tokenFactory, functionName: "setCreationFee", args: [tokenFeeIn, parseUnits(newTokenFee || "0", 18)] }).then(refresh)}>
                       Save token fee
                     </Button>
                   </div>
@@ -314,16 +370,16 @@ export default function Platform() {
 
       <Section
         title="Contract versions"
-        description="Each workspace keeps the contract version it was created with; new workspaces get the newest registered one. Registering a version tells the platform rules contract about a new set of contracts. It changes nothing for existing workspaces."
+        description="Each workspace keeps the contracts it was created with; new workspaces get the newest registered set. Registering tells the platform rules contract about a new set of contracts. It changes nothing for existing workspaces. This app works with protocol version 2."
       >
         <Card flush>
           {versions.map((v) => (
             <LedgerRow
               key={v.n}
-              title={`Version ${v.n}`}
+              title={`Contract set ${v.n}`}
               meta={
                 <>
-                  {v.n === 0 ? "Requests, listings, escrow and tokens." : "Adds a workspace treasury, sales with redemption, and payment links."}
+                  Protocol version 2: requests, listings, escrow, payments, the shop, redemption and a workspace treasury.
                   <span className="block">
                     Records <Addr a={v.instanceImpl} /> · Vault <Addr a={v.vaultImpl} />
                     {v.treasuryImpl && <> · Treasury <Addr a={v.treasuryImpl} /></>}
@@ -332,22 +388,18 @@ export default function Platform() {
               }
               status={
                 v.n < registered ? <Pill tone="good">Registered</Pill>
-                  : isOwner ? <Button size="sm" disabled={isPending || v.n !== registered} onClick={() => send(`Register version ${v.n}`, { address: addresses.mother, abi: abis.mother, functionName: "registerVersion", args: [v.instanceImpl, v.vaultImpl] }).then(refresh)}>Register version {v.n}</Button>
+                  : isOwner ? <Button size="sm" disabled={isPending || v.n !== registered} onClick={() => send(`Register contract set ${v.n}`, { address: addresses.mother, abi: abis.mother, functionName: "registerVersion", args: [v.instanceImpl, v.vaultImpl] }).then(refresh)}>Register set {v.n}</Button>
                   : <Pill>Not registered</Pill>
               }
             />
           ))}
         </Card>
-        {unregistered.length > 0 && !isOwner && <p className="mt-3 text-sm text-muted-foreground">Only the owner of the platform rules contract can register a version.</p>}
+        {unregistered.length > 0 && !isOwner && <p className="mt-3 text-sm text-muted-foreground">Only the owner of the platform rules contract can register a set of contracts.</p>}
       </Section>
 
-      <Section title="The platform's contracts" description="Three contracts, each with an owner. None of them can touch payments held in a workspace's vault.">
+      <Section title="The platform's contracts" description="Three contracts, each with an owner. None of them can touch payments held in a workspace's vault. An owner cannot give ownership up, and handing it over takes two steps: the owner offers it, the new owner accepts.">
         <Card flush>
-          {[
-            { name: "Platform rules", tech: "BitRegaloMother", what: "Creates new workspaces and holds the fee settings. Cannot touch anyone's funds.", addr: addresses.mother, owner: mOwner },
-            { name: "Fee vault", tech: "Treasury", what: "Receives every fee. Only its owner can withdraw.", addr: addresses.treasury, owner: tOwner },
-            { name: "Token maker", tech: "TokenFactory", what: "Creates tokens for workspaces and projects.", addr: addresses.tokenFactory, owner: fOwner },
-          ].map((c) => (
+          {contracts.map((c) => (
             <LedgerRow
               key={c.addr}
               title={<>{c.name} <span className="font-normal text-muted-foreground">({c.tech})</span></>}
@@ -355,12 +407,42 @@ export default function Platform() {
                 <>
                   {c.what}
                   <span className="block">Contract <Addr a={c.addr} /> · Owner <Addr a={String(c.owner ?? "")} /></span>
+                  {!isZero(c.pending) && <span className="block">Offered to <Addr a={c.pending!} />. Waiting for that wallet to accept; until then the owner does not change.</span>}
                 </>
               }
-              status={!!me && c.owner?.toLowerCase() === me ? <Pill tone="good">You</Pill> : undefined}
+              status={!isZero(c.pending) ? <Pill tone="accent">Handover pending</Pill> : !!me && c.owner?.toLowerCase() === me ? <Pill tone="good">You</Pill> : undefined}
             />
           ))}
         </Card>
+
+        {owned.length > 0 && (
+          <Card className="mt-6" title="Hand over a platform contract" description="Owner only. You offer the contract to another wallet, for example a shared multi-signature wallet. Nothing changes until that wallet accepts on this page.">
+            <form className="grid gap-4" onSubmit={(e) => e.preventDefault()}>
+              <div className="grid gap-4 sm:grid-cols-[14rem_minmax(0,1fr)]">
+                <Field label="Contract">
+                  <select className={inputCls} value={owned.some((c) => c.addr === handover.contract) ? handover.contract : owned[0].addr} onChange={(e) => setHandover({ ...handover, contract: e.target.value })}>
+                    {owned.map((c) => <option key={c.addr} value={c.addr}>{c.name}</option>)}
+                  </select>
+                </Field>
+                <Field label="New owner's wallet address">
+                  <input className={cn(inputCls, "t-mono")} value={handover.to} onChange={(e) => setHandover({ ...handover, to: e.target.value.trim() })} placeholder="0x…" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
+                </Field>
+              </div>
+              <div>
+                <Button
+                  variant="secondary"
+                  disabled={isPending || !isAddress(handover.to) || handover.to.toLowerCase() === me}
+                  onClick={() => {
+                    const target = owned.find((c) => c.addr === handover.contract) ?? owned[0]
+                    send(`Offer ${target.name}`, { address: target.addr, abi: abis.ownable, functionName: "transferOwnership", args: [handover.to] }).then(() => { setHandover({ ...handover, to: "" }); refresh() })
+                  }}
+                >
+                  Offer ownership
+                </Button>
+              </div>
+            </form>
+          </Card>
+        )}
         <p className="mt-4 max-w-[62ch] text-sm text-muted-foreground">
           Before real funds are involved, these owners should become a shared multi-signature wallet, so that no single key controls the platform.
         </p>

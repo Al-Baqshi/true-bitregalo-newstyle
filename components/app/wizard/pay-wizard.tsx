@@ -1,8 +1,8 @@
 "use client"
 import { useState } from "react"
 import Link from "next/link"
-import { useAccount } from "wagmi"
-import { formatUnits, isAddress, maxUint256, parseUnits, type Address } from "viem"
+import { useAccount, useReadContracts } from "wagmi"
+import { formatUnits, isAddress, parseUnits, type Address } from "viem"
 import { abis, addresses, short } from "@/lib/bitregalo/config"
 import { useErc20 } from "@/lib/bitregalo/hooks"
 import { encodeLabel, eventArgs, labelBytes, useProjects, useSettlementTokens } from "@/lib/bitregalo/instances"
@@ -35,15 +35,30 @@ export function PayWizard({ prefill = {} }: { prefill?: PayPrefill }) {
   const erc = useErc20(chosen?.address, address)
   const value = chosen && Number(amount) > 0 ? parseUnits(amount, chosen.decimals) : 0n
   const fee = (value * BigInt(rules.feeBps)) / 10_000n
-  const total = value + (chosen?.serviceFee ?? 0n)
+  const serviceFee = chosen?.serviceFee ?? 0n
+  const total = value + serviceFee
+  const fmt = (v: bigint) => (chosen ? `${formatUnits(v, chosen.decimals)} ${chosen.symbol}` : "—")
   const self = !!address && to.toLowerCase() === address.toLowerCase()
+  // A payment cannot name one of the protocol's own contracts as the payee: they have no way to send tokens on.
+  const payeeCheck = useReadContracts({
+    contracts: [
+      { address: addresses.mother, abi: abis.mother, functionName: "isVault", args: [to as Address] },
+      { address: addresses.mother, abi: abis.mother, functionName: "isInstance", args: [to as Address] },
+    ],
+    query: { enabled: isAddress(to) },
+  })
+  const lower = to.toLowerCase()
+  const protocolPayee = isAddress(to) && (
+    !!payeeCheck.data?.[0]?.result || !!payeeCheck.data?.[1]?.result ||
+    [addresses.mother, addresses.tokenFactory, chosen?.address].some((a) => !!a && a.toLowerCase() === lower)
+  )
   const refLong = labelBytes(ref) > 31
 
   const steps: WizardStep[] = [
     {
       id: "who", title: "Who and how much",
       caption: "The wallet that gets paid, and the amount they are owed.",
-      valid: !rules.loaded ? "Loading the workspace rules…" : !rules.direct ? "Direct payment is switched off in this workspace" : !chosen ? "This workspace accepts no currency yet" : !isAddress(to) ? "Enter the recipient's wallet address" : self ? "You cannot pay yourself" : !(value > 0n) ? "Enter an amount" : true,
+      valid: !rules.loaded ? "Loading the workspace rules…" : !rules.direct ? "Direct payment is switched off in this workspace" : !chosen ? "This workspace accepts no currency yet" : !isAddress(to) ? "Enter the recipient's wallet address" : self ? "You cannot pay yourself" : protocolPayee ? "That address is one of the protocol's own contracts or the token itself. A payment cannot be sent there" : !(value > 0n) ? "Enter an amount" : true,
       content: (
         <div className="grid gap-5">
           <Label title="Recipient" hint={locked ? "Set by the payment link." : "The wallet that receives the payment. Paste it, or open the link they sent you."}>
@@ -59,8 +74,8 @@ export function PayWizard({ prefill = {} }: { prefill?: PayPrefill }) {
           </Label>
           {chosen && (
             <Note>
-              You send <Amount value={total} decimals={chosen.decimals} symbol={chosen.symbol} /> in total
-              {chosen.serviceFee > 0n && <>, which includes a <Amount value={chosen.serviceFee} decimals={chosen.decimals} symbol={chosen.symbol} /> service fee</>}.
+              You pay <Amount value={total} decimals={chosen.decimals} symbol={chosen.symbol} /> in total: the amount
+              {chosen.serviceFee > 0n ? <> plus a <Amount value={chosen.serviceFee} decimals={chosen.decimals} symbol={chosen.symbol} /> service fee</> : <>, with no service fee</>}.
               {" "}The recipient gets <Amount value={value - fee} decimals={chosen.decimals} symbol={chosen.symbol} /> after the {rules.feeBps / 100}% platform fee.
               {" "}Your balance: <Amount value={erc.balance} decimals={erc.decimals} symbol={erc.symbol} />.
               {erc.balance < total && value > 0n && <strong className="text-destructive"> Not enough {chosen.symbol}.</strong>}
@@ -87,14 +102,17 @@ export function PayWizard({ prefill = {} }: { prefill?: PayPrefill }) {
               {projects.list.filter((p) => p.active).map((p) => <option key={String(p.id)} value={String(p.id)}>#{String(p.id)} · {p.label ?? "Private project"}</option>)}
             </select>
           </Label>
-          <Note>A direct payment is final. It reaches the recipient in the same transaction; there is no escrow to release or cancel. For goods you have not received yet, ask the supplier for an escrow listing instead.</Note>
+          <Note>A direct payment is final. It reaches the recipient in the same transaction; there is no escrow to release or hand back. For goods you have not received yet, ask the supplier for an escrow listing instead.</Note>
         </div>
       ),
     },
   ]
+  // The vault is allowed exactly the total shown, and `pay` names that total as the most to charge.
+  // If the service fee went up after this page was opened, the payment is refused and nothing is charged.
   const needApprove = !!chosen && erc.allowance < total
   const approve: WizardAction[] = needApprove
-    ? [{ id: "approve", label: `Allow the vault to move your ${chosen!.symbol}`, detail: "A one-time approval, reused for later payments", run: async ({ tx }) => { await tx("Approve", { address: chosen!.address, abi: abis.erc20, functionName: "approve", args: [t.vault, maxUint256] }) } }]
+    // The step is named after the total, so if the total changes after a refused payment, the new total is approved afresh.
+    ? [{ id: `approve-${total}`, label: `Allow the vault to take ${fmt(total)}`, detail: "Exactly the total of this payment, and no more", run: async ({ tx }) => { await tx("Approve", { address: chosen!.address, abi: abis.erc20, functionName: "approve", args: [t.vault, total] }) } }]
     : []
   return (
     <Wizard
@@ -105,11 +123,15 @@ export function PayWizard({ prefill = {} }: { prefill?: PayPrefill }) {
       plan={[
         ...approve,
         {
-          id: "pay", label: chosen ? `Pay ${amount || "…"} ${chosen.symbol}` : "Pay", detail: `To ${to ? short(to) : "…"}`,
+          id: "pay", label: chosen ? `Pay ${amount || "…"} ${chosen.symbol}` : "Pay", detail: `To ${to ? short(to) : "…"}${chosen ? ` · ${fmt(total)} leaves your wallet` : ""}`,
           run: async ({ tx, results }) => {
             const r = await tx("Pay", {
               address: t.instance, abi: abis.instance, functionName: "pay",
-              args: [to as Address, chosen!.address, value, encodeLabel(ref || ""), BigInt(project)],
+              args: [to as Address, chosen!.address, value, encodeLabel(ref || ""), BigInt(project), total],
+            }).catch((e) => {
+              // If it was refused because a fee changed, show the new total straight away.
+              tokens.refetch(); erc.refetch()
+              throw e
             })
             results.paymentId = eventArgs<{ paymentId: bigint }>(r, abis.instance, "Paid").paymentId
             erc.refetch()
@@ -119,7 +141,9 @@ export function PayWizard({ prefill = {} }: { prefill?: PayPrefill }) {
       summary={[
         { label: "To", value: to ? <span className="t-mono">{short(to)}</span> : "…" },
         { label: "Amount", value: chosen ? `${amount || "…"} ${chosen.symbol}` : "—" },
-        { label: "They receive", value: chosen ? `${formatUnits(value - fee, chosen.decimals)} ${chosen.symbol}` : "—" },
+        { label: "Service fee", value: chosen ? (serviceFee > 0n ? fmt(serviceFee) : "None") : "—" },
+        { label: "Total you pay", value: chosen && value > 0n ? fmt(total) : "—" },
+        { label: "They receive", value: chosen ? `${fmt(value - fee)}, after the ${rules.feeBps / 100}% platform fee` : "—" },
         { label: "Reference", value: ref || "None" },
       ]}
       done={(r) => (

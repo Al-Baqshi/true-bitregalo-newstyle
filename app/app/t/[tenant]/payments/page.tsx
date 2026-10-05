@@ -6,18 +6,15 @@ import { usePaymentCount, usePayments } from "@/lib/bitregalo/hooks"
 import { decodeLabel, useSettlementTokens } from "@/lib/bitregalo/instances"
 import { Card, Addr, Amount, PageHead, LedgerRow, Empty, Pill, RowsSkeleton } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
-import { OlderContract } from "@/components/app/older-contract"
 
 export default function Payments() {
   const t = useTenant()
   const base = t.base
   const { address } = useAccount()
-  const hasPay = t.version >= 1n
-  const { count } = usePaymentCount(hasPay)
+  const { count } = usePaymentCount()
   const list = usePayments(count)
   const tokens = useSettlementTokens(t.instance, t.id)
   const me = address?.toLowerCase()
-  if (!hasPay) return <OlderContract what="Payments" />
 
   const loading = count === undefined || list.isLoading
   const shown = list.data.filter(Boolean).length

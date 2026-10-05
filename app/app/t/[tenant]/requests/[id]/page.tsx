@@ -2,13 +2,13 @@
 import { use, useState } from "react"
 import Link from "next/link"
 import { useAccount } from "wagmi"
-import { parseUnits, maxUint256, type Hex } from "viem"
+import { parseUnits, type Hex } from "viem"
 import { decodeLabel } from "@/lib/bitregalo/instances"
 import { categoryLabel, useEntry } from "@/lib/bitregalo/market"
 import { useTenant } from "@/lib/bitregalo/tenant"
-import { useRfp, useTx, useErc20, useTokenCfg } from "@/lib/bitregalo/hooks"
+import { useNow, useRfp, useTx, useErc20, useTokenCfg } from "@/lib/bitregalo/hooks"
 import { abis, short } from "@/lib/bitregalo/config"
-import { Addr, Amount, Card, Empty, Fact, Facts, Notice, PageHead, Pill, RowsSkeleton, Section } from "@/components/app/ui"
+import { Addr, Amount, Card, Empty, Fact, Facts, Notice, PageHead, PayTotal, Pill, RowsSkeleton, Section } from "@/components/app/ui"
 import { Journey, when, inWords, type JourneyStep } from "@/components/app/journey"
 import { input, Label } from "@/components/app/wizard/fields"
 import { ConnectButton } from "@/components/app/connect-button"
@@ -43,7 +43,12 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
   const cfg = useTokenCfg(paid ? rfp!.token : undefined)
   const [amount, setAmount] = useState("")
   const [days, setDays] = useState("14")
+  // How long the supplier stands by the offer. After it, the offer cannot be accepted.
+  const [validDays, setValidDays] = useState("14")
+  // The offer the buyer is about to choose: shown with its total before anything is signed.
+  const [picked, setPicked] = useState<bigint | null>(null)
   const [editing, setEditing] = useState(false)
+  const nowSec = useNow()
   // Title, description, category and place, signed by the requester, from the marketplace index.
   const { data: entry } = useEntry(t.id, "request", id)
   const back = { href: `${base}/requests`, label: "All requests" }
@@ -75,9 +80,16 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
   const awarded = rfp.state === 2
   const closedForOffers = Number(rfp.deadline) <= Date.now() / 1000
   const liveBids = bids.filter((b) => !b.withdrawn)
+  // Read from the workspace: the flat fee the buyer pays on top, in this token.
+  const feeKnown = !paid || cfg !== undefined
   const serviceFee = cfg?.[2] ?? 0n
   const canChoose = open && isRequester
   const fee = serviceFee > 0n ? <Amount value={serviceFee} decimals={erc.decimals} symbol={erc.symbol} /> : null
+  const lapsed = (b: { validUntil: bigint }) => Number(b.validUntil) < nowSec
+  const pickedBid = canChoose ? liveBids.find((b) => b.id === picked && !lapsed(b)) : undefined
+  const pickedTotal = (pickedBid?.amount ?? 0n) + serviceFee
+  const pickedShort = paid && !!pickedBid && feeKnown && erc.balance < pickedTotal
+  const validOk = Number(validDays) > 0
 
   const journey: JourneyStep[] = [
     { title: "Posted", note: `by ${isRequester ? "you" : short(rfp.requester)}`, state: "done" },
@@ -92,15 +104,20 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
 
   async function sendOffer(e: React.FormEvent) {
     e.preventDefault()
-    await send("Send offer", { address: t.instance, abi: abis.instance, functionName: "bid", args: [id, paid ? parseUnits(amount || "0", erc.decimals) : 0n, BigInt(Math.round(Number(days) * 86400))] })
+    // The last moment the buyer can accept this offer. It must be in the future.
+    const validUntil = BigInt(Math.floor(Date.now() / 1000) + Math.round(Number(validDays) * 86400))
+    await send("Send offer", { address: t.instance, abi: abis.instance, functionName: "bid", args: [id, paid ? parseUnits(amount || "0", erc.decimals) : 0n, BigInt(Math.round(Number(days) * 86400)), validUntil] })
     setAmount(""); refetch()
   }
   async function choose(bidId: bigint, amt: bigint) {
-    if (paid && erc.allowance < amt + serviceFee) {
-      await send("Allow the vault to take the payment", { address: rfp!.token, abi: abis.erc20, functionName: "approve", args: [t.vault, maxUint256] })
+    // Approve exactly the total shown, and name it as the most the contract may charge.
+    // If the service fee went up since this page was opened, the choice is refused and nothing is charged.
+    const total = amt + serviceFee
+    if (paid && erc.allowance < total) {
+      await send("Allow the vault to take the total", { address: rfp!.token, abi: abis.erc20, functionName: "approve", args: [t.vault, total] })
     }
-    await send("Choose offer", { address: t.instance, abi: abis.instance, functionName: "acceptBid", args: [id, bidId] })
-    refetch(); erc.refetch()
+    await send("Choose offer", { address: t.instance, abi: abis.instance, functionName: "acceptBid", args: [id, bidId, paid ? total : 0n] })
+    setPicked(null); refetch(); erc.refetch()
   }
 
   // Offers line up in columns so prices and delivery times can be compared at a glance.
@@ -174,19 +191,24 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
                   {bids.map((b) => {
                     const chosen = awarded && rfp.acceptedBid === b.id
                     const mine = !!address && address.toLowerCase() === b.provider.toLowerCase()
-                    const dim = b.withdrawn
+                    const expired = !b.withdrawn && !chosen && open && lapsed(b)
+                    const dim = b.withdrawn || expired
                     return (
                       <li
                         key={String(b.id)}
-                        className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-border px-5 py-3.5 last:border-b-0 sm:px-6", cols, chosen && "bg-success-fill/50")}
+                        className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-border px-5 py-3.5 last:border-b-0 sm:px-6", cols, chosen && "bg-success-fill/50", pickedBid?.id === b.id && "bg-gold-fill/50")}
                       >
                         <div className="min-w-0">
                           <div className={cn("flex flex-wrap items-center gap-x-2.5 gap-y-1 text-base font-[560]", dim && "text-subtle")}>
                             Offer #{String(b.id)}
                             {chosen && <Pill tone="good">Chosen</Pill>}
                             {b.withdrawn && <Pill>Withdrawn</Pill>}
+                            {expired && <Pill>Expired</Pill>}
                           </div>
-                          <div className="mt-0.5 text-sm text-muted-foreground">From <Addr a={b.provider} />{mine && " (you)"}</div>
+                          <div className="mt-0.5 text-sm text-muted-foreground">
+                            From <Addr a={b.provider} />{mine && " (you)"}
+                            {!b.withdrawn && !chosen && open && <> · {expired ? `valid until ${when(b.validUntil)}, so it can no longer be chosen` : `valid until ${when(b.validUntil)}`}</>}
+                          </div>
                         </div>
                         <div className={cn("t-num text-sm sm:order-0 sm:col-span-1 sm:text-base", paid ? "order-3 col-span-2" : "order-2 text-right", dim ? "text-subtle" : paid ? "text-muted-foreground sm:text-foreground" : "")}>
                           <span className="sm:hidden">Delivers in </span>{duration(b.timeframe)}
@@ -198,7 +220,7 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
                         )}
                         {canChoose && (
                           <div className="order-4 col-span-2 sm:order-0 sm:col-span-1 sm:text-right">
-                            {!b.withdrawn && <Button size="sm" variant="secondary" className="w-full sm:w-auto" disabled={isPending} onClick={() => choose(b.id, b.amount)}>Choose this offer</Button>}
+                            {!b.withdrawn && <Button size="sm" variant="secondary" className="w-full sm:w-auto" disabled={isPending || expired} onClick={() => setPicked(b.id)}>Choose this offer</Button>}
                           </div>
                         )}
                       </li>
@@ -208,6 +230,38 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
               </>
             )}
           </Card>
+
+          {pickedBid && (
+            <Notice
+              tone="accent"
+              title={`Choose offer #${String(pickedBid.id)}?`}
+              action={
+                <div className="flex flex-wrap gap-2">
+                  <Button disabled={isPending || !feeKnown || pickedShort} onClick={() => choose(pickedBid.id, pickedBid.amount)}>
+                    {rfp.settlement === 2 ? "Confirm and hold the payment" : rfp.settlement === 1 ? "Confirm and pay" : "Confirm the choice"}
+                  </Button>
+                  <Button variant="ghost" disabled={isPending} onClick={() => setPicked(null)}>Not now</Button>
+                </div>
+              }
+            >
+              <p>
+                From <Addr a={pickedBid.provider} />, delivery in {duration(pickedBid.timeframe)}.{" "}
+                {rfp.settlement === 2 && <>The payment is held in the vault until you release it. If you never do, after {duration(pickedBid.timeframe)} it can only go back to you, and someone has to trigger that return.</>}
+                {rfp.settlement === 1 && <>The supplier is paid straight away. This cannot be undone.</>}
+                {rfp.settlement === 0 && <>This only records your decision. Nothing is paid.</>}
+                {" "}Choosing closes the request: the other offers can no longer be chosen.
+              </p>
+              {paid && (
+                <>
+                  <PayTotal className="mt-3" amountLabel="Offer price" amount={pickedBid.amount} serviceFee={feeKnown ? serviceFee : undefined} decimals={erc.decimals} symbol={erc.symbol} />
+                  <p className="mt-2">
+                    Your wallet first approves exactly this total, then pays it. Your balance: <Amount value={erc.balance} decimals={erc.decimals} symbol={erc.symbol} />.
+                    {pickedShort && <strong className="text-destructive"> That is not enough.</strong>}
+                  </p>
+                </>
+              )}
+            </Notice>
+          )}
         </div>
       </Section>
 
@@ -229,7 +283,7 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
         <Section title="Make an offer" description="Once sent, an offer cannot be edited, only withdrawn, so the buyer always sees exactly what you offered.">
           <Card>
             <form onSubmit={sendOffer} className="grid gap-5">
-              <div className={cn("grid gap-5", paid && "sm:grid-cols-2")}>
+              <div className="grid gap-5 sm:grid-cols-2">
                 {paid && (
                   <Label title={`Your price (${erc.symbol})`} hint={`What you want to be paid, in ${erc.symbol}. The platform fee is taken from it.`}>
                     <input className={input} type="number" inputMode="decimal" min="0" step="any" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
@@ -241,8 +295,14 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
                 >
                   <input className={input} type="number" inputMode="decimal" min="0.05" step="any" value={days} onChange={(e) => setDays(e.target.value)} />
                 </Label>
+                <Label
+                  title="Your offer is valid for (days)"
+                  hint="The buyer can choose your offer until then. After that it can no longer be accepted, so you are not held to this price for ever."
+                >
+                  <input className={input} type="number" inputMode="decimal" min="0.05" step="any" required value={validDays} onChange={(e) => setValidDays(e.target.value)} />
+                </Label>
               </div>
-              <div><Button type="submit" disabled={isPending}>Send offer</Button></div>
+              <div><Button type="submit" disabled={isPending || !validOk}>Send offer</Button></div>
             </form>
           </Card>
         </Section>

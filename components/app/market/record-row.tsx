@@ -26,6 +26,8 @@ export function stateWord(kind: EntryKind, r: LiveRecord): { word: string; tone:
     return { word: "Withdrawn", tone: "muted" }
   }
   const o = r as Offer
+  // Past its valid-until time a listing can no longer be taken (0 means open until withdrawn).
+  if (o.state === 1 && o.validUntil > 0n && Number(o.validUntil) < Date.now() / 1000) return { word: "Expired", tone: "muted" }
   if (o.state === 1) return ZERO.test(o.designatedBuyer) ? { word: "Open", tone: "accent" } : { word: "For one buyer", tone: "accent" }
   if (o.state === 2) return { word: "Taken", tone: "good" }
   return { word: "Withdrawn", tone: "muted" }

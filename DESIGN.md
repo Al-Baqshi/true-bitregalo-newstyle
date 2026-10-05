@@ -65,7 +65,7 @@ There are three ways to use BitRegalo, always named in this order: connect a pla
 - On a desktop both are a left sidebar. On a phone they are bottom tabs (Home or Overview, Market, **New**, Payments, More), with the pages of the current tab as a row of tabs under the top bar. **New** lists what can be started here: send a payment, get paid, hold a payment for someone, ask for something, offer something (and, in a workspace, sell, create a token, start a project).
 - The top bar's place switcher shows where you are (BitRegalo network, or the workspace's name) and moves between the network and every organisation workspace. It also links to "Connect a platform" for the place you are in.
 - The foot of every app page says where the app runs today, that it is a practice network whose tokens have no value, and that the contracts have not been independently audited.
-- Pages that need a newer contract version are hidden from the navigation of older workspaces.
+- Every workspace has the same pages: the app serves one protocol version, so nothing is hidden by contract version.
 - Page content sits in a single column up to 56rem wide. Sections are separated by space first; a `Card` is used only when a set of records or a form needs a surface. Cards are never nested.
 
 ## Components

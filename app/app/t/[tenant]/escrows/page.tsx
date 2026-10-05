@@ -1,11 +1,13 @@
 "use client"
 import Link from "next/link"
-import { useAccount } from "wagmi"
+import { useAccount, useReadContracts } from "wagmi"
+import { zeroAddress } from "viem"
 import { Explainer } from "@/components/app/explain"
 import { useTenant } from "@/lib/bitregalo/tenant"
-import { useOverview, useEscrows } from "@/lib/bitregalo/hooks"
+import { useOverview, useEscrows, useTx } from "@/lib/bitregalo/hooks"
+import { abis } from "@/lib/bitregalo/config"
 import { useSettlementTokens } from "@/lib/bitregalo/instances"
-import { Card, Addr, Pill, LedgerRow, Amount, PageHead, Empty, RowsSkeleton, timeLeft } from "@/components/app/ui"
+import { Card, Addr, Pill, LedgerRow, Amount, Notice, PageHead, Empty, RowsSkeleton, timeLeft } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
 
 /** The state of an escrow in a word, and the tone it is said in. */
@@ -25,6 +27,13 @@ export default function EscrowsPage() {
   const escrows = useEscrows(count)
   const tokens = useSettlementTokens(t.instance, t.id)
   const me = address?.toLowerCase()
+  const { send, isPending } = useTx()
+  // Payouts a token refused to deliver are credited to the same wallet, per token, to collect later.
+  const creditQ = useReadContracts({
+    contracts: tokens.all.map((x) => ({ address: t.vault, abi: abis.vault, functionName: "claimable", args: [address ?? zeroAddress, x.address] })),
+    query: { enabled: !!address && tokens.all.length > 0, refetchInterval: 15_000 },
+  })
+  const credits = tokens.all.map((x, i) => ({ ...x, amount: (creditQ.data?.[i]?.result as bigint | undefined) ?? 0n })).filter((x) => x.amount > 0n)
   const loading = count === undefined || escrows.isLoading
   const shown = escrows.data.filter(Boolean).length
   const total = count !== undefined ? Number(count) : 0
@@ -48,6 +57,17 @@ export default function EscrowsPage() {
         <p>A payment held safely by {t.isPublic ? "the network's" : "the workspace's"} vault contract while work is done. It ends in one of three ways: the <b>buyer releases</b> it to the supplier, the <b>supplier hands it back</b>, or the <b>deadline passes</b> and it can only go back to the buyer. Anyone can trigger that return.</p>
         <p>No person holds the payment: not BitRegalo{t.isPublic ? "" : ", not the workspace admin"}. An escrow opens when a request or a listing is paid by escrow. To start one yourself, use <b>Hold a payment for someone</b>: you send the supplier a link, they accept, and you fund it.</p>
       </Explainer>
+
+      {credits.map((c) => (
+        <Notice
+          key={c.address}
+          tone="accent"
+          title="A payout is credited to your wallet"
+          action={<Button disabled={isPending} onClick={() => send(`Collect ${c.symbol}`, { address: t.vault, abi: abis.vault, functionName: "claim", args: [c.address] }).then(() => creditQ.refetch())}>Collect</Button>}
+        >
+          <p><Amount value={c.amount} decimals={c.decimals} symbol={c.symbol} /> is waiting for you in the vault. The token did not deliver it when a held payment settled. Collecting sends it to your wallet. Only your wallet can collect it.</p>
+        </Notice>
+      ))}
 
       <Card flush title={total > 0 ? `All escrows (${total})` : "All escrows"} description={total > shown && shown > 0 ? `Showing the newest ${shown}.` : undefined}>
         {loading && <RowsSkeleton rows={3} />}

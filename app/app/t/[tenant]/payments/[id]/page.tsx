@@ -11,7 +11,6 @@ import { useInstanceRules } from "@/lib/bitregalo/instance-rules"
 import { addresses, chain, short } from "@/lib/bitregalo/config"
 import { Card, Addr, Amount, PageHead, Pill, Facts, Fact, Empty, RowsSkeleton } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
-import { OlderContract } from "@/components/app/older-contract"
 
 const NO_REF = `0x${"0".repeat(64)}`
 
@@ -28,7 +27,6 @@ export default function Receipt({ params }: { params: Promise<{ id: string }> })
   const [copied, setCopied] = useState(false)
   const back = { href: `${base}/payments`, label: "All payments" }
 
-  if (t.version < 1n) return <OlderContract what="Payments" />
   if (!p) {
     return (
       <div className="space-y-8">
@@ -102,7 +100,7 @@ export default function Receipt({ params }: { params: Promise<{ id: string }> })
         </Facts>
 
         <p className="mt-7 max-w-[68ch] border-t border-border pt-5 text-xs text-subtle">
-          Fees went to the platform fee vault <Addr a={addresses.treasury} />. The workspace vault itself kept nothing.
+          The payment passed straight through the vault to the payee. The fees stay in the vault until someone sends them on to the platform fee treasury, <Addr a={addresses.treasury} />.
         </p>
       </Card>
 

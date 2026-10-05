@@ -181,7 +181,11 @@ Confirmed functionality in the app today (on the network and in every workspace)
 - Escrows: release, hand back, and after the deadline a return to the buyer that anyone can trigger.
 - Projects (grouping), Tokens (create, accept as payment), Treasury (workspace-owned funds).
 - Platform page for the operator: earnings by token, gas sponsorship, contract versions, ownership.
-- Older workspaces (version 0) lack shop, payments and treasury and show an "older contract" notice.
+- The app is written for protocol version 2 only (on BNB Smart Chain Testnet since 6 Oct 2026): every workspace it serves has
+  payments, the shop, redemption and a treasury, so there is no "older contract" notice any more. Workspaces on
+  earlier contract versions are not served. Version 2 is a hardening release with no new feature
+  (`docs/V2.md` in the contracts repo): paying calls carry the most the payer agreed to, a sale needs the approval
+  of the treasury's owner, fees wait in the vault until someone sends them on, and roles change hands in two steps.
 - Marketplace details (title, description, category, country, city) live in an off-chain index
   (bitregalo-platform `cmd/market`, Postgres on Railway), each entry signed by the record's owner.
   Contract of record: `docs/market-api.md`.

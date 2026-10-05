@@ -15,7 +15,6 @@ import { Card, PageHead, Section, Addr } from "@/components/app/ui"
 import { Explainer } from "@/components/app/explain"
 import { Label, Note, input } from "@/components/app/wizard/fields"
 import { Button } from "@/components/ui/button"
-import { OlderContract } from "@/components/app/older-contract"
 
 function GetPaidInner() {
   const t = useTenant()
@@ -52,7 +51,6 @@ function GetPaidInner() {
   async function copy() {
     try { await navigator.clipboard.writeText(link); setCopied(true); toast.success("Link copied"); setTimeout(() => setCopied(false), 1500) } catch { toast.error("Could not copy") }
   }
-  if (t.version < 1n) return <OlderContract what="Getting paid" />
   const fixedAmount = Number(amount) > 0
   return (
     <div className="space-y-8">

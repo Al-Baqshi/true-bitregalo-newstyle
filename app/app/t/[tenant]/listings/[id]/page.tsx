@@ -2,14 +2,14 @@
 import { use, useState } from "react"
 import Link from "next/link"
 import { useAccount } from "wagmi"
-import { maxUint256 } from "viem"
 import { useTenant } from "@/lib/bitregalo/tenant"
-import { useOffer, useTx, useErc20, useTokenCfg } from "@/lib/bitregalo/hooks"
+import { useNow, useOffer, useTx, useErc20, useTokenCfg } from "@/lib/bitregalo/hooks"
 import { abis } from "@/lib/bitregalo/config"
 import { categoryLabel, useEntry } from "@/lib/bitregalo/market"
 import { EditDetailsButton, EntryDescription, OwnerDetails } from "@/components/app/market/record-details"
 import { placeOf } from "@/components/app/market/words"
-import { Addr, Amount, Card, Empty, Fact, Facts, Notice, PageHead, Pill, RowsSkeleton, Section } from "@/components/app/ui"
+import { Addr, Amount, Card, Empty, Fact, Facts, Notice, PageHead, PayTotal, Pill, RowsSkeleton, Section } from "@/components/app/ui"
+import { when } from "@/components/app/journey"
 import { ConnectButton } from "@/components/app/connect-button"
 import { Button } from "@/components/ui/button"
 
@@ -40,6 +40,7 @@ export default function OfferDetail({ params }: { params: Promise<{ id: string }
   const erc = useErc20(paid ? offer!.token : undefined, address)
   const cfg = useTokenCfg(paid ? offer!.token : undefined)
   const [editing, setEditing] = useState(false)
+  const now = useNow()
   // Title, description, category and place, signed by the supplier, from the marketplace index.
   const { data: entry } = useEntry(t.id, "listing", id)
   const back = { href: `${base}/listings`, label: "All listings" }
@@ -66,19 +67,24 @@ export default function OfferDetail({ params }: { params: Promise<{ id: string }
   const taken = offer.state === 2
   const isBuyer = taken && !!address && address.toLowerCase() === offer.buyer.toLowerCase()
   const designated = !/^0x0{40}$/.test(offer.designatedBuyer)
-  const canConfirm = listed && isConnected && !isSupplier && (!designated || address!.toLowerCase() === offer.designatedBuyer.toLowerCase())
+  // A listing may carry a last moment to take it; 0 means it stays open until the supplier withdraws it.
+  const expired = listed && offer.validUntil > 0n && Number(offer.validUntil) < now
+  const forMe = !designated || (!!address && address.toLowerCase() === offer.designatedBuyer.toLowerCase())
+  const canConfirm = listed && !expired && isConnected && !isSupplier && forMe
   const mode = MODE[offer.settlement]
+  // Read from the workspace: the flat fee the buyer pays on top, in this token.
+  const feeKnown = !paid || cfg !== undefined
   const serviceFee = cfg?.[2] ?? 0n
   const fee = paid && serviceFee > 0n ? <Amount value={serviceFee} decimals={erc.decimals} symbol={erc.symbol} /> : null
   const total = offer.amount + serviceFee
+  const short = paid && feeKnown && erc.balance < total
   const place = placeOf(entry)
 
   async function confirm() {
-    if (paid) {
-      const need = offer!.amount + (cfg?.[2] ?? 0n)
-      if (erc.allowance < need) await send("Allow the vault to take the payment", { address: offer!.token, abi: abis.erc20, functionName: "approve", args: [t.vault, maxUint256] })
-    }
-    await send("Take listing", { address: t.instance, abi: abis.instance, functionName: "confirmOffer", args: [id] })
+    // Approve exactly the total shown, and name it as the most the contract may charge.
+    // If the service fee went up since this page was opened, taking the listing is refused and nothing is charged.
+    if (paid && erc.allowance < total) await send("Allow the vault to take the total", { address: offer!.token, abi: abis.erc20, functionName: "approve", args: [t.vault, total] })
+    await send("Take listing", { address: t.instance, abi: abis.instance, functionName: "confirmOffer", args: [id, paid ? total : 0n] })
     refetch(); erc.refetch()
   }
   async function withdraw() {
@@ -103,11 +109,12 @@ export default function OfferDetail({ params }: { params: Promise<{ id: string }
             <p className="text-sm text-muted-foreground">Price</p>
             <p className="t-figure mt-1">{paid ? <Amount value={offer.amount} decimals={erc.decimals} symbol={erc.symbol} /> : "No payment"}</p>
           </div>
-          <Pill tone={listed ? "accent" : taken ? "good" : "muted"}>{STATE[offer.state] ?? "—"}</Pill>
+          <Pill tone={expired ? "muted" : listed ? "accent" : taken ? "good" : "muted"}>{expired ? "Expired" : STATE[offer.state] ?? "—"}</Pill>
         </div>
         <Facts columns={4} className="mt-6 border-t border-border pt-5">
           <Fact label="Delivered within">{duration(offer.timeframe)}</Fact>
           <Fact label="Who can take it">{designated ? <>Only <Addr a={offer.designatedBuyer} /></> : "Anyone"}</Fact>
+          <Fact label="Valid until">{offer.validUntil === 0n ? "Until the supplier withdraws it" : when(offer.validUntil)}</Fact>
           <Fact label="How it settles">{mode.name} <span className="text-muted-foreground">({mode.pill})</span></Fact>
           <Fact label="Supplier"><Addr a={offer.supplier} /></Fact>
           {entry && <Fact label="Category">{categoryLabel(entry.category)}</Fact>}
@@ -123,24 +130,38 @@ export default function OfferDetail({ params }: { params: Promise<{ id: string }
 
       {canConfirm && (
         <Section title="Take this listing">
-          <Notice tone="accent" action={<Button disabled={isPending} onClick={confirm}>{offer.settlement === 2 ? "Take it and fund the escrow" : offer.settlement === 1 ? "Take it and pay" : "Take this listing"}</Button>}>
+          <Notice tone="accent" action={<Button disabled={isPending || !feeKnown || short} onClick={confirm}>{offer.settlement === 2 ? "Take it and fund the escrow" : offer.settlement === 1 ? "Take it and pay" : "Take this listing"}</Button>}>
             <p>
               {offer.settlement === 2 && <>Taking it moves <Amount value={offer.amount} decimals={erc.decimals} symbol={erc.symbol} />{fee && <> plus a {fee} service fee</>} from your wallet into the vault. You release it to the supplier when the work is delivered. If you never do, after {duration(offer.timeframe)} it can only go back to you.</>}
               {offer.settlement === 1 && <>Taking it pays the supplier <Amount value={offer.amount} decimals={erc.decimals} symbol={erc.symbol} /> straight away from your wallet{fee && <>, plus a {fee} service fee</>}.</>}
               {offer.settlement === 0 && <>Taking it records that you accepted this offer. Nothing is paid.</>}
-              {paid && <> Your wallet will be charged <Amount value={total} decimals={erc.decimals} symbol={erc.symbol} />. Your balance: <Amount value={erc.balance} decimals={erc.decimals} symbol={erc.symbol} />.</>}
             </p>
+            {paid && (
+              <>
+                <PayTotal className="mt-3" amountLabel="Price" amount={offer.amount} serviceFee={feeKnown ? serviceFee : undefined} decimals={erc.decimals} symbol={erc.symbol} />
+                <p className="mt-2">
+                  Your wallet first approves exactly this total, then pays it. Your balance: <Amount value={erc.balance} decimals={erc.decimals} symbol={erc.symbol} />.
+                  {short && <strong className="text-destructive"> That is not enough.</strong>}
+                </p>
+              </>
+            )}
           </Notice>
         </Section>
       )}
 
-      {listed && !isConnected && (
+      {expired && (
+        <Notice title="This listing is no longer valid">
+          <p>It could be taken until {when(offer.validUntil)}. {isSupplier ? "Withdraw it and create a new one if the offer still stands." : "Ask the supplier for a new listing if you still want it."}</p>
+        </Notice>
+      )}
+
+      {listed && !expired && !isConnected && (
         <Notice tone="accent" title="Connect a wallet to take this listing" action={<ConnectButton />}>
           <p>Your wallet signs the transaction. Nothing happens until you do.</p>
         </Notice>
       )}
 
-      {listed && designated && !canConfirm && isConnected && !isSupplier && (
+      {listed && !expired && designated && !canConfirm && isConnected && !isSupplier && (
         <Notice title="Meant for one buyer">
           <p>Only <Addr a={offer.designatedBuyer} /> can take this listing.</p>
         </Notice>

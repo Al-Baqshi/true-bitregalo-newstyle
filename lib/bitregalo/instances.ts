@@ -2,6 +2,7 @@
 import { useReadContract, useReadContracts } from "wagmi"
 import { decodeEventLog, hexToBytes, keccak256, stringToHex, toBytes, type Abi, type Address, type Hex, type TransactionReceipt } from "viem"
 import { abis, addresses, STABLES } from "./config"
+import { useConfiguredTokens } from "./configured-tokens"
 
 export type InstanceInfo = {
   id: bigint; instance: Address; vault: Address; admin: Address
@@ -118,11 +119,14 @@ export function useWorkspaceTokens(tenantId: bigint | undefined, instance: Addre
 
 /**
  * Tokens a workspace accepts as payment. The allowlist is a mapping, so candidates are the known
- * stablecoins plus every token created for this workspace through the factory, each checked on chain.
+ * stablecoins, every token created for this workspace through the factory, and every token its
+ * admin ever configured by address (found from the contract's events), each checked on chain.
  */
 export function useSettlementTokens(instance: Address | undefined, tenantId: bigint | undefined) {
   const own = useWorkspaceTokens(tenantId, instance)
-  const candidates = Array.from(new Set([...STABLES.map((s) => s.address), ...own.addresses]))
+  const configured = useConfiguredTokens(instance)
+  const seen = new Set<string>()
+  const candidates = [...STABLES.map((s) => s.address), ...own.addresses, ...configured.tokens].filter((a) => !seen.has(a.toLowerCase()) && !!seen.add(a.toLowerCase()))
   const q = useReadContracts({
     contracts: candidates.flatMap((t) => [
       { address: instance!, abi: abis.instance, functionName: "tokens", args: [t] },
@@ -141,7 +145,7 @@ export function useSettlementTokens(instance: Address | undefined, tenantId: big
       allowed: !!cfg?.[0],
     }
   })
-  return { all, accepted: all.filter((t) => t.allowed), refetch: () => { own.refetch(); q.refetch() } }
+  return { all, accepted: all.filter((t) => t.allowed), refetch: () => { own.refetch(); configured.refetch(); q.refetch() } }
 }
 
 /**

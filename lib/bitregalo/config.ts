@@ -11,12 +11,21 @@ import { defineChain, type Abi, type Address, type Chain } from "viem"
  * nothing below this block names a network.
  */
 type Stable = { symbol: string; name: string; address: Address }
-type NetworkEntry = { chain: Chain; rpcUrl: string; explorer: string; practice: boolean; stables: Stable[]; marketApi?: string }
+type NetworkEntry = {
+  chain: Chain; rpcUrl: string; explorer: string; practice: boolean; stables: Stable[]; marketApi?: string
+  /** An endpoint that answers event queries (eth_getLogs), when the main one refuses them. */
+  logsRpcUrl?: string
+  /** No contract of the deployment is older than this block: event queries need not look further back. */
+  logsFromBlock?: bigint
+}
 const NETWORKS: Record<number, NetworkEntry> = {
   97: {
     chain: bscTestnet, rpcUrl: "https://data-seed-prebsc-1-s1.bnbchain.org:8545", explorer: "https://testnet.bscscan.com", practice: true,
     stables: [{ symbol: "USDT", name: "Tether USD (testnet)", address: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd" }],
     marketApi: "https://market-production-671e.up.railway.app",
+    // The public endpoint above refuses eth_getLogs. The version 2 contracts were deployed after block 135,000,000.
+    logsRpcUrl: "https://bsc-testnet-rpc.publicnode.com",
+    logsFromBlock: 135_000_000n,
   },
 }
 
@@ -57,6 +66,16 @@ export const chain = entry.chain
 /** Overridable at build time so the same app can point at a local fork for testing. */
 export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || entry.rpcUrl
 export const EXPLORER = entry.explorer
+/**
+ * Where event queries go, and how far back they need to look. Events are the only way to learn
+ * which tokens an admin accepted by address. With NEXT_PUBLIC_RPC_URL set (a local node, say), that
+ * node answers them from its first block; NEXT_PUBLIC_LOGS_RPC_URL and NEXT_PUBLIC_LOGS_FROM_BLOCK
+ * override both.
+ */
+export const LOGS_RPC_URL = process.env.NEXT_PUBLIC_LOGS_RPC_URL || process.env.NEXT_PUBLIC_RPC_URL || entry.logsRpcUrl || entry.rpcUrl
+export const LOGS_FROM_BLOCK = process.env.NEXT_PUBLIC_LOGS_FROM_BLOCK
+  ? BigInt(process.env.NEXT_PUBLIC_LOGS_FROM_BLOCK)
+  : process.env.NEXT_PUBLIC_RPC_URL ? 0n : entry.logsFromBlock ?? 0n
 /** The marketplace index BitRegalo runs for this network, if any. NEXT_PUBLIC_MARKET_API overrides it. */
 export const DEFAULT_MARKET_API = entry.marketApi ?? ""
 /** What the rest of the app may say about the network it is running on. */
@@ -129,6 +148,8 @@ export const abis = {
   /** The platform fee treasury. */
   treasury: bundle.abis.treasury as Abi,
   testStable: bundle.abis.testStable as Abi,
+  /** The gas sponsor. Missing from a bundle made before it was added: the operator page then hides its panel. */
+  paymaster: (bundle.abis as { paymaster?: unknown }).paymaster as Abi | undefined,
   /** Two-step ownership, the same on every platform contract (mother, fee treasury, token factory, paymaster). */
   ownable: (bundle.abis.mother as Abi).filter((x) => x.type === "function" && OWNABLE.includes(x.name)),
 }

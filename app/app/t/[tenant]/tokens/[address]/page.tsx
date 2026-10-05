@@ -52,6 +52,8 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
   const [mintAmt, setMintAmt] = useState("")
   const [fee, setFee] = useState("0")
   const [newOwner, setNewOwner] = useState("")
+  // Fixing the supply cannot be undone, so it is asked twice.
+  const [fixing, setFixing] = useState(false)
   const back = { href: `${base}/tokens`, label: "All tokens" }
   if (!isAddress(raw)) {
     return (
@@ -210,6 +212,29 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
                 }
               >
                 New {sym} go to the wallet you name, or to you{capped ? ", up to the maximum" : ""}.
+              </Step>
+            )}
+
+            {isOwner && (
+              <Step
+                title="Fix the supply for good"
+                action={
+                  fixing ? (
+                    <div className="rounded-lg bg-destructive-fill px-4 py-4">
+                      <p className="max-w-[58ch] text-sm">
+                        This cannot be undone. You give up ownership of {sym}: nobody, including you, can ever create more, and the workspace treasury can never be given the right to create it as it sells. The <Amount value={supply ?? 0n} decimals={dec} symbol={sym} /> that exist now are all there will ever be.{offeredTo ? " The offer of ownership that is waiting ends too." : ""}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button variant="destructive" disabled={isPending} onClick={() => send(`Fix the supply of ${sym} for good`, { address: token, abi: abis.utilityToken, functionName: "renounceOwnership", args: [] }).then(() => { setFixing(false); refresh() })}>Yes, fix the supply for good</Button>
+                        <Button variant="ghost" disabled={isPending} onClick={() => setFixing(false)}>Keep it as it is</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button variant="outline" disabled={isPending} onClick={() => setFixing(true)}>Fix the supply for good…</Button>
+                  )
+                }
+              >
+                Give up the right to create more {sym}, so the supply can never grow. Holders can then rely on it. It also ends any creating by the treasury. You will be asked to confirm.
               </Step>
             )}
           </Card>

@@ -209,6 +209,12 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
                             From <Addr a={b.provider} />{mine && " (you)"}
                             {!b.withdrawn && !chosen && open && <> · {expired ? `valid until ${when(b.validUntil)}, so it can no longer be chosen` : `valid until ${when(b.validUntil)}`}</>}
                           </div>
+                          {/* An offer cannot be edited, only taken back, and only while the request is open. */}
+                          {mine && !b.withdrawn && open && (
+                            <div className="mt-2">
+                              <Button size="sm" variant="outline" disabled={isPending} onClick={() => send("Withdraw my offer", { address: t.instance, abi: abis.instance, functionName: "withdrawBid", args: [id, b.id] }).then(() => refetch())}>Withdraw my offer</Button>
+                            </div>
+                          )}
                         </div>
                         <div className={cn("t-num text-sm sm:order-0 sm:col-span-1 sm:text-base", paid ? "order-3 col-span-2" : "order-2 text-right", dim ? "text-subtle" : paid ? "text-muted-foreground sm:text-foreground" : "")}>
                           <span className="sm:hidden">Delivers in </span>{duration(b.timeframe)}
@@ -280,7 +286,7 @@ export default function RequestPage({ params }: { params: Promise<{ id: string }
       )}
 
       {isConnected && !isRequester && open && !closedForOffers && (
-        <Section title="Make an offer" description="Once sent, an offer cannot be edited, only withdrawn, so the buyer always sees exactly what you offered.">
+        <Section title="Make an offer" description="Once sent, an offer cannot be edited, only withdrawn, so the buyer always sees exactly what you offered. You can withdraw it from the list above until the buyer chooses.">
           <Card>
             <form onSubmit={sendOffer} className="grid gap-5">
               <div className="grid gap-5 sm:grid-cols-2">

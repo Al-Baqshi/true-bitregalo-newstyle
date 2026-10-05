@@ -8,6 +8,7 @@ import { useInstances, useTokensOf } from "@/lib/bitregalo/instances"
 import { useWorkspaceName } from "@/lib/bitregalo/names"
 import { abis, addresses, versions, PUBLIC_WORKSPACE_ID, STABLES, network } from "@/lib/bitregalo/config"
 import { deployment } from "@/components/app/admin/use-platform"
+import { PaymasterPanel } from "@/components/app/admin/paymaster-panel"
 import { Addr, Amount, Card, Empty, Fact, Facts, Field, LedgerRow, Notice, PageHead, Pill, Section, Stat, Stats, inputCls } from "@/components/app/ui"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -356,17 +357,20 @@ export default function Platform() {
         )}
       </Section>
 
-      <Section
-        title="Deposit for sponsored network fees"
-        description="When sign-in without a wallet is switched on, BitRegalo will pay people's network fees from this deposit. That is not in use yet: today each person pays their own network fee from their wallet, so the deposit is untouched."
-      >
-        <Card>
-          <Facts columns={2}>
-            <Fact label="On deposit">{gasDeposit !== undefined ? <Amount value={gasDeposit} symbol={network.nativeSymbol} /> : "…"}</Fact>
-            <Fact label="Paymaster contract"><Addr a={addresses.paymaster} /></Fact>
-          </Facts>
-        </Card>
-      </Section>
+      <PaymasterPanel />
+      {!abis.paymaster && (
+        <Section
+          title="Deposit for sponsored network fees"
+          description="When sign-in without a wallet is switched on, BitRegalo will pay people's network fees from this deposit. That is not in use yet: today each person pays their own network fee from their wallet, so the deposit is untouched."
+        >
+          <Card>
+            <Facts columns={2}>
+              <Fact label="On deposit">{gasDeposit !== undefined ? <Amount value={gasDeposit} symbol={network.nativeSymbol} /> : "…"}</Fact>
+              <Fact label="Paymaster contract"><Addr a={addresses.paymaster} /></Fact>
+            </Facts>
+          </Card>
+        </Section>
+      )}
 
       <Section
         title="Contract versions"

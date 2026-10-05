@@ -366,7 +366,7 @@ export function ConnectPlatform() {
               { name: "A published SDK", body: "These examples as a ready-made library, so calling the protocol takes a few lines." },
               { name: "Signing in without a wallet", body: "For your users who have no wallet, with their network fees paid by BitRegalo's sponsor. Today each person pays their own network fee." },
               { name: "Hosted checkout", body: "Send your customers to a BitRegalo payment page that brings them back to your site." },
-              { name: "Identity checks (KYC)", body: "For workspaces that need to know who their users are." },
+              { name: "An identity service", body: "A service that checks who a person is and signs the workspace's identity approvals. Today a workspace's own attester signs them by hand, in Settings." },
             ].map((x) => (
               <div key={x.name}>
                 <dt className="t-subheading">{x.name}</dt>

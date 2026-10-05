@@ -43,7 +43,10 @@ const WORDS: Record<string, string> = {
   NotAttesterOrAdmin: "Only the identity attester or the admin can do this.",
   OwnableUnauthorizedAccount: "Only the owner of that contract can do this.",
   RenounceDisabled: "The owner of a platform contract cannot give ownership up.",
-  KycRequired: "This workspace asks for an identity check first, for you or for the other party.",
+  KycRequired: "This workspace asks for an identity approval. Ask its attester for one. The other party to a payment needs one too.",
+  InvalidVoucher: "This signed approval is not valid here. It must be signed by this workspace's current attester, for this workspace, and not be dated in the future.",
+  VoucherSuperseded: "A newer approval, or the end of one, is already recorded for this person. After an approval is ended, a new one can be recorded only ten minutes later.",
+  NotGuardianOrOwner: "Only the owner or the guardian can pause sponsorship.",
   // Timing and state
   OfferExpired: "This offer is past its valid-until time, so it can no longer be accepted.",
   InvalidValidity: "The valid-until time must be in the future.",

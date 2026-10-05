@@ -22,6 +22,7 @@ if (!contracts || !chainId) {
 }
 const read = (p) => JSON.parse(readFileSync(path.join(contracts, p), "utf8"))
 const abi = (file, name = file) => read(`out/${file}.sol/${name}.json`).abi
+const PAYMASTER_SKIP = new Set(["validatePaymasterUserOp", "postOp", "getHash", "parsePaymasterAndData"])
 const ERC20 = new Set(["Approval", "Transfer", "allowance", "approve", "balanceOf", "totalSupply", "transfer", "transferFrom"])
 
 const bundle = {
@@ -38,6 +39,8 @@ const bundle = {
     // The platform fee treasury (its owner withdraws with `sweep`) and the practice token's faucet.
     treasury: abi("Treasury"),
     testStable: abi("TestStable").filter((x) => !ERC20.has(x.name)),
+    // The gas sponsor. Only what the operator page reads and its owner calls; validation is not the app's business.
+    paymaster: abi("BitRegaloPaymaster").filter((x) => x.type !== "constructor" && !PAYMASTER_SKIP.has(x.name)),
   },
 }
 if (bundle.deployments.chainId !== bundle.chainId) {

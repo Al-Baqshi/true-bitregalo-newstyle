@@ -2,7 +2,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useAccount, useReadContracts } from "wagmi"
-import { isAddress, parseUnits, type Address } from "viem"
+import { isAddress, parseUnits, zeroAddress, type Address } from "viem"
 import { useTenant } from "@/lib/bitregalo/tenant"
 import { useSaleCount, useSales, useTx } from "@/lib/bitregalo/hooks"
 import { decodeLabel, useSettlementTokens, useWorkspaceTokens } from "@/lib/bitregalo/instances"
@@ -206,7 +206,12 @@ export default function TreasuryPage() {
                 </Field>
                 <Button variant="secondary" disabled={isPending || !isAddress(newOwner)} onClick={() => send("Offer ownership", { address: tr, abi: abis.workspaceTreasury, functionName: "transferOwnership", args: [newOwner] }).then(() => { setNewOwner(""); refresh() })}>Offer ownership</Button>
               </div>
-              {offered && <p className="mt-3 text-sm text-muted-foreground">Offered to <Addr a={offered} />. Waiting for them to accept.</p>}
+              {offered && (
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-border pt-4">
+                  <p className="text-sm text-muted-foreground">Offered to <Addr a={offered} />. Waiting for them to accept. You are still the owner and can withdraw the offer.</p>
+                  <Button variant="secondary" disabled={isPending} onClick={() => send("Withdraw the offer", { address: tr, abi: abis.workspaceTreasury, functionName: "transferOwnership", args: [zeroAddress] }).then(refresh)}>Withdraw the offer</Button>
+                </div>
+              )}
             </Card>
           </div>
         </Section>

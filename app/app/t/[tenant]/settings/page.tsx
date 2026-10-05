@@ -9,6 +9,7 @@ import { useSettlementTokens } from "@/lib/bitregalo/instances"
 import { useWorkspaceName } from "@/lib/bitregalo/names"
 import { Addr, Amount, Card, Empty, Fact, Facts, Field, LedgerRow, Notice, PageHead, Section, inputCls } from "@/components/app/ui"
 import { AddOn } from "@/components/app/wizard/fields"
+import { IdentityChecks } from "@/components/app/identity-checks"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -139,7 +140,7 @@ export default function AdminPage() {
                 />
               ))}
               <p className="border-t border-border px-5 py-3 text-xs text-subtle sm:px-6">
-                Shows the known stablecoins and this workspace&apos;s own tokens. A token accepted by address from elsewhere works too, but is not listed here.
+                Shows the known stablecoins, this workspace&apos;s own tokens, and any token accepted by address, found from the workspace contract&apos;s public record of its settings.
               </p>
             </Card>
 
@@ -152,7 +153,7 @@ export default function AdminPage() {
                     {STABLES.map((x) => <option key={x.address} value={x.address}>{x.symbol}</option>)}
                   </select>
                 </Field>
-                <Field label="Token address" hint="Pick a known stablecoin, or paste the address of any standard token (ERC-20). Tokens created in this workspace qualify. Tokens that take a fee on transfer, or change balances by themselves, do not work.">
+                <Field label="Token address" hint={<>Pick a known stablecoin, or paste the address of any standard token (ERC-20). Tokens created in this workspace qualify. Tokens that take a fee on transfer, or change balances by themselves, do not work.{tokenSymbol ? <> This address is <span className="font-[560] text-foreground">{tokenSymbol}</span>, with {String(tokenDecimals)} decimals.</> : null}</>}>
                   <input className={cn(inputCls, "t-mono")} value={token} onChange={(ev) => setToken(ev.target.value.trim())} placeholder="0x…" autoComplete="off" spellCheck={false} />
                 </Field>
               </div>
@@ -235,6 +236,8 @@ export default function AdminPage() {
           </Section>
         </>
       )}
+
+      <IdentityChecks />
 
       <Section
         title="Platform fees waiting in the vault"

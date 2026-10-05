@@ -134,12 +134,14 @@ const usd = (v) => `${formatUnits(v, 18)} tUSD`
 console.log(`workspace #${workspace} on chain ${chainId} · admin ${admin.address} · buyer ${buyer.address} · supplier ${supplier.address}`)
 console.log(`platform fee ${Number(feeBps) / 100}% · service fee ${usd(serviceFee)} per payment`)
 
-// Practice tokens for the buyer (once a day from the faucet).
+// Practice tokens (once a day from the faucet): the buyer pays, the admin and the supplier pay the
+// token creation fee and the launch fee when the platform charges them.
 const NEED = parseUnits("200", 18)
-if ((await balance(stable, buyer.address)) < NEED) {
-  const next = Number(await read(stable, abis.testStable, "nextClaimAt", [buyer.address]))
-  expect(next <= (await now()), `the buyer holds under ${usd(NEED)} and the faucet is on its daily pause until ${new Date(next * 1000).toISOString()}`)
-  await send(buyer, "faucet", { address: stable, abi: abis.testStable, functionName: "faucet", args: [] })
+for (const person of [buyer, admin, supplier]) {
+  if ((await balance(stable, person.address)) >= NEED) continue
+  const next = Number(await read(stable, abis.testStable, "nextClaimAt", [person.address]))
+  expect(next <= (await now()), `the ${person.name} holds under ${usd(NEED)} and the faucet is on its daily pause until ${new Date(next * 1000).toISOString()}`)
+  await send(person, "faucet", { address: stable, abi: abis.testStable, functionName: "faucet", args: [] })
 }
 
 // ── 1. Create a workspace token as the admin, with the fee limits ─────────────────
@@ -342,10 +344,13 @@ const launchParams = {
   minTerm: 86400n, maxTerm: 180n * 86400n, kycRequired: false, attester: zeroAddress, directEnabled: true, escrowEnabled: true,
 }
 const limits = { feeToken: deployFeeToken, maxDeployFee: deployFee, maxFeeBps: Number(defaultFeeBps) }
+if (deployFee > 0n) {
+  await refused(supplier, "launching with a lower launch fee than the mother's", { address: dep.mother, abi: abis.mother, functionName: "launchTenant", args: [launchParams, { ...limits, maxDeployFee: deployFee - 1n }] }, "FeeAboveMax")
+  await approveExact(supplier, deployFeeToken, dep.mother, deployFee, "approve the launch fee")
+}
 if (Number(defaultFeeBps) > 0) {
   await refused(supplier, "launching with a lower platform percentage than the mother's", { address: dep.mother, abi: abis.mother, functionName: "launchTenant", args: [launchParams, { ...limits, maxFeeBps: Number(defaultFeeBps) - 1 }] }, "FeeBpsAboveMax")
 }
-if (deployFee > 0n) await approveExact(supplier, deployFeeToken, dep.mother, deployFee, "approve the launch fee")
 const launched = await send(supplier, "launchTenant", { address: dep.mother, abi: abis.mother, functionName: "launchTenant", args: [launchParams, limits] })
 const born = event(launched, abis.mother, "TenantLaunched")
 const bornRecord = await read(dep.mother, abis.mother, "tenants", [born.tenantId])
@@ -353,7 +358,63 @@ expect(born.tenantId === countBefore, "the new workspace's number is not the one
 expect(bornRecord.instance.toLowerCase() === born.instance.toLowerCase() && bornRecord.vault.toLowerCase() === born.vault.toLowerCase(), "mother.tenants(id) does not match the launch event")
 expect((await read(born.instance, abis.instance, "admin")).toLowerCase() === supplier.address.toLowerCase(), "the new workspace's admin is not the launcher")
 expect(Number(await read(born.instance, abis.instance, "feeBps")) === Number(defaultFeeBps), "the platform percentage fixed into the workspace is not the one agreed")
-ok(`launch workspace #${born.tenantId} with limits {feeToken, maxDeployFee: ${deployFee}, maxFeeBps: ${defaultFeeBps}}; its number is read from TenantLaunched; a lower maxFeeBps is refused (FeeBpsAboveMax)`)
+ok(`launch workspace #${born.tenantId} with limits {feeToken, maxDeployFee: ${deployFee}, maxFeeBps: ${defaultFeeBps}}${deployFee > 0n ? " and an exact approval of the launch fee" : ""}; its number is read from TenantLaunched; a lower maxFeeBps is refused (FeeBpsAboveMax)`)
+
+// ── 18. Withdraw an offer ─────────────────────────────────────────────────────────────
+const rfp2 = event(await send(buyer, "postRfp", { ...instance, functionName: "postRfp", args: [label32("Smoke test request 2"), BigInt((await now()) + 7 * 86400), stable, 0n, 2] }), abis.instance, "RfpPosted").rfpId
+const bid2 = event(await send(supplier, "bid", { ...instance, functionName: "bid", args: [rfp2, bidAmount, timeframe, BigInt((await now()) + 86400)] }), abis.instance, "BidPlaced").bidId
+await refused(buyer, "someone else withdrawing the offer", { ...instance, functionName: "withdrawBid", args: [rfp2, bid2] }, "NotProvider")
+await send(supplier, "withdrawBid", { ...instance, functionName: "withdrawBid", args: [rfp2, bid2] })
+expect((await read(t.instance, abis.instance, "getBid", [rfp2, bid2])).withdrawn === true, "the offer is not marked withdrawn")
+await refused(buyer, "awarding a withdrawn offer", { ...instance, functionName: "acceptBid", args: [rfp2, bid2, bidAmount + serviceFee] }, "BadState")
+ok(`withdraw offer #${bid2} on request #${rfp2} as the supplier who placed it: withdrawBid(rfpId, bidId); nobody else can, and it can no longer be awarded`)
+
+// ── 19–21. Identity checks, in the workspace launched above (the supplier is its admin) ──
+// The attester is an ordinary key: here the buyer's. The voucher is built and signed as the app does it:
+// EIP-712, domain {name "BitRegaloInstance", version "2", this chain, the workspace contract},
+// attesterEpoch read from the contract, issuedAt = the latest block's time.
+const ws2 = { address: born.instance, abi: abis.instance }
+const attester = buyer
+const subject = supplier
+const KYC_TYPES = {
+  KycVoucher: [
+    { name: "subject", type: "address" }, { name: "tenantId", type: "uint256" }, { name: "attesterEpoch", type: "uint32" },
+    { name: "issuedAt", type: "uint64" }, { name: "expiry", type: "uint64" }, { name: "ref", type: "bytes32" },
+  ],
+}
+const kycDomain = { name: "BitRegaloInstance", version: "2", chainId, verifyingContract: born.instance }
+async function signVoucher(signer, expiresIn) {
+  const [epoch, block] = await Promise.all([read(born.instance, abis.instance, "attesterEpoch"), pub.getBlock()])
+  const voucher = { subject: subject.address, tenantId: born.tenantId, attesterEpoch: Number(epoch), issuedAt: block.timestamp, expiry: block.timestamp + BigInt(expiresIn), ref: label32("Case 2026-0142") }
+  const signature = await signer.wallet.signTypedData({ domain: kycDomain, types: KYC_TYPES, primaryType: "KycVoucher", message: voucher })
+  return { voucher, signature }
+}
+const gated = { ...ws2, functionName: "createProject", args: [label32("Gated project")] }
+
+await send(subject, "createProject before the checks", gated)
+await send(subject, "setKyc", { ...ws2, functionName: "setKyc", args: [true, attester.address] })
+expect((await read(born.instance, abis.instance, "kycRequired")) === true && (await read(born.instance, abis.instance, "attester")).toLowerCase() === attester.address.toLowerCase(), "identity checks are not on with the attester that was set")
+expect((await read(born.instance, abis.instance, "isKycValid", [subject.address])) === false, "a wallet with no approval counts as approved")
+await refused(subject, "a gated action without an approval", gated, "KycRequired")
+ok(`switch identity checks on in workspace #${born.tenantId}: setKyc(true, attester); a wallet without an approval is refused (KycRequired)`)
+
+const forged = await signVoucher(supplier, 30 * 86400)
+await refused(admin, "an approval signed by someone who is not the attester", { ...ws2, functionName: "submitKycVoucher", args: [forged.voucher, forged.signature] }, "InvalidVoucher")
+const approval = await signVoucher(attester, 30 * 86400)
+await send(admin, "submitKycVoucher", { ...ws2, functionName: "submitKycVoucher", args: [approval.voucher, approval.signature] })
+const status = await read(born.instance, abis.instance, "kycOf", [subject.address])
+expect(status.validUntil === approval.voucher.expiry && status.issuedAt === approval.voucher.issuedAt, "kycOf does not return the approval as signed")
+expect((await read(born.instance, abis.instance, "isKycValid", [subject.address])) === true, "the approved wallet does not count as approved")
+await send(subject, "a gated action with an approval", gated)
+ok(`the attester signs a voucher (EIP-712, issuedAt = block time ${approval.voucher.issuedAt}), a third wallet submits it with submitKycVoucher, and the gated action succeeds; a voucher signed by another key is refused (InvalidVoucher)`)
+
+await refused(supplier, "someone who is neither attester nor admin ending an approval", { address: t.instance, abi: abis.instance, functionName: "revokeKyc", args: [subject.address] }, "NotAttesterOrAdmin")
+await send(attester, "revokeKyc", { ...ws2, functionName: "revokeKyc", args: [subject.address] })
+expect((await read(born.instance, abis.instance, "isKycValid", [subject.address])) === false, "the approval still counts after it was ended")
+await refused(subject, "a gated action after the approval was ended", gated, "KycRequired")
+const tooSoon = await signVoucher(attester, 30 * 86400)
+await refused(admin, "a new approval within ten minutes of ending one", { ...ws2, functionName: "submitKycVoucher", args: [tooSoon.voucher, tooSoon.signature] }, "VoucherSuperseded")
+ok("the attester ends the approval with revokeKyc: the gated action is refused again (KycRequired), and a new approval is refused for ten minutes (VoucherSuperseded)")
 
 console.log(`\nall ${step} steps passed against workspace #${workspace} on chain ${chainId} (${rpcUrl})`)
 } catch (e) {

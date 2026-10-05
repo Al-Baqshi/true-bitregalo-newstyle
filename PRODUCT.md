@@ -194,6 +194,12 @@ Confirmed functionality in the app today (on the network and in every workspace)
   statistics come from an owner-signed admin API (`docs/admin-api.md`).
 - Every workspace has a "Connect a platform" page: addresses, ABIs, code examples, link formats
   and the marketplace API, so an organisation can use its workspace from its own platform.
+- Identity checks per workspace (Settings): the admin switches them on and names an attester; the attester
+  signs an approval for a wallet in the app (or passes the signed text on for someone else to record), the
+  attester or the admin can end one, and anyone can check a wallet. A wallet without an approval is told so
+  before it signs anything.
+- Gas sponsorship panel for the platform owner (Platform and earnings): the paymaster's deposit, limits,
+  signer, guardian, pause, and which workspaces are sponsored. The app itself does not use sponsorship yet.
 - Not built yet, by decision: the KYC bridge (contracts already support EIP-712 KYC vouchers per
   workspace; kyc.baqshi.com would verify and a BitRegalo attester would sign), goal-based
   crowdfunding (needs a new contract and NZ legal advice: reward/donation pre-sales differ from

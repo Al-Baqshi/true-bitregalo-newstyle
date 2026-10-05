@@ -58,8 +58,23 @@ Built and running on the practice network:
 - A page per workspace that gives a developer the addresses, interface files and code examples to
   read records and let users sign actions from another site.
 
-Designed, not built:
+Designed, not built (in the order planned for the next contract version):
 
+- **Delivery confirmation**, the supplier's side of escrow. Today only the buyer's own wallet can
+  release, so a buyer who has received the goods can decline to release and wait for the return.
+  Three parts:
+  - **Delivery code.** When the buyer orders, the app creates a long random secret and the contract
+    stores only its fingerprint with the escrow. The buyer sends the code to the recipient as a QR
+    code or link (it can be printed). On delivery the supplier scans it; presenting it releases the
+    held payment to the supplier on the spot and records the handover with its time, which is the
+    supplier's proof of fulfilment. The recipient needs no wallet, app or account. Presenting the
+    code can only ever send the payment to the supplier. The code must be long, random and carried
+    in the QR: a short typed PIN can be guessed against the stored fingerprint. The supplier must
+    never see it before delivery.
+  - **Buyer-approved extension of the term**, so an order can wait for a late delivery instead of
+    returning.
+  - **A deadline watcher**: a service that sends the return transaction when a term passes, so the
+    return needs nobody to act. Until it runs, never write that a payment returns "automatically".
 - **General records**: a record of any event a platform wants to prove (a subscription, a sale made
   elsewhere, an approval), written by the platform's own key.
 - **Platform-triggered commitments**: a key a workspace authorises to act for it from a server, and
@@ -175,8 +190,11 @@ Wording rule (owner, 4 Oct 2026): never "money" in the site or the app. Say "pay
 Product vocabulary (use these words, with these meanings): BitRegalo network, Workspace,
 Organisation, Request, Offer (an answer to a request), Listing, Escrow, Buyer, Supplier, Release,
 Hand back, Returned, Marketplace, Country, Private wording, Project, Token, Treasury, Shop,
-Redeem, Payment link, Platform fee, Service fee, Practice network. The contract's own terms
-(issuer, receiver, cancel, RFP, RTS, tenant, instance) appear only in technical reference.
+Redeem, Payment link, Platform fee, Service fee, Practice network, Delivery code (planned),
+Recipient (the person the goods are delivered to, who may be neither buyer nor supplier). The
+contract's own terms (issuer, receiver, cancel, RFP, RTS, tenant, instance) appear only in
+technical reference. Never call the recipient "the receiver": in the contracts that word means the
+supplier.
 
 Constraints:
 

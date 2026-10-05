@@ -17,7 +17,7 @@ export type RoadmapItem = {
 export type Phase = { n: number; title: string; status: Status; items: RoadmapItem[] }
 
 /*
- * Phases 1 and 2 are what is built and running on the practice network. Phases 3 to 9 are
+ * Phases 1 and 2 are what is built and running on the practice network. Phases 3 to 10 are
  * the "Designed, not built" list in PRODUCT.md, in the same order. Keep the two in step.
  */
 export const PHASES: Phase[] = [
@@ -50,6 +50,16 @@ export const PHASES: Phase[] = [
   },
   {
     n: 3,
+    title: "Delivery confirmation",
+    status: "Next",
+    items: [
+      { title: "Delivery code", status: "Next", note: "The recipient confirms delivery with a QR code and no wallet. Presenting it releases the payment to the supplier and records the handover. Designed, not built" },
+      { title: "Buyer-approved extension of the term", status: "Next", note: "An order can wait for a late delivery instead of returning. Designed, not built" },
+      { title: "Deadline watcher", status: "Next", note: "A service that sends the return when a term passes, so it needs nobody to act. Designed, not built" },
+    ],
+  },
+  {
+    n: 4,
     title: "General records",
     status: "Next",
     items: [
@@ -58,7 +68,7 @@ export const PHASES: Phase[] = [
     ],
   },
   {
-    n: 4,
+    n: 5,
     title: "Keys that act for a workspace",
     status: "Next",
     items: [
@@ -67,15 +77,15 @@ export const PHASES: Phase[] = [
     ],
   },
   {
-    n: 5,
+    n: 6,
     title: "More kinds of commitment",
     status: "Next",
     items: [
-      { title: "Refund window", status: "Next", note: "The supplier is paid after a set time unless the buyer takes the payment back first. Designed, not built" },
+      { title: "Refund window", status: "Next", note: "For goods and services with no handover to scan: the supplier is paid after a set time unless the buyer takes the payment back first. Designed, not built" },
     ],
   },
   {
-    n: 6,
+    n: 7,
     title: "Indexer, webhooks and SDK",
     status: "In progress",
     items: [
@@ -88,7 +98,7 @@ export const PHASES: Phase[] = [
     ],
   },
   {
-    n: 7,
+    n: 8,
     title: "A second network",
     status: "Next",
     items: [
@@ -97,7 +107,7 @@ export const PHASES: Phase[] = [
     ],
   },
   {
-    n: 8,
+    n: 9,
     title: "Audit and main network",
     status: "Next",
     items: [
@@ -106,7 +116,7 @@ export const PHASES: Phase[] = [
     ],
   },
   {
-    n: 9,
+    n: 10,
     title: "Sign-in without a wallet",
     status: "In progress",
     items: [

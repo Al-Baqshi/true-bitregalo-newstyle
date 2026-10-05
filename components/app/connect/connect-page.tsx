@@ -113,7 +113,7 @@ export function ConnectPlatform() {
             ))}
           </dl>
           <p className="mt-6 max-w-[66ch] text-sm text-muted-foreground">
-            Not built yet: general records written by your own key, keys that act for a workspace from a server, a refund-window commitment, an indexer with webhooks, and a published SDK. They are listed under{" "}
+            Not built yet: delivery confirmation with a code, general records written by your own key, keys that act for a workspace from a server, a refund-window commitment, an indexer with webhooks, and a published SDK. They are listed under{" "}
             <a href="#next" className="text-gold underline decoration-1 underline-offset-4 hover:decoration-2">Coming next</a>.
           </p>
           {t.isPublic && (
@@ -372,9 +372,10 @@ export function ConnectPlatform() {
       </Anchor>
 
       <Anchor id="next">
-        <Section title="Coming next" description="Planned, not available yet. The first five are in the order they are planned.">
+        <Section title="Coming next" description="Planned, not available yet. The first six are in the order they are planned.">
           <dl className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
             {[
+              { name: "Delivery confirmation with a code", body: "The person who receives an order confirms it with a QR code and no wallet. Presenting the code releases the held payment to the supplier and records the handover. With it: the buyer can extend the term, and a service sends the return when a deadline passes." },
               { name: "General records", body: "A record of any event your platform wants to prove (a subscription, a sale made elsewhere, an approval), written by your platform's own key." },
               { name: "Keys that act for a workspace", body: "A workspace authorises a key that your server uses, so your platform can write records and trigger its side of a commitment without a person at a wallet." },
               { name: "A refund-window commitment", body: "The supplier is paid after a set time unless the buyer takes the payment back first. Today's escrow goes back to the buyer when nobody releases it by the deadline." },

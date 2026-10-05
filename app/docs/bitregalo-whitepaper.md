@@ -56,6 +56,7 @@ There are three ways to use BitRegalo.
 These are illustrations, not customers.
 
 - **A marketplace** holds each order's payment in a commitment. The supplier is paid when the buyer confirms, and the buyer's way back is guaranteed by the contract and not by the marketplace's support desk.
+- **A gift sent across borders.** Someone orders flowers from a florist in another country for a friend who lives there. The payment is held. The buyer sends the friend a delivery code, the florist scans it at the door, and the payment is released on the spot. The friend needs no wallet, app or account. The delivery code is planned, not built.
 - **An enterprise running tenders** records each request, every answer and the award. A supplier who lost can verify that the record was not rearranged afterwards.
 - **A platform selling credits, vouchers or memberships** issues them as tokens, sells them for a stablecoin into its own treasury, and has a public record of every sale and every redemption.
 - **A head contractor** holds each progress payment until the stage is certified, so a subcontractor can see the payment exists before starting work.
@@ -148,11 +149,12 @@ One deployment exists today. The web app and the services each assume a single n
 
 **Planned, in this order.**
 
-1. **General records.** A record of any event a platform wants to prove, such as a subscription, a sale made elsewhere or an approval, written by the platform's own key.
-2. **Keys that act for a workspace.** A workspace authorises a key that its own server uses, so a platform can write records and trigger its side of a commitment without a person at a wallet.
-3. **More kinds of commitment.** For example a refund window: the supplier is paid after a set time unless the buyer takes the payment back first.
-4. **An indexer, webhooks and a published SDK**, so a platform is told when something happens and can call the protocol in a few lines.
-5. **Signing in without a wallet**, with network fees paid by the sponsor.
+1. **Delivery confirmation.** Today only the buyer's own wallet can release a held payment. A delivery code lets the person receiving the goods confirm delivery without a wallet, an app or an account. When the buyer orders, the app creates a long random code and the contract stores only its fingerprint. The buyer sends the code to the recipient as a QR code or a link, and the supplier never sees it before delivery. On delivery the supplier scans it. Presenting the code releases the payment to the supplier on the spot and writes a permanent record of the handover with its time, which is the supplier's proof of fulfilment. Presenting the code can only ever send the payment to the supplier. With it come two more parts: the buyer can extend the term so an order can wait for a late delivery, and a watcher service sends the return when a deadline passes, so the return needs nobody to act.
+2. **General records.** A record of any event a platform wants to prove, such as a subscription, a sale made elsewhere or an approval, written by the platform's own key.
+3. **Keys that act for a workspace.** A workspace authorises a key that its own server uses, so a platform can write records and trigger its side of a commitment without a person at a wallet.
+4. **More kinds of commitment.** For example a refund window: the supplier is paid after a set time unless the buyer takes the payment back first.
+5. **An indexer, webhooks and a published SDK**, so a platform is told when something happens and can call the protocol in a few lines.
+6. **Signing in without a wallet**, with network fees paid by the sponsor.
 
 # Business model
 
@@ -172,6 +174,7 @@ Fees are paid in the token the payment itself uses. There is no BitRegalo token.
 | Payments with receipts, token sales, redemption, workspace treasury | Version 1 is deployed and registered. No workspace has been launched on it yet |
 | Marketplace index | Live |
 | Gas sponsor and signing in without a wallet | Built, not in use |
+| Delivery code, term extension, deadline watcher | Designed, not built |
 | General records, keys for servers, refund window | Designed, not built |
 | Indexer, webhooks, SDK | Not built |
 | Second network | Not built |
@@ -182,8 +185,8 @@ Fees are paid in the token the payment itself uses. There is no BitRegalo token.
 - **It has not been audited.** Until it has, nothing of real value should pass through it.
 - **It is public by design.** On a public network, amounts and addresses are visible to anyone.
 - **Keys are final.** BitRegalo cannot recover a lost wallet or reverse a signed action.
-- **Escrow today leans toward the buyer.** If the buyer does not release and the supplier does not hand back, the payment returns to the buyer after the deadline. A supplier who has already delivered depends on the buyer releasing. The refund-window commitment is the planned answer.
-- **A return needs a trigger.** After the deadline someone has to send the transaction that returns a held payment. It does not happen by itself.
+- **Escrow today leans toward the buyer.** Only the buyer's own wallet can release. If the buyer does not release and the supplier does not hand back, the payment returns to the buyer after the deadline, so a buyer who has received the goods can decline to release and wait. The delivery code is the planned answer: the supplier hands over the goods only when the code is presented, and presenting it releases the payment. A recipient who takes the goods and refuses to show the code is still a risk the supplier carries.
+- **A return needs a trigger.** After the deadline someone has to send the transaction that returns a held payment. It does not happen by itself. A watcher service that sends it is planned.
 - **Descriptions are separate from records.** A description in the marketplace index can be replaced by its owner. The record on chain cannot.
 - **Law differs by country.** An organisation that uses BitRegalo remains responsible for its own obligations. This paper is not legal or financial advice.
 

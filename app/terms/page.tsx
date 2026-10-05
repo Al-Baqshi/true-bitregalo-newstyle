@@ -50,7 +50,7 @@ export default function TermsPage() {
 
       <h2 id="tokens">4. Tokens</h2>
       <p>
-        BitRegalo has not issued a token and is not offering one. Earlier documents that described BTR or Regalo tokens are superseded.
+        BitRegalo has no token of its own. It has not issued one and sells none, anywhere. Earlier documents that described BTR or Regalo tokens are superseded.
       </p>
       <p>
         An organisation may issue its own utility tokens (vouchers, credits, memberships) inside its workspace. Those tokens belong to the organisation that issues them, not to BitRegalo, and that organisation is responsible for them. See <Link href="/token-terms">Tokens</Link>.

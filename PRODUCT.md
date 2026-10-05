@@ -215,7 +215,7 @@ Constraints:
 
 - **Legal framing is part of the product.** BitRegalo® Limited (New Zealand) presents itself as a
   technology company providing decentralised infrastructure for records and payment commitments, not
-  a financial institution or payment service. There is no BitRegalo token and no offering. Copy must
+  a financial institution or payment service. There is no BitRegalo token and no offering (owner's decision, 5 Oct 2026: BitRegalo is funded by fees and licences, never by selling tokens or memberships; if a token is ever issued it will be through BitRegalo's own platform and announced on the site first). Copy must
   not add claims that contradict the legal notice, the terms, or the KYC policy.
 - No real customers, volumes, testimonials, audits or certifications exist to cite. Do not invent them.
 - All chain data is read live; pages must tolerate loading, empty and wrong-network states.

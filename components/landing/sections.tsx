@@ -248,7 +248,7 @@ const STATUS = [
   { title: "A public test network", text: "Today it runs on BNB Smart Chain Testnet, a practice network where tokens have no value. It is not on a main network." },
   { title: "Not independently audited", text: "The contracts pass their own automated tests. Until an audit is done, nothing of real value should pass through them." },
   { title: "Public or private", text: "The same contracts run on a shared public network or on an organisation's own private one. Tested on Hyperledger Besu. Stellar and Hyperledger Fabric are planned." },
-  { title: "No BitRegalo token", text: "BitRegalo has not issued a token and is not offering one. Fees are paid in the token a payment already uses." },
+  { title: "No BitRegalo token", text: "BitRegalo has no token of its own and sells none, anywhere. It is paid for the use of its infrastructure, in the token a payment already uses." },
 ]
 
 export function Protocol() {

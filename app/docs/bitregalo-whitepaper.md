@@ -43,7 +43,7 @@ BitRegalo is a protocol and the software around it. An organisation keeps its ow
 ## What it is not
 
 - **Not a payment service or a custodian.** BitRegalo never holds anyone's tokens. A payment moves from one wallet to another through a contract, and no BitRegalo server is in its path.
-- **Not a token.** BitRegalo has not issued a token and is not offering one.
+- **Not a token.** BitRegalo has no token of its own. It has not issued one and sells none, anywhere. It earns fees for the use of its infrastructure.
 - **Not one network.** The protocol is defined by its rules. A network is where an organisation chooses to run it.
 - **Not one app or one industry.** The web app is a reference implementation. Construction, marketplaces, banking, nonprofits and subscriptions are examples of use.
 
@@ -210,7 +210,7 @@ The web app reads the network directly and sends each signed transaction straigh
 
 # Business model
 
-BitRegalo earns when the protocol is used.
+BitRegalo is paid for the use of its infrastructure: fees on shared networks and licences on private ones. It does not sell tokens, memberships or any other instrument to fund itself.
 
 **On a shared network**, fees are built into the contracts and paid in the token a payment already uses:
 
@@ -220,7 +220,7 @@ BitRegalo earns when the protocol is used.
 
 **On a private network**, the organisation that deploys the contracts holds the fee settings, so the terms are a licence and support agreement with BitRegalo and not a fee per payment. The contract source is published and marked with the Business Source Licence. Its terms for commercial use are being finalised.
 
-There is no BitRegalo token.
+There is no BitRegalo token. If BitRegalo ever issues one, it will be issued through its own platform and announced on bitregalo.com first. Anything offered elsewhere in BitRegalo's name is not from BitRegalo.
 
 # Status
 

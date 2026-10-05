@@ -4,7 +4,7 @@ import { DocNotice, DocPage } from "@/components/site/doc-page"
 
 export const metadata: Metadata = {
   title: "Tokens",
-  description: "BitRegalo has not issued a token and is not offering one. What that means, and how tokens issued by organisations work.",
+  description: "BitRegalo has no token of its own and sells none, anywhere. What that means, and how tokens issued by organisations work.",
 }
 
 export default function TokenTermsPage() {
@@ -16,13 +16,16 @@ export default function TokenTermsPage() {
     >
       <DocNotice title="The short version">
         <p>
-          BitRegalo has not issued a token and is not offering one.
+          BitRegalo has no token of its own. It has not issued one and sells none, anywhere.
         </p>
       </DocNotice>
 
       <h2 id="no-bitregalo-token">No BitRegalo token</h2>
       <p>
-        BitRegalo has not issued a token and is not offering one. Fees are paid in the tokens people already use to pay.
+        BitRegalo has no token of its own. It has not issued one and sells none, anywhere. BitRegalo is paid for the use of its infrastructure, and those fees are paid in the tokens people already use to pay.
+      </p>
+      <p>
+        If BitRegalo ever issues a token, it will be issued through its own platform and announced on this site first. Anything offered elsewhere in BitRegalo&apos;s name is not from BitRegalo.
       </p>
 
       <h2 id="earlier-documents">Earlier documents</h2>

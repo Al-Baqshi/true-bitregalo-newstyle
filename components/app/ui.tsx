@@ -128,6 +128,8 @@ export function Stat({ label, value, hint }: { label: string; value: React.React
 /** A wallet or contract address: shortened, monospaced, linked to the public explorer. */
 export function Addr({ a, className }: { a: string; className?: string }) {
   if (!a || /^0x0{40}$/.test(a)) return <span className="text-subtle">—</span>
+  // A private network may have no public block explorer: show the address without a link.
+  if (!explorerAddress(a)) return <span className={cn("t-mono whitespace-nowrap text-muted-foreground", className)} title={a}>{short(a)}</span>
   return (
     <a
       className={cn("t-mono relative z-10 whitespace-nowrap rounded-sm text-muted-foreground underline decoration-border-strong/60 decoration-1 underline-offset-[3px] transition-colors hover:text-foreground hover:decoration-foreground", className)}

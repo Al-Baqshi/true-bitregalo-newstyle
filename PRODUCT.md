@@ -34,10 +34,14 @@ It gives a connected platform two things:
   back, return it after the deadline) locked in a contract, so it executes exactly as agreed when it
   is triggered. A refund is a refund.
 
-Each organisation gets its own contracts, called a workspace. The protocol is not tied to one
-network. EVM is the first, with BNB Smart Chain as the reference deployment; private chains and
-other networks follow, and BitRegalo may run a network of its own when customers or volume call for
-it. Platforms reach BitRegalo through an SDK and an API. The web app at `/app` is the reference
+Each organisation gets its own contracts, called a workspace, and can run them in two ways: on a
+**shared public network**, where anyone can read and verify the records, or on a **private
+network** run by the organisation or a group it belongs to, where only members can see anything.
+This matters most to banks and enterprises, which often cannot publish amounts or counterparties.
+The protocol is the same in both and is not tied to one ledger. EVM is the first implementation:
+BNB Smart Chain is the public reference deployment, and the same contracts run unchanged on a
+private Hyperledger Besu network. Stellar and Hyperledger Fabric are planned as separate
+implementations, and BitRegalo may run a network of its own when customers or volume call for it. Platforms reach BitRegalo through an SDK and an API. The web app at `/app` is the reference
 implementation and BitRegalo's own public workspace. It is not the whole product.
 
 Industries (construction, marketplaces, nonprofits, subscriptions, trade) are examples of use. They
@@ -57,6 +61,11 @@ Built and running on the practice network:
 - A marketplace index for descriptions, signed by the record's owner.
 - A page per workspace that gives a developer the addresses, interface files and code examples to
   read records and let users sign actions from another site.
+- **Private EVM networks.** On 5 Oct 2026 the unchanged contracts and scripts were deployed to a
+  private Hyperledger Besu 26.9.0 network (QBFT, one validator) and exercised end to end with
+  `script/try-network.sh` in the contracts repository; the reference app was built for that network
+  (`scripts/make-bundle.mjs` plus `NEXT_PUBLIC_NETWORK_*`) and read its records. It was a test on
+  one node: say "tested on Hyperledger Besu", never "in production" or "used by".
 
 Designed, not built (in the order planned for the next contract version):
 
@@ -80,7 +89,12 @@ Designed, not built (in the order planned for the next contract version):
 - **Platform-triggered commitments**: a key a workspace authorises to act for it from a server, and
   commitment types such as a refund window.
 - **A server-side API with keys, webhooks and an indexer**, and a published **SDK**.
-- **A second network.** One deployment exists; the code assumes a single network.
+- **For private networks**: anchoring (publishing a fingerprint of a private network's state to a
+  public one, so a rewrite can be detected) and one installation that serves several networks.
+  Always say what the guarantee rests on: a private network is only as honest as its validators,
+  so they must be held by independent parties.
+- **Other ledgers**: implementations for Stellar (Soroban) and Hyperledger Fabric (chaincode), to
+  the same rules. Not started.
 - An independent audit, mainnet, and signing in without a wallet.
 
 ## Users
@@ -139,8 +153,9 @@ developer connecting a first record or a first held payment in an afternoon.
   a vault, a treasury its admin owns), not an account on someone else's ledger.
 - **Infrastructure, not a payment service.** BitRegalo never holds anyone's tokens and no BitRegalo
   server is in a payment's path.
-- **Not tied to one network.** EVM first; the same protocol is meant to run on private chains and
-  other networks.
+- **Public or private.** The same contracts run on a shared public network or on an organisation's
+  own private network. EVM first (tested on Hyperledger Besu); Stellar and Hyperledger Fabric are
+  planned.
 
 ## Operating Context
 

@@ -15,7 +15,7 @@ import { DocPage, DocTable, PrintButton, type TocItem } from "@/components/site/
 
 export const metadata: Metadata = {
   title: "Whitepaper",
-  description: "The BitRegalo whitepaper: infrastructure that lets a platform keep records nobody can edit and make payment commitments that execute as agreed. What is built, what is planned, and the rules the protocol keeps.",
+  description: "The BitRegalo whitepaper: infrastructure that lets an organisation keep records nobody can edit and make payment commitments that execute as agreed, on a shared public network or its own private one. What is built, what is planned, and the rules the protocol keeps.",
 }
 
 const FILE = path.join(process.cwd(), "app/docs/bitregalo-whitepaper.md")
@@ -157,7 +157,7 @@ export default async function WhitepaperPage() {
   const { sections, toc } = prepare(raw)
 
   return (
-    <DocPage title="BitRegalo Whitepaper" meta="Version 5 · 5 October 2026 · By Al Baqshi Mohammed" toc={toc} action={<PrintButton />}>
+    <DocPage title="BitRegalo Whitepaper" meta="Version 6 · 5 October 2026 · By Al Baqshi Mohammed" toc={toc} action={<PrintButton />}>
       {sections.map((s) => (
         <Fragment key={s.id}>
           <h2 id={s.id}>{s.title}</h2>

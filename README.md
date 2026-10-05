@@ -41,9 +41,31 @@ All are optional and read at build time. Put them in `.env.local`.
 
 | Variable | Read in | What it does |
 | --- | --- | --- |
-| `NEXT_PUBLIC_MARKET_API` | `lib/bitregalo/market.ts` | Base URL of the marketplace index. Without it the app shows on-chain records with no descriptions. |
+| `NEXT_PUBLIC_MARKET_API` | `lib/bitregalo/market.ts` | Base URL of the marketplace index. Defaults to the index BitRegalo runs for the built-in network; on another network, without it the app shows records with no descriptions. |
+| `NEXT_PUBLIC_NETWORK_NAME`, `NEXT_PUBLIC_NATIVE_SYMBOL`, `NEXT_PUBLIC_EXPLORER_URL`, `NEXT_PUBLIC_PRACTICE_NETWORK` | `lib/bitregalo/config.ts` | Describe a network that is not built in. See "Another network". |
 | `NEXT_PUBLIC_RPC_URL` | `lib/bitregalo/config.ts` | RPC endpoint. Defaults to a public BNB Smart Chain Testnet endpoint; set it to point the app at a local fork. |
 | `NEXT_PUBLIC_PUBLIC_WORKSPACE` | `lib/bitregalo/config.ts`, `next.config.ts` | Which workspace is the public BitRegalo network served at `/app`. Defaults to `publicWorkspace` in `lib/bitregalo/bitregalo.json`, or 0. |
+
+## Another network
+
+The app serves one network per build. `lib/bitregalo/bitregalo.json` says which: it holds that
+network's deployment record and the contract interface files. To build for another network, a
+private one included:
+
+```sh
+# in bitregalo-contracts: forge build, and deploy (script/try-network.sh does both checks)
+node scripts/make-bundle.mjs ../bitregalo-contracts <chainId>
+NEXT_PUBLIC_RPC_URL=http://your-node:8545 \
+NEXT_PUBLIC_NETWORK_NAME="Your network" \
+NEXT_PUBLIC_NATIVE_SYMBOL=ETH \
+NEXT_PUBLIC_PRACTICE_NETWORK=1 \
+npm run build
+```
+
+`NEXT_PUBLIC_EXPLORER_URL` is optional: a private network may have no public block explorer, and
+addresses are then shown without links. Networks BitRegalo itself runs on are listed in `NETWORKS`
+in `lib/bitregalo/config.ts` and need no variables. This was checked against a private Hyperledger
+Besu network on 5 October 2026.
 
 ## Where things are
 

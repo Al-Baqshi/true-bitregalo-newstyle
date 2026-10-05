@@ -23,6 +23,7 @@ const CONNECT = [
 ]
 
 const WORKSPACE = [
+  { title: "On the network it chooses", text: "A shared public network, or a private one the organisation or its group runs. The contracts are the same." },
   { title: "Its own contracts", text: "Records and rules, a vault that holds commitments, and a treasury its admin owns." },
   { title: "Its own rules", text: "The tokens it accepts, such as a local stablecoin, and which ways of settling are switched on." },
   { title: "Its own tokens and shop", text: "Vouchers, credits or memberships it issues, sells for a stablecoin and takes back when they are redeemed." },

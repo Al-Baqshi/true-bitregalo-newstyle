@@ -2,7 +2,7 @@ import { bscTestnet } from "wagmi/chains"
 import { createConfig, http } from "wagmi"
 import { injected } from "wagmi/connectors"
 import bundle from "./bitregalo.json"
-import type { Abi, Address, Chain } from "viem"
+import { defineChain, type Abi, type Address, type Chain } from "viem"
 
 /**
  * The networks this app knows how to talk to. The protocol is not tied to one network: a
@@ -10,17 +10,47 @@ import type { Abi, Address, Chain } from "viem"
  * carries the chain id it was built from). The app serves one network per build today;
  * nothing below this block names a network.
  */
-type NetworkEntry = { chain: Chain; rpcUrl: string; explorer: string; practice: boolean }
+type Stable = { symbol: string; name: string; address: Address }
+type NetworkEntry = { chain: Chain; rpcUrl: string; explorer: string; practice: boolean; stables: Stable[]; marketApi?: string }
 const NETWORKS: Record<number, NetworkEntry> = {
-  97: { chain: bscTestnet, rpcUrl: "https://data-seed-prebsc-1-s1.bnbchain.org:8545", explorer: "https://testnet.bscscan.com", practice: true },
+  97: {
+    chain: bscTestnet, rpcUrl: "https://data-seed-prebsc-1-s1.bnbchain.org:8545", explorer: "https://testnet.bscscan.com", practice: true,
+    stables: [{ symbol: "USDT", name: "Tether USD (testnet)", address: "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd" }],
+    marketApi: "https://market-production-671e.up.railway.app",
+  },
 }
-const entry = NETWORKS[bundle.chainId]
-if (!entry) throw new Error(`No network entry for chain ${bundle.chainId}: add it to NETWORKS in lib/bitregalo/config.ts`)
+
+/**
+ * A network with no entry above, such as an organisation's private network, is described at
+ * build time: NEXT_PUBLIC_RPC_URL (required), NEXT_PUBLIC_NETWORK_NAME, NEXT_PUBLIC_NATIVE_SYMBOL,
+ * NEXT_PUBLIC_EXPLORER_URL (optional: a private network may have no public explorer) and
+ * NEXT_PUBLIC_PRACTICE_NETWORK=1 when its tokens have no value.
+ */
+function fromEnv(id: number): NetworkEntry {
+  const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL
+  if (!rpcUrl) throw new Error(`Chain ${id} is not a built-in network: set NEXT_PUBLIC_RPC_URL (see README.md, "Another network")`)
+  const symbol = process.env.NEXT_PUBLIC_NATIVE_SYMBOL || "ETH"
+  return {
+    chain: defineChain({
+      id,
+      name: process.env.NEXT_PUBLIC_NETWORK_NAME || `Network ${id}`,
+      nativeCurrency: { name: symbol, symbol, decimals: 18 },
+      rpcUrls: { default: { http: [rpcUrl] } },
+    }),
+    rpcUrl,
+    explorer: (process.env.NEXT_PUBLIC_EXPLORER_URL || "").replace(/\/$/, ""),
+    practice: process.env.NEXT_PUBLIC_PRACTICE_NETWORK === "1",
+    stables: [],
+  }
+}
+const entry = NETWORKS[bundle.chainId] ?? fromEnv(bundle.chainId)
 
 export const chain = entry.chain
 /** Overridable at build time so the same app can point at a local fork for testing. */
 export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || entry.rpcUrl
 export const EXPLORER = entry.explorer
+/** The marketplace index BitRegalo runs for this network, if any. NEXT_PUBLIC_MARKET_API overrides it. */
+export const DEFAULT_MARKET_API = entry.marketApi ?? ""
 /** What the rest of the app may say about the network it is running on. */
 export const network = {
   id: entry.chain.id,
@@ -29,6 +59,7 @@ export const network = {
   nativeSymbol: entry.chain.nativeCurrency.symbol,
   /** A practice network: tokens have no value. */
   practice: entry.practice,
+  /** Empty when the network has no public block explorer. */
   explorer: entry.explorer,
 } as const
 
@@ -55,7 +86,18 @@ export const PUBLIC_WORKSPACE_ID = BigInt(
   process.env.NEXT_PUBLIC_PUBLIC_WORKSPACE ?? String((dep as { publicWorkspace?: number }).publicWorkspace ?? 0)
 )
 
-/** Implementation pairs from the deployments file, oldest first. Registration state lives on the mother. */
+/**
+ * The mother numbers versions in the order they were registered on that network, so the same
+ * code can be version 1 on one network and version 0 on a network deployed later. What the app
+ * needs to know is what a workspace can do. A version registered with a workspace-treasury
+ * implementation has payments, the shop, redemption and the treasury: protocol version 1.
+ */
+export function protocolVersion(registered: bigint): bigint {
+  const v = versions.find((x) => BigInt(x.n) === registered)
+  return v?.treasuryImpl && registered < 1n ? 1n : registered
+}
+
+/** Implementation sets from the deployments file, oldest first. Registration state lives on the mother. */
 export const versions = Object.entries(dep.versions as Record<string, { instanceImpl: string; vaultImpl: string; treasuryImpl?: string }>)
   .map(([k, v]) => ({ n: Number(k.replace(/^v/, "")), instanceImpl: v.instanceImpl as Address, vaultImpl: v.vaultImpl as Address, treasuryImpl: v.treasuryImpl as Address | undefined }))
   .sort((a, b) => a.n - b.n)
@@ -73,7 +115,7 @@ export const abis = {
 /** Stablecoins the app offers by name on this network. Any other ERC-20 can be added by address. */
 export const STABLES: { symbol: string; name: string; address: Address; faucet?: boolean }[] = [
   ...(addresses.testStable ? [{ symbol: "tUSD", name: "BitRegalo Test Dollar — free from the faucet", address: addresses.testStable, faucet: true }] : []),
-  { symbol: "USDT", name: "Tether USD (testnet)", address: addresses.usdt },
+  ...entry.stables,
 ]
 
 export const wagmiConfig = createConfig({
@@ -95,9 +137,10 @@ export const ESCROW_STATE = ["—", "Held", "Released", "Handed back", "Returned
 export function short(a: string) {
   return a ? `${a.slice(0, 6)}…${a.slice(-4)}` : ""
 }
+/** Links to the network's block explorer, or "" when the network has none. */
 export function explorerAddress(a: string) {
-  return `${EXPLORER}/address/${a}`
+  return EXPLORER ? `${EXPLORER}/address/${a}` : ""
 }
 export function explorerTx(h: string) {
-  return `${EXPLORER}/tx/${h}`
+  return EXPLORER ? `${EXPLORER}/tx/${h}` : ""
 }

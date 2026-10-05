@@ -99,11 +99,15 @@ export const PHASES: Phase[] = [
   },
   {
     n: 8,
-    title: "A second network",
-    status: "Next",
+    title: "Networks: public and private",
+    status: "In progress",
     items: [
-      { title: "App and services that handle more than one network", status: "Next", note: "One deployment exists; the code assumes a single network" },
-      { title: "A second deployment", status: "Next", note: "Not started" },
+      { title: "Private EVM network", status: "Done", note: "Deployed unchanged to a Hyperledger Besu network (QBFT) and exercised end to end. A test on one node; none in production" },
+      { title: "The app built for any network", status: "Done", note: "One script builds its configuration for a network" },
+      { title: "One installation that serves several networks", status: "Next", note: "The app and each service serve one network today" },
+      { title: "Anchoring for private networks", status: "Next", note: "A fingerprint of a private network's state published to a public one, so a rewrite can be detected. Designed, not built" },
+      { title: "Stellar implementation", status: "Next", note: "The protocol written again as Soroban contracts. Not started" },
+      { title: "Hyperledger Fabric implementation", status: "Next", note: "The protocol written again as chaincode. Not started" },
     ],
   },
   {

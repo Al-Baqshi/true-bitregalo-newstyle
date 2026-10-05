@@ -32,7 +32,7 @@ export function Hero() {
           <Button asChild size="lg" variant="outline"><Link href="/whitepaper">Read the whitepaper</Link></Button>
         </div>
         <p className="mt-5 max-w-[56ch] text-sm text-muted-foreground">
-          Today BitRegalo runs on BNB Smart Chain Testnet, a public test network where tokens have no value. It has not been independently audited and it is not on a main network. You can <Link href="/app" className={link}>try every step in the reference app</Link> with practice tokens.
+          Today BitRegalo runs on BNB Smart Chain Testnet, a public test network where tokens have no value, and has been deployed unchanged to a private Hyperledger Besu test network. It has not been independently audited and it is not on a main network. You can <Link href="/app" className={link}>try every step in the reference app</Link> with practice tokens.
         </p>
       </div>
       <HeroDemo />
@@ -166,7 +166,7 @@ const MORE_CASES = [
   { title: "An enterprise running tenders", text: "Each request, every answer and the award are recorded. A supplier who lost can check that nothing was rearranged afterwards." },
   { title: "A platform selling credits or memberships", text: "It issues them as tokens, sells them for a stablecoin into its own treasury, and has a public record of every sale and every redemption." },
   { title: "A nonprofit paying on delivery", text: "A grant waits in escrow and is released to the local supplier when the aid arrives. Anyone can see each amount and when it moved." },
-  { title: "A bank on a private network", text: "A bank that cannot publish amounts on a public network would run the same contracts on a network it controls. This is planned, not built." },
+  { title: "A bank on a private network", text: "A bank that cannot publish amounts or counterparties runs the same contracts on a permissioned network with its clients. Tested on Hyperledger Besu; no private deployment is in production." },
 ]
 
 export function UseCases() {
@@ -247,7 +247,7 @@ const DOCS = [
 const STATUS = [
   { title: "A public test network", text: "Today it runs on BNB Smart Chain Testnet, a practice network where tokens have no value. It is not on a main network." },
   { title: "Not independently audited", text: "The contracts pass their own automated tests. Until an audit is done, nothing of real value should pass through them." },
-  { title: "Not tied to one network", text: "EVM networks come first. Private chains and other networks are planned; one deployment exists today." },
+  { title: "Public or private", text: "The same contracts run on a shared public network or on an organisation's own private one. Tested on Hyperledger Besu. Stellar and Hyperledger Fabric are planned." },
   { title: "No BitRegalo token", text: "BitRegalo has not issued a token and is not offering one. Fees are paid in the token a payment already uses." },
 ]
 

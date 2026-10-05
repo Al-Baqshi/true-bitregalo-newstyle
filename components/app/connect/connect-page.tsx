@@ -136,9 +136,13 @@ export function ConnectPlatform() {
                 <ValueRow label="Network" value={chain.name} mono={false} copy="" />
                 <ValueRow label="Chain id" value={String(chain.id)} />
                 <ValueRow label="RPC URL" value={RPC_URL} hint="A public endpoint. For steady traffic, use your own RPC provider for this network." />
-                <ValueRow label="Explorer" mono={false} copy={EXPLORER}>
-                  <a href={EXPLORER} target="_blank" rel="noreferrer" className="text-gold underline decoration-1 underline-offset-4 hover:decoration-2">{EXPLORER.replace(/^https:\/\//, "")}</a>
-                </ValueRow>
+                {EXPLORER ? (
+                  <ValueRow label="Explorer" mono={false} copy={EXPLORER}>
+                    <a href={EXPLORER} target="_blank" rel="noreferrer" className="text-gold underline decoration-1 underline-offset-4 hover:decoration-2">{EXPLORER.replace(/^https:\/\//, "")}</a>
+                  </ValueRow>
+                ) : (
+                  <ValueRow label="Explorer" value="None: this network has no public block explorer" mono={false} copy="" />
+                )}
               </dl>
             </Card>
 

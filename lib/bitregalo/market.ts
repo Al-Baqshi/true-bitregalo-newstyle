@@ -10,9 +10,9 @@
  */
 import { useSyncExternalStore } from "react"
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
-import { chain } from "./config"
+import { chain, DEFAULT_MARKET_API } from "./config"
 
-const ENV_API = (process.env.NEXT_PUBLIC_MARKET_API ?? "").replace(/\/$/, "")
+const ENV_API = (process.env.NEXT_PUBLIC_MARKET_API ?? DEFAULT_MARKET_API).replace(/\/$/, "")
 
 /**
  * Development builds only: `?marketApi=<url>` on any app page points this browser tab at
